@@ -34,6 +34,7 @@ class MainScreen : View() {
             menu("File") {
                 item("Load", "Shortcut+L").action { doLoadRegionFile() }
                 item("Save", "Shortcut+S").action { doSaveRegionFile() }
+                item("Save As", "F12").action { doSaveAsRegionFile() }
                 item("Quit", "Shortcut+Q").action {
                     println("QUIT")
                 }
@@ -73,17 +74,21 @@ class MainScreen : View() {
         }
     }
 
+    private fun doSaveAsRegionFile() {
+        var outFile = chooseFile("Name the save file", regionFileFilters, FileChooserMode.Save, op = { initialDirectory = File(runPath) }).firstOrNull()
+        if (outFile != null) {
+            if (!outFile.absolutePath.endsWith(".region")) {
+                outFile = File(outFile.absolutePath + ".region")
+            }
+            regionFile.path = outFile
+            val regionJson = json.stringify(Region.serializer(), regionFile.region)
+            outFile.writeText(regionJson)
+        }
+    }
+
     private fun doSaveRegionFile() {
         if (regionFile.path == null) {
-            var outFile = chooseFile("Name the save file", regionFileFilters, FileChooserMode.Save, op = { initialDirectory = File(runPath) }).firstOrNull()
-            if (outFile != null) {
-                if (!outFile.absolutePath.endsWith(".region")) {
-                    outFile = File(outFile.absolutePath + ".region")
-                }
-                regionFile.path = outFile
-                val regionJson = json.stringify(Region.serializer(), regionFile.region)
-                outFile.writeText(regionJson)
-            }
+            doSaveAsRegionFile()
         } else {
             val regionJson = json.stringify(Region.serializer(), regionFile.region)
             regionFile.path!!.writeText(regionJson)
