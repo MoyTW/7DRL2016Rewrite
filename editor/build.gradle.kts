@@ -1,5 +1,15 @@
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
+/**
+ * To set TornadoFX to run properly in IntelliJ:
+ *
+ * 1) Place the following line in the Run Configuration VM Options
+ * --module-path "$JFX_SDK_DIR$\javafx-sdk-11.0.2\lib" --add-modules javafx.controls,javafx.base,javafx.graphics
+ *
+ * 2) Define $JFX_SDK_DIR$ in your env variables to the project dir /editor/javafx-sdk-11.0.2 (or whatever version)
+ */
+
+
 plugins {
     kotlin("jvm")
     id("org.jetbrains.kotlin.plugin.serialization") version "1.3.50"

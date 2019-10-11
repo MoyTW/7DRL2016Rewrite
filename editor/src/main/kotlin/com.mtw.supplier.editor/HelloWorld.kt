@@ -9,7 +9,22 @@ import tornadofx.*
 
 class HelloWorld : View() {
     // every view has a root component
-    override val root = hilarity()
+    override val root = borderpane {
+        top = menubar {
+            menu("File") {
+                item("Load", "Shortcut+L").action {
+                    println("LOAD")
+                }
+                item("Save", "Shortcut+S").action {
+                    println("SAVE")
+                }
+                item("Quit", "Shortcut+Q").action {
+                    println("QUIT")
+                }
+            }
+        }
+        bottom = hilarity()
+    }
 
     fun hilarity(): Group {
         val region = Region(5, 5, RegionGridLayout.HEXAGONAL, RegionGridOrientation.FLAT_TOP, gridHexRadius = 50.0)
