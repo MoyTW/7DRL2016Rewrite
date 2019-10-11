@@ -3,18 +3,24 @@ package com.mtw.supplier.editor
 import com.mtw.supplier.region.Region
 import com.mtw.supplier.region.RegionGridLayout
 import com.mtw.supplier.region.RegionGridOrientation
+import javafx.beans.property.SimpleDoubleProperty
 import javafx.beans.property.SimpleIntegerProperty
 import javafx.scene.control.ScrollPane
+import javafx.scene.image.Image
 import javafx.stage.FileChooser
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonConfiguration
 import tornadofx.*
 import java.io.File
 import java.nio.file.Paths
+import javafx.scene.image.WritableImage
+import kotlin.math.roundToInt
 
-data class RegionFile(var name: String, var path: File?, var region: Region)
 
 class MainScreen : View() {
+    data class RegionFile(var name: String, var path: File?, var region: Region)
+    data class BackgroundFile(var path: File?)
+
     private val json = Json(JsonConfiguration.Stable.copy(prettyPrint = true))
 
     private val runPath = Paths.get("").toAbsolutePath().toString()
@@ -23,11 +29,13 @@ class MainScreen : View() {
 
     private val gridHeight = SimpleIntegerProperty(this, "gridHeight", 20)
     private val gridWidth = SimpleIntegerProperty(this, "gridWidth", 20)
+    private val gridRadius = SimpleDoubleProperty(this, "gridRadius", 10.0)
     private var regionFile: RegionFile = RegionFile(
         "Unnamed Region File",
         null,
-        Region(gridHeight.value, gridWidth.value, RegionGridLayout.RECTANGULAR, RegionGridOrientation.FLAT_TOP, gridHexRadius = 10.0)
+        Region(gridHeight.value, gridWidth.value, RegionGridLayout.RECTANGULAR, RegionGridOrientation.FLAT_TOP, gridHexRadius = gridRadius.value)
     )
+    private var backgroundFile: BackgroundFile = BackgroundFile(null)
 
     override val root = borderpane {
         top = menubar {
@@ -44,12 +52,14 @@ class MainScreen : View() {
             fieldset("Grid Controls") {
                 field("Grid Height") { textfield { bind(gridHeight) } }
                 field("Grid Width") { textfield { bind(gridWidth) } }
-                button("Regenerate Hexes").action {
-                    doRegenerate()
-                }
+                field("Grid Radius") { textfield { bind(gridRadius) } }
+                button("Regenerate Hexes").action { doRegenerate() }
+            }
+            fieldset("Background Controls") {
+                button("Load Background").action { doLoadBackground() }
             }
         }
-        center = regionRender(regionFile.region)
+        center = centerRender(backgroundFile, regionFile.region)
     }
 
     init {
@@ -69,7 +79,7 @@ class MainScreen : View() {
                 regionFile.region = region
                 gridHeight.set(region.gridHeight)
                 gridWidth.set(region.gridWidth)
-                center = regionRender(region)
+                center = centerRender(backgroundFile, region)
             }
         }
     }
@@ -95,36 +105,78 @@ class MainScreen : View() {
         }
     }
 
-    private fun doLoadImage() {
+    private fun doLoadBackground() {
         with (root) {
-            val file = chooseFile("FILE", pngFilters, op = { initialDirectory = File(runPath) })
-            if (file.isNotEmpty()) {
-                println(file[0].path)
-                center = imageview("file:\\${file[0].canonicalPath}")
+            val file = chooseFile("FILE", pngFilters, op = { initialDirectory = File(runPath) }).firstOrNull()
+            if (file != null) {
+                backgroundFile.path = file
+                center = centerRender(backgroundFile, regionFile.region)
             }
         }
     }
 
     private fun doRegenerate() {
         with(root) {
-            regionFile.region = Region(gridHeight.value, gridWidth.value, RegionGridLayout.RECTANGULAR, RegionGridOrientation.FLAT_TOP, gridHexRadius = 10.0)
-            center = regionRender(regionFile.region)
+            regionFile.region = Region(gridHeight.value, gridWidth.value, RegionGridLayout.RECTANGULAR, RegionGridOrientation.FLAT_TOP, gridHexRadius = gridRadius.value)
+            center = centerRender(backgroundFile, regionFile.region)
         }
     }
 
-    private fun regionRender(region: Region): ScrollPane {
-        return scrollpane {
-            group {
-                region.getAllPoints().map {
-                    polyline(
-                        it[0].first, it[0].second,
-                        it[1].first, it[1].second,
-                        it[2].first, it[2].second,
-                        it[3].first, it[3].second,
-                        it[4].first, it[4].second,
-                        it[5].first, it[5].second,
-                        it[0].first, it[0].second
-                    )
+    private fun maxXY(region: Region): Pair<Double,Double> {
+        var maxX = 0.0
+        var maxY = 0.0
+        for (points in region.getAllPoints()) {
+            for (point in points) {
+                if (point.first > maxX) {
+                    maxX = point.first
+                }
+                if (point.second > maxY) {
+                    maxY = point.second
+                }
+            }
+        }
+        return Pair(maxX, maxY)
+    }
+
+    // I can't figure out how to make these things work in functions so I'm doing this now because wait it's 12:30
+    // already what the i got work tomorrow. wtf. ok technically i got work today. rip me
+    private fun centerRender(backgroundFile: BackgroundFile, region: Region): ScrollPane {
+        val (maxX, maxY) = maxXY(regionFile.region)
+        if (backgroundFile.path != null) {
+            return scrollpane {
+                stackpane {
+                    group {
+                        imageview {
+                            image=Image("file:\\${backgroundFile.path!!.canonicalPath}", maxX, maxY, false, false)
+                        }
+                        region.getAllPoints().map {
+                            polyline(
+                                it[0].first, it[0].second,
+                                it[1].first, it[1].second,
+                                it[2].first, it[2].second,
+                                it[3].first, it[3].second,
+                                it[4].first, it[4].second,
+                                it[5].first, it[5].second,
+                                it[0].first, it[0].second
+                            )
+                        }
+                    }
+                }
+            }
+        } else {
+            return scrollpane{
+                group {
+                    region.getAllPoints().map {
+                        polyline(
+                            it[0].first, it[0].second,
+                            it[1].first, it[1].second,
+                            it[2].first, it[2].second,
+                            it[3].first, it[3].second,
+                            it[4].first, it[4].second,
+                            it[5].first, it[5].second,
+                            it[0].first, it[0].second
+                        )
+                    }
                 }
             }
         }
