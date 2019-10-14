@@ -14,6 +14,8 @@ import org.springframework.test.context.junit4.SpringRunner
 @SpringBootTest
 class RegionTests {
     val json = Json(JsonConfiguration.Stable)
+    val coordinates00 = CubeCoordinates(0, 0)
+    val coordinates11 = CubeCoordinates(1, 1)
 
     @Test
     fun testEmptyRegionSerializationToJson() {
@@ -33,8 +35,8 @@ class RegionTests {
             "]}"
 
         val region = Region(2, 2, RegionGridLayout.RECTANGULAR, RegionGridOrientation.FLAT_TOP)
-        region.setHex(CubeCoordinates(0, 0), RegionHex(50, 69))
-        region.setHex(CubeCoordinates(1, 1), RegionHex(1, 1))
+        region.setHex(coordinates00, RegionHex(coordinates00,50, 69))
+        region.setHex(coordinates11, RegionHex(coordinates11,1, 1))
         val jsonData = json.stringify(Region.serializer(), region)
         Assert.assertEquals(
             expected,

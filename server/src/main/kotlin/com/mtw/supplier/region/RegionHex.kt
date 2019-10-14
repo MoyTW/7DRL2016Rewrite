@@ -10,6 +10,7 @@ enum class HexEffects {
 
 @Serializable
 class RegionHex(
+    val coordinates: CubeCoordinates,
     val vegetationPercentage: Int,
     val elevation: Int,
     val hexEffects: MutableList<HexEffects> = mutableListOf(),

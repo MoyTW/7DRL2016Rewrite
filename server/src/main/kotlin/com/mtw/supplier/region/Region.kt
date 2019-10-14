@@ -25,6 +25,12 @@ data class CubeCoordinates(val gridX: Int, val gridZ: Int) {
     internal fun toMixiteCubeCoordinate(): CubeCoordinate {
         return CubeCoordinate.fromCoordinates(this.gridX, this.gridZ)
     }
+
+    companion object {
+        internal fun fromMixiteCubeCoordinate(coordinate: CubeCoordinate): CubeCoordinates {
+            return CubeCoordinates(coordinate.gridX, coordinate.gridZ)
+        }
+    }
 }
 
 @Serializable
@@ -67,11 +73,23 @@ class Region(
         return cubeCoordinatesToRegionHexes[coordinates]
     }
 
+    // <editor-fold desc="UI proxy">
     // Unsure on UI philosophy.
     fun getAllPoints(): List<List<Pair<Double,Double>>> {
         return this.grid.hexagons.map { hex -> hex.points.map { point -> Pair(point.coordinateX, point.coordinateY) } }
     }
 
+    fun getByPixel(x: Double, y: Double): RegionHex? {
+        val hexMaybe = this.grid.getByPixelCoordinate(x, y)
+        return if (hexMaybe.isPresent) {
+            cubeCoordinatesToRegionHexes[CubeCoordinates.fromMixiteCubeCoordinate(hexMaybe.get().cubeCoordinate)]
+        } else {
+            null
+        }
+    }
+    // </editor-fold>
+
     class CoordinatesInvalidException(coordinates: CubeCoordinates):
         Exception("Coordinates [x=${coordinates.gridX}, z=${coordinates.gridZ}] are invalid!")
+
 }

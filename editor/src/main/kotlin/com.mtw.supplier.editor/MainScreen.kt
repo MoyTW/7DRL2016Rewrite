@@ -13,8 +13,6 @@ import kotlinx.serialization.json.JsonConfiguration
 import tornadofx.*
 import java.io.File
 import java.nio.file.Paths
-import javafx.scene.image.WritableImage
-import kotlin.math.roundToInt
 
 
 class MainScreen : View() {
@@ -142,8 +140,8 @@ class MainScreen : View() {
     // already what the i got work tomorrow. wtf. ok technically i got work today. rip me
     private fun centerRender(backgroundFile: BackgroundFile, region: Region): ScrollPane {
         val (maxX, maxY) = maxXY(regionFile.region)
-        if (backgroundFile.path != null) {
-            return scrollpane {
+        val sp = if (backgroundFile.path != null) {
+            scrollpane {
                 stackpane {
                     group {
                         imageview {
@@ -164,7 +162,7 @@ class MainScreen : View() {
                 }
             }
         } else {
-            return scrollpane{
+            scrollpane{
                 group {
                     region.getAllPoints().map {
                         polyline(
@@ -178,7 +176,13 @@ class MainScreen : View() {
                         )
                     }
                 }
+
             }
         }
+        sp.setOnMouseClicked {
+            println("Click at [${it.x}, ${it.y}]")
+            println(region.getByPixel(it.x, it.y))
+        }
+        return sp
     }
 }
