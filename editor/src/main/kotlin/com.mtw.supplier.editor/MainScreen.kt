@@ -5,6 +5,7 @@ import com.mtw.supplier.region.RegionGridLayout
 import com.mtw.supplier.region.RegionGridOrientation
 import javafx.beans.property.SimpleDoubleProperty
 import javafx.beans.property.SimpleIntegerProperty
+import javafx.scene.Group
 import javafx.scene.control.ScrollPane
 import javafx.scene.image.Image
 import javafx.stage.FileChooser
@@ -136,6 +137,22 @@ class MainScreen : View() {
         return Pair(maxX, maxY)
     }
 
+    private fun regionLines(region: Region): Group {
+        return group {
+            region.getAllPoints().map {
+                polyline(
+                    it[0].first, it[0].second,
+                    it[1].first, it[1].second,
+                    it[2].first, it[2].second,
+                    it[3].first, it[3].second,
+                    it[4].first, it[4].second,
+                    it[5].first, it[5].second,
+                    it[0].first, it[0].second
+                )
+            }
+        }
+    }
+
     // I can't figure out how to make these things work in functions so I'm doing this now because wait it's 12:30
     // already what the i got work tomorrow. wtf. ok technically i got work today. rip me
     private fun centerRender(backgroundFile: BackgroundFile, region: Region): ScrollPane {
@@ -143,41 +160,14 @@ class MainScreen : View() {
         val sp = if (backgroundFile.path != null) {
             scrollpane {
                 stackpane {
-                    group {
-                        imageview {
-                            image=Image("file:\\${backgroundFile.path!!.canonicalPath}", maxX, maxY, false, false)
-                        }
-                        region.getAllPoints().map {
-                            polyline(
-                                it[0].first, it[0].second,
-                                it[1].first, it[1].second,
-                                it[2].first, it[2].second,
-                                it[3].first, it[3].second,
-                                it[4].first, it[4].second,
-                                it[5].first, it[5].second,
-                                it[0].first, it[0].second
-                            )
-                        }
+                    imageview {
+                        image=Image("file:\\${backgroundFile.path!!.canonicalPath}", maxX, maxY, false, false)
                     }
+                    children.add(regionLines(region))
                 }
             }
         } else {
-            scrollpane{
-                group {
-                    region.getAllPoints().map {
-                        polyline(
-                            it[0].first, it[0].second,
-                            it[1].first, it[1].second,
-                            it[2].first, it[2].second,
-                            it[3].first, it[3].second,
-                            it[4].first, it[4].second,
-                            it[5].first, it[5].second,
-                            it[0].first, it[0].second
-                        )
-                    }
-                }
-
-            }
+            ScrollPane(regionLines(region))
         }
         sp.setOnMouseClicked {
             println("Click at [${it.x}, ${it.y}]")
