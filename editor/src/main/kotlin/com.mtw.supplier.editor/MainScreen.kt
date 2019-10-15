@@ -11,13 +11,18 @@ import javafx.scene.image.Image
 import javafx.stage.FileChooser
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonConfiguration
+import org.hexworks.mixite.core.api.HexagonOrientation
+import org.hexworks.mixite.core.api.HexagonalGrid
+import org.hexworks.mixite.core.api.HexagonalGridBuilder
+import org.hexworks.mixite.core.api.HexagonalGridLayout
+import org.hexworks.mixite.core.api.contract.SatelliteData
 import tornadofx.*
 import java.io.File
 import java.nio.file.Paths
 
 
 class MainScreen : View() {
-    data class RegionFile(var name: String, var path: File?, var region: Region)
+    data class RegionData(var name: String, var path: File?, var region: Region, var grid: HexagonalGrid<SatelliteData>)
     data class BackgroundFile(var path: File?)
 
     private val json = Json(JsonConfiguration.Stable.copy(prettyPrint = true))
@@ -29,10 +34,17 @@ class MainScreen : View() {
     private val gridHeight = SimpleIntegerProperty(this, "gridHeight", 20)
     private val gridWidth = SimpleIntegerProperty(this, "gridWidth", 20)
     private val gridRadius = SimpleDoubleProperty(this, "gridRadius", 10.0)
-    private var regionFile: RegionFile = RegionFile(
-        "Unnamed Region File",
+    private var regionData: RegionData = RegionData(
+        "Unnamed Region",
         null,
-        Region(gridHeight.value, gridWidth.value, RegionGridLayout.RECTANGULAR, RegionGridOrientation.FLAT_TOP, gridHexRadius = gridRadius.value)
+        Region(gridHeight.value, gridWidth.value, RegionGridLayout.RECTANGULAR, RegionGridOrientation.FLAT_TOP),
+        HexagonalGridBuilder<SatelliteData>()
+            .setGridHeight(gridHeight.value)
+            .setGridWidth(gridWidth.value)
+            .setGridLayout(HexagonalGridLayout.RECTANGULAR)
+            .setOrientation(HexagonOrientation.FLAT_TOP)
+            .setRadius(gridRadius.value)
+            .build()
     )
     private var backgroundFile: BackgroundFile = BackgroundFile(null)
 
@@ -58,7 +70,7 @@ class MainScreen : View() {
                 button("Load Background").action { doLoadBackground() }
             }
         }
-        center = centerRender(backgroundFile, regionFile.region)
+        center = centerRender(backgroundFile, regionData.region)
     }
 
     init {
@@ -73,11 +85,18 @@ class MainScreen : View() {
             val file = chooseFile("Select the region file", regionFileFilters, op = { initialDirectory = File(runPath) }).firstOrNull()
             if (file != null) {
                 val region = json.parse(Region.serializer(), file.readText())
-                regionFile.name = file.name
-                regionFile.path = file
-                regionFile.region = region
+                regionData.name = file.name
+                regionData.path = file
+                regionData.region = region
                 gridHeight.set(region.gridHeight)
                 gridWidth.set(region.gridWidth)
+                regionData.grid = HexagonalGridBuilder<SatelliteData>()
+                    .setGridHeight(gridHeight.value)
+                    .setGridWidth(gridWidth.value)
+                    .setGridLayout(region.gridLayout.hexagonalGridLayout)
+                    .setOrientation(region.gridOrientation.hexagonOrientation)
+                    .setRadius(gridRadius.value)
+                    .build()
                 center = centerRender(backgroundFile, region)
             }
         }
@@ -89,18 +108,18 @@ class MainScreen : View() {
             if (!outFile.absolutePath.endsWith(".region")) {
                 outFile = File(outFile.absolutePath + ".region")
             }
-            regionFile.path = outFile
-            val regionJson = json.stringify(Region.serializer(), regionFile.region)
+            regionData.path = outFile
+            val regionJson = json.stringify(Region.serializer(), regionData.region)
             outFile.writeText(regionJson)
         }
     }
 
     private fun doSaveRegionFile() {
-        if (regionFile.path == null) {
+        if (regionData.path == null) {
             doSaveAsRegionFile()
         } else {
-            val regionJson = json.stringify(Region.serializer(), regionFile.region)
-            regionFile.path!!.writeText(regionJson)
+            val regionJson = json.stringify(Region.serializer(), regionData.region)
+            regionData.path!!.writeText(regionJson)
         }
     }
 
@@ -109,45 +128,53 @@ class MainScreen : View() {
             val file = chooseFile("FILE", pngFilters, op = { initialDirectory = File(runPath) }).firstOrNull()
             if (file != null) {
                 backgroundFile.path = file
-                center = centerRender(backgroundFile, regionFile.region)
+                center = centerRender(backgroundFile, regionData.region)
             }
         }
     }
 
     private fun doRegenerate() {
         with(root) {
-            regionFile.region = Region(gridHeight.value, gridWidth.value, RegionGridLayout.RECTANGULAR, RegionGridOrientation.FLAT_TOP, gridHexRadius = gridRadius.value)
-            center = centerRender(backgroundFile, regionFile.region)
+            val region = Region(gridHeight.value, gridWidth.value, RegionGridLayout.RECTANGULAR, RegionGridOrientation.FLAT_TOP)
+            regionData.region = region
+            regionData.grid = HexagonalGridBuilder<SatelliteData>()
+                .setGridHeight(gridHeight.value)
+                .setGridWidth(gridWidth.value)
+                .setGridLayout(region.gridLayout.hexagonalGridLayout)
+                .setOrientation(region.gridOrientation.hexagonOrientation)
+                .setRadius(gridRadius.value)
+                .build()
+            center = centerRender(backgroundFile, regionData.region)
         }
     }
 
-    private fun maxXY(region: Region): Pair<Double,Double> {
+    private fun maxXY(data: RegionData): Pair<Double,Double> {
         var maxX = 0.0
         var maxY = 0.0
-        for (points in region.getAllPoints()) {
-            for (point in points) {
-                if (point.first > maxX) {
-                    maxX = point.first
+        data.grid.hexagons.forEach {
+            it.points.forEach { point ->
+                if (point.coordinateX > maxX) {
+                    maxX = point.coordinateX
                 }
-                if (point.second > maxY) {
-                    maxY = point.second
+                if (point.coordinateY > maxY) {
+                    maxY = point.coordinateY
                 }
             }
         }
         return Pair(maxX, maxY)
     }
 
-    private fun regionLines(region: Region): Group {
+    private fun regionLines(data: RegionData): Group {
         return group {
-            region.getAllPoints().map {
+            data.grid.hexagons.map {
                 polyline(
-                    it[0].first, it[0].second,
-                    it[1].first, it[1].second,
-                    it[2].first, it[2].second,
-                    it[3].first, it[3].second,
-                    it[4].first, it[4].second,
-                    it[5].first, it[5].second,
-                    it[0].first, it[0].second
+                    it.points[0].coordinateX, it.points[0].coordinateY,
+                    it.points[1].coordinateX, it.points[1].coordinateY,
+                    it.points[2].coordinateX, it.points[2].coordinateY,
+                    it.points[3].coordinateX, it.points[3].coordinateY,
+                    it.points[4].coordinateX, it.points[4].coordinateY,
+                    it.points[5].coordinateX, it.points[5].coordinateY,
+                    it.points[0].coordinateX, it.points[0].coordinateY
                 )
             }
         }
@@ -156,22 +183,22 @@ class MainScreen : View() {
     // I can't figure out how to make these things work in functions so I'm doing this now because wait it's 12:30
     // already what the i got work tomorrow. wtf. ok technically i got work today. rip me
     private fun centerRender(backgroundFile: BackgroundFile, region: Region): ScrollPane {
-        val (maxX, maxY) = maxXY(regionFile.region)
+        val (maxX, maxY) = maxXY(regionData)
         val sp = if (backgroundFile.path != null) {
             scrollpane {
                 stackpane {
                     imageview {
                         image=Image("file:\\${backgroundFile.path!!.canonicalPath}", maxX, maxY, false, false)
                     }
-                    children.add(regionLines(region))
+                    children.add(regionLines(regionData))
                 }
             }
         } else {
-            ScrollPane(regionLines(region))
+            ScrollPane(regionLines(regionData))
         }
         sp.setOnMouseClicked {
             println("Click at [${it.x}, ${it.y}]")
-            println(region.getByPixel(it.x, it.y))
+            println(regionData.grid.getByPixelCoordinate(it.x, it.y))
         }
         return sp
     }

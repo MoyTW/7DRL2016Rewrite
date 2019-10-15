@@ -38,8 +38,7 @@ class Region(
     val gridHeight: Int,
     val gridWidth: Int,
     val gridLayout: RegionGridLayout,
-    val gridOrientation: RegionGridOrientation,
-    val gridHexRadius: Double = 6.0 // You shouldn't bother with this, really...
+    val gridOrientation: RegionGridOrientation
 ) {
     @Transient
     private val grid = HexagonalGridBuilder<RegionHex>()
@@ -47,7 +46,7 @@ class Region(
         .setGridWidth(gridWidth)
         .setGridLayout(gridLayout.hexagonalGridLayout)
         .setOrientation(gridOrientation.hexagonOrientation)
-        .setRadius(gridHexRadius)
+        .setRadius(1.0) // Radius is only required if you want to draw it; we're using it here for its coordinate math
         .build()
     private val cubeCoordinatesToRegionHexes: MutableMap<CubeCoordinates, RegionHex> = mutableMapOf()
 
@@ -72,22 +71,6 @@ class Region(
         if(!grid.containsCubeCoordinate(coordinates.toMixiteCubeCoordinate())) throw CoordinatesInvalidException(coordinates)
         return cubeCoordinatesToRegionHexes[coordinates]
     }
-
-    // <editor-fold desc="UI proxy">
-    // Unsure on UI philosophy.
-    fun getAllPoints(): List<List<Pair<Double,Double>>> {
-        return this.grid.hexagons.map { hex -> hex.points.map { point -> Pair(point.coordinateX, point.coordinateY) } }
-    }
-
-    fun getByPixel(x: Double, y: Double): RegionHex? {
-        val hexMaybe = this.grid.getByPixelCoordinate(x, y)
-        return if (hexMaybe.isPresent) {
-            cubeCoordinatesToRegionHexes[CubeCoordinates.fromMixiteCubeCoordinate(hexMaybe.get().cubeCoordinate)]
-        } else {
-            null
-        }
-    }
-    // </editor-fold>
 
     class CoordinatesInvalidException(coordinates: CubeCoordinates):
         Exception("Coordinates [x=${coordinates.gridX}, z=${coordinates.gridZ}] are invalid!")
