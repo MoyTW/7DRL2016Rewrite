@@ -1,17 +1,15 @@
 package com.mtw.supplier.editor
 
 import javafx.beans.property.SimpleStringProperty
-import javafx.scene.control.TableView
-import javafx.scene.control.TextField
 import javafx.scene.layout.BorderPane
 import tornadofx.*
 
 class Person(name: String? = null, title: String? = null) {
     val nameProperty = SimpleStringProperty(this, "name", name)
-    var name by nameProperty
+    var name: String? by nameProperty
 
     val titleProperty = SimpleStringProperty(this, "title", title)
-    var title by titleProperty
+    var title: String? by titleProperty
 }
 
 class PersonModel: ItemViewModel<Person>() {
@@ -19,38 +17,34 @@ class PersonModel: ItemViewModel<Person>() {
     val title = bind(Person::titleProperty)
 }
 
-class BindingScreen: View("Person Editor") {
-    override val root = BorderPane()
+class PersonList: View("Person List") {
     private val persons = listOf(Person("Bob", "Manager"), Person("Larry", "Manager")).observable()
-    private val model = PersonModel()
+    private val model: PersonModel by inject()
 
-    init {
-        with(root) {
-            center {
-                tableview(persons) {
-                    column("Name", Person::nameProperty)
-                    column("Title", Person::titleProperty)
+    override val root = tableview(persons) {
+        column("Name", Person::nameProperty)
+        column("Title", Person::titleProperty)
 
-                    bindSelected(model)
+        bindSelected(model)
+    }
+}
+
+class EditForm: View("Edit Form") {
+    private val model: PersonModel by inject()
+
+    override val root = form {
+        fieldset("Edit Person") {
+            field("Name") { textfield(model.name) }
+            field("Title") { textfield(model.title) }
+            button("Save") {
+                enableWhen(model.dirty)
+                action {
+                    save()
                 }
             }
-            right {
-                form {
-                    fieldset("Edit Person") {
-                        field("Name") { textfield(model.name) }
-                        field("Title") { textfield(model.title) }
-                        button("Save") {
-                            enableWhen(model.dirty)
-                            action {
-                                save()
-                            }
-                        }
-                        button("Reset") {
-                            action {
-                                model.rollback()
-                            }
-                        }
-                    }
+            button("Reset") {
+                action {
+                    model.rollback()
                 }
             }
         }
@@ -63,4 +57,23 @@ class BindingScreen: View("Person Editor") {
 
         println("Saving ${person.name} : ${person.title}")
     }
+}
+
+class BindingScreen: View("Person Editor") {
+    override val root = BorderPane()
+    private val personList: PersonList by inject()
+    private val editForm: EditForm by inject()
+
+    init {
+        with(root) {
+            center {
+                this += personList
+            }
+            right {
+                this += editForm
+            }
+        }
+    }
+
+
 }
