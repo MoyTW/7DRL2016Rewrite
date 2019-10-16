@@ -14,56 +14,52 @@ class Person(name: String? = null, title: String? = null) {
     var title by titleProperty
 }
 
+class PersonModel: ItemViewModel<Person>() {
+    val name = bind(Person::nameProperty)
+    val title = bind(Person::titleProperty)
+}
+
 class BindingScreen: View("Person Editor") {
     override val root = BorderPane()
-    var nameField: TextField by singleAssign()
-    var titleField: TextField by singleAssign()
-    var personTable: TableView<Person> by singleAssign()
-
-    val persons = listOf(Person("Bob", "Manager"), Person("Larry", "Manager")).observable()
-
-    var prevSelection: Person? = null
+    private val persons = listOf(Person("Bob", "Manager"), Person("Larry", "Manager")).observable()
+    private val model = PersonModel()
 
     init {
         with(root) {
             center {
                 tableview(persons) {
-                    personTable = this
                     column("Name", Person::nameProperty)
                     column("Title", Person::titleProperty)
 
-                    selectionModel.selectedItemProperty().onChange {
-                        editPerson(it)
-                        prevSelection = it
-                    }
+                    bindSelected(model)
                 }
             }
             right {
                 form {
                     fieldset("Edit Person") {
-                        field("Name") { textfield { nameField = this } }
-                        field("Title") { textfield { titleField = this } }
-                        button("Save").action { save() }
+                        field("Name") { textfield(model.name) }
+                        field("Title") { textfield(model.title) }
+                        button("Save") {
+                            enableWhen(model.dirty)
+                            action {
+                                save()
+                            }
+                        }
+                        button("Reset") {
+                            action {
+                                model.rollback()
+                            }
+                        }
                     }
                 }
             }
         }
     }
 
-    private fun editPerson(person: Person?) {
-        if (person != null) {
-            prevSelection?.apply {
-                nameProperty.unbindBidirectional(nameField.textProperty())
-                titleProperty.unbindBidirectional(titleField.textProperty())
-            }
-            nameField.bind(person.nameProperty)
-            titleField.bind(person.titleProperty)
-            prevSelection = person
-        }
-    }
-
     private fun save() {
-        val person = personTable.selectedItem!!
+        model.commit()
+
+        val person = model.item
 
         println("Saving ${person.name} : ${person.title}")
     }
