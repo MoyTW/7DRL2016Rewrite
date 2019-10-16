@@ -1,6 +1,7 @@
 package com.mtw.supplier.editor
 
 import javafx.beans.property.SimpleStringProperty
+import javafx.collections.ObservableList
 import javafx.scene.layout.BorderPane
 import tornadofx.*
 
@@ -12,16 +13,31 @@ class Person(name: String? = null, title: String? = null) {
     var title: String? by titleProperty
 }
 
+class PersonController : Controller() {
+    private val persons = mutableListOf(Person("Bob", "Manager"), Person("Larry", "Manager")).observable()
+
+    fun getPersons(): ObservableList<Person> {
+        return persons
+    }
+
+    fun newPerson(name: String?, title: String?): Person {
+        val newPerson = Person(name, title)
+        this.persons.add(newPerson)
+        return newPerson
+    }
+
+}
+
 class PersonModel: ItemViewModel<Person>() {
     val name = bind(Person::nameProperty)
     val title = bind(Person::titleProperty)
 }
 
 class PersonList: View("Person List") {
-    private val persons = listOf(Person("Bob", "Manager"), Person("Larry", "Manager")).observable()
+    private val personController: PersonController by inject()
     private val model: PersonModel by inject()
 
-    override val root = tableview(persons) {
+    override val root = tableview(personController.getPersons()) {
         column("Name", Person::nameProperty)
         column("Title", Person::titleProperty)
 
@@ -30,12 +46,18 @@ class PersonList: View("Person List") {
 }
 
 class EditForm: View("Edit Form") {
+    private val personController: PersonController by inject()
     private val model: PersonModel by inject()
 
     override val root = form {
         fieldset("Edit Person") {
             field("Name") { textfield(model.name) }
             field("Title") { textfield(model.title) }
+            button("New Person") {
+                action {
+                    model.rebind { item = personController.newPerson(model.name.value, model.title.value) }
+                }
+            }
             button("Save") {
                 enableWhen(model.dirty)
                 action {
