@@ -5,6 +5,7 @@ import javafx.beans.property.SimpleIntegerProperty
 import javafx.beans.property.SimpleObjectProperty
 import javafx.beans.property.SimpleStringProperty
 import javafx.collections.ObservableList
+import javafx.scene.control.TableView
 import javafx.stage.FileChooser
 import tornadofx.*
 import java.io.File
@@ -43,19 +44,52 @@ class LayerController: Controller() {
     fun getObservableLayers(): ObservableList<Layer> {
         return layers
     }
+
+    fun addLayer(layer: Layer) {
+        this.layers.add(layer)
+    }
+
+    fun removeLayer(layer: Layer) {
+        if (layer in layers) {
+            layers.remove(layer)
+        }
+    }
 }
 
 class LayerTableView: View("Layer Table View") {
     private val layerController: LayerController by inject()
     private val layerModel: LayerModel by inject()
 
-    override val root = tableview(layerController.getObservableLayers()) {
-        column("Name", Layer::nameProperty)
-        column("Level", Layer::levelProperty)
-        column("Visible", Layer::visibleProperty)
-        column("File", Layer::fileProperty)
+    var tableView: TableView<Layer> by singleAssign()
 
-        bindSelected(layerModel)
+    override val root = borderpane { }
+
+    init {
+        with(root) {
+            top {
+                hbox {
+                    button("New Row").action {
+                        layerController.addLayer(Layer("New Layer"))
+                    }
+                    button("Remove Row").action {
+                        // I can't figure out how to get it to only be shown if there's a current selection
+                        if (tableView.selectedItem != null) {
+                            layerController.removeLayer(tableView.selectedItem!!)
+                        }
+                    }
+                }
+            }
+            center {
+                tableView = tableview(layerController.getObservableLayers()) {
+                    column("Name", Layer::nameProperty)
+                    column("Level", Layer::levelProperty)
+                    column("Visible", Layer::visibleProperty)
+                    column("File", Layer::fileProperty)
+
+                    bindSelected(layerModel)
+                }
+            }
+        }
     }
 }
 
