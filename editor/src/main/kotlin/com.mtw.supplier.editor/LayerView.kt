@@ -5,6 +5,7 @@ import javafx.beans.property.SimpleIntegerProperty
 import javafx.beans.property.SimpleObjectProperty
 import javafx.beans.property.SimpleStringProperty
 import javafx.collections.ObservableList
+import javafx.scene.control.TableCell
 import javafx.scene.control.TableView
 import javafx.stage.FileChooser
 import tornadofx.*
@@ -56,11 +57,51 @@ class LayerController: Controller() {
     }
 }
 
+class LayerFileCell: TableCell<Layer, File>() {
+    private val noFileText = "NO_FILE_SELECTED"
+    private val appPath = Paths.get("").toAbsolutePath().toString()
+    private val pngFilters = arrayOf(FileChooser.ExtensionFilter("PNG", "*png"))
+
+    init {
+        isEditable = true
+    }
+
+    // I'm not super confident that this is how startEdit is supposed to be used; I'm preeety sure literally calling
+    // the commit/cancel inside this function is not intended. Unfortunately I can't understand ChoiceBoxTableCell
+    // so I'm just gonna go off this because it looks like it works at the moment.
+    override fun startEdit() {
+        super.startEdit()
+
+        val chosenFile = chooseFile("Choose the image file",
+            pngFilters,
+            FileChooserMode.Single,
+            op = { initialDirectory = File(appPath) }
+        ).firstOrNull()
+
+        if (chosenFile != null) {
+            this.commitEdit(chosenFile)
+        } else {
+            this.cancelEdit()
+        }
+    }
+
+    override fun updateItem(item: File?, empty: Boolean) {
+        super.updateItem(item, empty)
+        if (empty) {
+            this.text = null
+        } else if (item != null) {
+            this.text = item.name
+        } else {
+            this.text = noFileText
+        }
+    }
+}
+
 class LayerTableView: View("Layer Table View") {
     private val layerController: LayerController by inject()
     private val layerModel: LayerModel by inject()
 
-    var tableView: TableView<Layer> by singleAssign()
+    private var tableView: TableView<Layer> by singleAssign()
 
     override val root = borderpane { }
 
@@ -84,63 +125,16 @@ class LayerTableView: View("Layer Table View") {
                     column("Name", Layer::nameProperty).makeEditable()
                     column("Level", Layer::levelProperty).makeEditable()
                     column("Visible", Layer::visibleProperty).makeEditable()
-                    column("File", Layer::fileProperty).cellFormat {
-                        text = it.name
+                    column("File", Layer::fileProperty) {
+                        setCellFactory {
+                            LayerFileCell()
+                        }
                     }
 
                     bindSelected(layerModel)
                 }
             }
         }
-    }
-}
-
-class LayerEditView: View("Layer Edit View") {
-    private val appPath = Paths.get("").toAbsolutePath().toString()
-    // TODO: Professionalism
-    private val pngFilters = arrayOf(FileChooser.ExtensionFilter("pngs!!! ONLY PNGS", "*png"))
-
-    private val layerModel: LayerModel by inject()
-
-    override val root = form{
-        fieldset("Layer Stuff") {
-            field("Name") { textfield(layerModel.name) }
-            field("Level") { textfield(layerModel.level) }
-            field("Visible") { checkbox(null, layerModel.visible) }
-            field("File") {
-                button(layerModel.fileName()) {
-                    action {
-                        pickFile()
-                    }
-                    layerModel.file.addListener { it, _, _ ->
-                        this.text = it.value?.name ?: "NO FILE CHOSEN"
-                    }
-                }
-            }
-
-            button("Save") {
-                enableWhen(layerModel.dirty)
-                action { save() }
-            }
-            button("Reset").action {
-                layerModel.rollback()
-            }
-        }
-    }
-
-    private fun pickFile() {
-        val file = chooseFile("Choose the image file",
-            pngFilters,
-            FileChooserMode.Single,
-            op = { initialDirectory = File(appPath) }
-        )
-        file.map {
-            layerModel.file.value = it
-        }
-    }
-
-    private fun save() {
-        layerModel.commit()
     }
 }
 
@@ -152,9 +146,6 @@ class LayerView: View("Layer View") {
             center {
                 this += LayerTableView()
             }
-           right {
-               this += LayerEditView()
-           }
         }
     }
 }
