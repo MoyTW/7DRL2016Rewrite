@@ -81,10 +81,12 @@ class LayerTableView: View("Layer Table View") {
             }
             center {
                 tableView = tableview(layerController.getObservableLayers()) {
-                    column("Name", Layer::nameProperty)
-                    column("Level", Layer::levelProperty)
-                    column("Visible", Layer::visibleProperty)
-                    column("File", Layer::fileProperty)
+                    column("Name", Layer::nameProperty).makeEditable()
+                    column("Level", Layer::levelProperty).makeEditable()
+                    column("Visible", Layer::visibleProperty).makeEditable()
+                    column("File", Layer::fileProperty).cellFormat {
+                        text = it.name
+                    }
 
                     bindSelected(layerModel)
                 }

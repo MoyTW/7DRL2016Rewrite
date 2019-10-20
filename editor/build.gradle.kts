@@ -6,6 +6,9 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
  * 1) Place the following line in the Run Configuration VM Options
  * --module-path "$JFX_SDK_DIR$\javafx-sdk-11.0.2\lib" --add-modules javafx.controls,javafx.base,javafx.graphics
  *
+ * Below...seems to work, somehow? without the JFX_SDK_DIR?
+ * --module-path "$MODULE_DIR$\javafx-sdk-11.0.2\lib" --add-modules javafx.controls,javafx.base,javafx.graphics --add-opens=javafx.graphics/javafx.scene=ALL-UNNAMED
+ *
  * 2) Define $JFX_SDK_DIR$ in your env variables to the project dir /editor/javafx-sdk-11.0.2 (or whatever version)
  */
 
