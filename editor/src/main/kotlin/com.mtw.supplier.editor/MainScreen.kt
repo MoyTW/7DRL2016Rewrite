@@ -1,13 +1,14 @@
 package com.mtw.supplier.editor
 
-import com.mtw.supplier.region.Region
-import com.mtw.supplier.region.RegionGridLayout
-import com.mtw.supplier.region.RegionGridOrientation
+import com.mtw.supplier.region.*
 import javafx.beans.property.SimpleDoubleProperty
 import javafx.beans.property.SimpleIntegerProperty
 import javafx.scene.Group
 import javafx.scene.control.ScrollPane
 import javafx.scene.image.Image
+import javafx.scene.image.ImageView
+import javafx.scene.layout.StackPane
+import javafx.scene.paint.Color
 import javafx.stage.FileChooser
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonConfiguration
@@ -19,6 +20,7 @@ import org.hexworks.mixite.core.api.contract.SatelliteData
 import tornadofx.*
 import java.io.File
 import java.nio.file.Paths
+import kotlin.math.roundToInt
 
 
 class MainScreen : View() {
@@ -47,6 +49,9 @@ class MainScreen : View() {
             .build()
     )
     private var backgroundFile: BackgroundFile = BackgroundFile(null)
+    private var mainScrollPane: ScrollPane by singleAssign()
+    private var backgroundImageView: ImageView by singleAssign()
+    private var regionLinesStackpane: StackPane by singleAssign()
 
     override val root = borderpane {
         top = menubar {
@@ -65,12 +70,32 @@ class MainScreen : View() {
                 field("Grid Width") { textfield { bind(gridWidth) } }
                 field("Grid Radius") { textfield { bind(gridRadius) } }
                 button("Regenerate Hexes").action { doRegenerate() }
+                button("Sync Heights").action { doSyncHeight() }
             }
             fieldset("Background Controls") {
                 button("Load Background").action { doLoadBackground() }
             }
         }
-        center = centerRender(backgroundFile, regionData.region)
+        center {
+            mainScrollPane = scrollpane {
+                stackpane {
+                    backgroundImageView = imageview()
+                    regionLinesStackpane = stackpane {
+                        children.add(regionLines(regionData))
+                    }
+                }
+
+                setOnMouseClicked {
+                    println("Click at [${it.x}, ${it.y}]")
+                    println(regionData.grid.getByPixelCoordinate(it.x, it.y))
+                    if (backgroundImageView.image != null) {
+                        val color = backgroundImageView.image.pixelReader.getColor(it.x.roundToInt(), it.y.roundToInt())
+                        println("${color.red}, ${color.green}, ${color.blue}")
+                    }
+                }
+            }
+            centerRender(backgroundFile, regionData.region)
+        }
     }
 
     init {
@@ -97,7 +122,7 @@ class MainScreen : View() {
                     .setOrientation(region.gridOrientation.hexagonOrientation)
                     .setRadius(gridRadius.value)
                     .build()
-                center = centerRender(backgroundFile, region)
+                centerRender(backgroundFile, region)
             }
         }
     }
@@ -128,9 +153,43 @@ class MainScreen : View() {
             val file = chooseFile("FILE", pngFilters, op = { initialDirectory = File(runPath) }).firstOrNull()
             if (file != null) {
                 backgroundFile.path = file
-                center = centerRender(backgroundFile, regionData.region)
+                centerRender(backgroundFile, regionData.region)
             }
         }
+    }
+
+    private val elevationColorToIntMap = mapOf(
+        "0x000000ff" to 75,
+        "0x3f48ccff" to 50,
+        "0x00a2e8ff" to 25,
+        "0xffaec9ff" to 0
+    )
+    private val elevationIntToColorMap = mapOf(
+        75 to Color.web("0x000000ff"),
+        50 to Color.web("0x3f48ccff"),
+        25 to Color.web("0x00a2e8ff"),
+        0 to Color.web("0xffaec9ff")
+    )
+
+    private fun doSyncHeight() {
+        if (backgroundImageView.image == null) { return }
+        val pixelReader = backgroundImageView.image.pixelReader
+        val region = regionData.region
+
+        regionData.grid.hexagons.forEach { hex ->
+            val color = pixelReader.getColor(hex.centerX.roundToInt(), hex.centerY.roundToInt())
+            // ok this is...dumb. I mean in my "final" version I expect to decouple Region from Editor entirely and move
+            // to, like, a pure json representation? but eeeeeh hacks
+            val coordinates = CubeCoordinates(hex.cubeCoordinate.gridX, hex.cubeCoordinate.gridZ)
+
+            var regionHex = region.getHex(coordinates)
+            if (regionHex == null) {
+                regionHex = RegionHex(coordinates, 0, 0)
+                region.setHex(coordinates, regionHex)
+            }
+            regionHex.elevation = elevationColorToIntMap[color.toString()] ?: throw Exception("color not found")
+        }
+        centerRender(backgroundFile, region)
     }
 
     private fun doRegenerate() {
@@ -144,7 +203,7 @@ class MainScreen : View() {
                 .setOrientation(region.gridOrientation.hexagonOrientation)
                 .setRadius(gridRadius.value)
                 .build()
-            center = centerRender(backgroundFile, regionData.region)
+            centerRender(backgroundFile, regionData.region)
         }
     }
 
@@ -167,7 +226,7 @@ class MainScreen : View() {
     private fun regionLines(data: RegionData): Group {
         return group {
             data.grid.hexagons.map {
-                polyline(
+                val hexShape = polyline(
                     it.points[0].coordinateX, it.points[0].coordinateY,
                     it.points[1].coordinateX, it.points[1].coordinateY,
                     it.points[2].coordinateX, it.points[2].coordinateY,
@@ -176,30 +235,23 @@ class MainScreen : View() {
                     it.points[5].coordinateX, it.points[5].coordinateY,
                     it.points[0].coordinateX, it.points[0].coordinateY
                 )
+                val coordinates = CubeCoordinates(it.gridX, it.gridZ)
+                val regionHex = data.region.getHex(coordinates)
+                if (regionHex != null) {
+                    hexShape.fill = elevationIntToColorMap[regionHex.elevation]
+                }
             }
         }
     }
 
     // I can't figure out how to make these things work in functions so I'm doing this now because wait it's 12:30
     // already what the i got work tomorrow. wtf. ok technically i got work today. rip me
-    private fun centerRender(backgroundFile: BackgroundFile, region: Region): ScrollPane {
+    private fun centerRender(backgroundFile: BackgroundFile, region: Region) {
         val (maxX, maxY) = maxXY(regionData)
-        val sp = if (backgroundFile.path != null) {
-            scrollpane {
-                stackpane {
-                    imageview {
-                        image=Image("file:\\${backgroundFile.path!!.canonicalPath}", maxX, maxY, false, false)
-                    }
-                    children.add(regionLines(regionData))
-                }
-            }
-        } else {
-            ScrollPane(regionLines(regionData))
+        regionLinesStackpane.replaceChildren(regionLines(regionData))
+        if (backgroundFile.path != null) {
+            backgroundImageView.image = Image("file:\\${backgroundFile.path!!.canonicalPath}", maxX, maxY, false, false)
         }
-        sp.setOnMouseClicked {
-            println("Click at [${it.x}, ${it.y}]")
-            println(regionData.grid.getByPixelCoordinate(it.x, it.y))
-        }
-        return sp
+
     }
 }

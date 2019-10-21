@@ -11,8 +11,8 @@ enum class HexEffects {
 @Serializable
 class RegionHex(
     val coordinates: CubeCoordinates,
-    val vegetationPercentage: Int,
-    val elevation: Int,
+    var vegetationPercentage: Int,
+    var elevation: Int,
     val hexEffects: MutableList<HexEffects> = mutableListOf(),
     // These parameters are not used, and are vestigal SatelliteData requirements.
     override var passable: Boolean = true,
