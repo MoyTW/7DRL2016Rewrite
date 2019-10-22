@@ -56,7 +56,6 @@ class RegionTests {
         Assert.assertEquals(2, region.gridWidth)
         Assert.assertEquals(RegionGridLayout.RECTANGULAR, region.gridLayout)
         Assert.assertEquals(RegionGridOrientation.FLAT_TOP, region.gridOrientation)
-        Assert.assertEquals(6.0, region.gridHexRadius, 0.01)
 
         val hex00: RegionHex = region.getHex(CubeCoordinates(0, 0))!!
         Assert.assertEquals(50, hex00.vegetationPercentage)
