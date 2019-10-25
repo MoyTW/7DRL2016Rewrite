@@ -10,7 +10,8 @@ import com.mtw.supplier.encounter.rulebook.actions.WaitAction
 import kotlinx.serialization.Serializable
 
 @Serializable
-class AIComponent(override var _parentId: Int? = null) : Component() {
+class AIComponent : Component() {
+    override var _parentId: Int? = null
 
     private fun parentIsHostileTo(parentEntity: Entity, otherEntity: Entity, encounterState: EncounterState): Boolean {
         return parentEntity.getComponent(FactionComponent::class).isHostileTo(otherEntity.id, encounterState)

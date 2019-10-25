@@ -6,9 +6,10 @@ import kotlinx.serialization.Serializable
 @Serializable
 class HpComponent(
     var maxHp: Int,
-    var currentHp: Int,
-    override var _parentId: Int? = null
+    var currentHp: Int
 ): Component() {
+    override var _parentId: Int? = null
+
     fun removeHp(hp: Int) {
         this.currentHp -= hp
     }

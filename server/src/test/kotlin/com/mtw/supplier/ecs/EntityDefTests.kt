@@ -1,36 +1,38 @@
 package com.mtw.supplier.ecs
 
-import kotlinx.serialization.Serializable
+import com.mtw.supplier.ecs.components.AIComponent
+import com.mtw.supplier.ecs.components.HpComponent
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonConfiguration
 import kotlinx.serialization.modules.SerializersModule
 import org.junit.Assert
 import org.junit.Test
 import org.junit.runner.RunWith
-import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.test.context.junit4.SpringRunner
 
 @RunWith(SpringRunner::class)
-class EntityTests {
-    @Serializable
-    class TestComponent(val x1: String, val x2: Int): Component() {
-        override var _parentId: Int? = null
-    }
+class EntityDefTests {
 
     val testComponentModule = SerializersModule {
-        polymorphic(Component::class) {
-            TestComponent::class with TestComponent.serializer()
+        polymorphic(Generator::class) {
+            FixedIntegerGenerator::class with FixedIntegerGenerator.serializer()
         }
     }
 
     @Test
     fun testSerializationToJson() {
         val json = Json(JsonConfiguration.Stable, testComponentModule)
-        val entity = Entity(95, "bob").addComponent(TestComponent("test", 99))
-        val jsonData = json.stringify(Entity.serializer(), entity)
+        val hpDef = ComponentDef(HpComponent::class.qualifiedName!!, arrayOf(FixedIntegerGenerator(3), FixedIntegerGenerator(9)))
+        val aiDef = ComponentDef(AIComponent::class.qualifiedName!!, arrayOf())
+        val entityDef = EntityDef(listOf(hpDef, aiDef))
+        //val entity = Entity(95, "bob").addComponent(TestComponent("test", 99))
+
+        // serializing objects
+        val jsonData = json.stringify(EntityDef.serializer(), entityDef)
         Assert.assertEquals("{\"id\":95,\"name\":\"bob\",\"components\":[{\"type\":\"com.mtw.supplier.ecs.EntityTests.TestComponent\",\"x1\":\"test\",\"x2\":99,\"_parentId\":95}]}", jsonData)
     }
 
+    /*
     @Test
     fun testSerializationFromJson() {
         val jsonString = "{\"id\":95,\"name\":\"bob\",\"components\":[{\"type\":\"com.mtw.supplier.ecs.EntityTests.TestComponent\",\"_parentId\":95,\"x1\":\"test\",\"x2\":99}]}"
@@ -43,4 +45,5 @@ class EntityTests {
         Assert.assertEquals("test", component.x1)
         Assert.assertEquals(99, component.x2)
     }
+    */
 }
