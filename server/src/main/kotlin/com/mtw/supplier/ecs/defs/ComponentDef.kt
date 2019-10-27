@@ -1,27 +1,11 @@
-package com.mtw.supplier.ecs
+package com.mtw.supplier.ecs.defs
 
-import com.mtw.supplier.ecs.components.HpComponent
-import kotlinx.serialization.ContextualSerialization
-import kotlinx.serialization.Serializable
-import kotlinx.serialization.Transient
+import com.mtw.supplier.ecs.Component
 import kotlin.reflect.KClass
 import kotlin.reflect.KParameter
-import kotlin.reflect.KTypeParameter
 import kotlin.reflect.full.declaredFunctions
-import kotlin.reflect.full.starProjectedType
-import kotlin.reflect.jvm.internal.impl.resolve.jvm.JvmClassName
-
-@Serializable
-abstract class Generator {
-    abstract fun generate(): Any
-}
-
-@Serializable
-class FixedIntegerGenerator(val value: Int): Generator() {
-    override fun generate(): Int {
-        return value
-    }
-}
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.Transient
 
 @Serializable
 class ComponentDef(
@@ -54,20 +38,4 @@ class ComponentDef(
     }
 
     class InvalidComponentDefException: Exception("something went wrong loading rip you")
-}
-
-@Serializable
-class EntityDef(
-    val componentDefs: List<ComponentDef>
-) {
-    fun buildEntity(id: Int?, name: String): Entity {
-        if (id == null) {
-            TODO("Auto-increment entity IDs aren't a thing yet")
-        }
-        val entity = Entity(id, name)
-        for (componentDef in componentDefs) {
-            entity.addComponent(componentDef.buildComponent())
-        }
-        return entity
-    }
 }

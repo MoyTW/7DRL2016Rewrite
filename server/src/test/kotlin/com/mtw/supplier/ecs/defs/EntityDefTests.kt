@@ -1,5 +1,6 @@
-package com.mtw.supplier.ecs
+package com.mtw.supplier.ecs.defs
 
+import com.mtw.supplier.ecs.Component
 import com.mtw.supplier.ecs.components.AIComponent
 import com.mtw.supplier.ecs.components.HpComponent
 import kotlinx.serialization.Serializable
@@ -40,12 +41,12 @@ class EntityDefTests {
 
         // serializing objects
         val jsonData = json.stringify(EntityDef.serializer(), entityDef)
-        Assert.assertEquals("{\"componentDefs\":[{\"qualifiedClassName\":\"com.mtw.supplier.ecs.components.HpComponent\",\"generators\":[{\"type\":\"com.mtw.supplier.ecs.FixedIntegerGenerator\",\"value\":3},{\"type\":\"com.mtw.supplier.ecs.FixedIntegerGenerator\",\"value\":9}]},{\"qualifiedClassName\":\"com.mtw.supplier.ecs.components.AIComponent\",\"generators\":[]}]}", jsonData)
+        Assert.assertEquals("{\"componentDefs\":[{\"qualifiedClassName\":\"com.mtw.supplier.ecs.components.HpComponent\",\"generators\":[{\"type\":\"com.mtw.supplier.ecs.defs.FixedIntegerGenerator\",\"value\":3},{\"type\":\"com.mtw.supplier.ecs.defs.FixedIntegerGenerator\",\"value\":9}]},{\"qualifiedClassName\":\"com.mtw.supplier.ecs.components.AIComponent\",\"generators\":[]}]}", jsonData)
     }
 
     @Test
     fun testSerializationFromJson() {
-        val jsonString = "{\"componentDefs\":[{\"qualifiedClassName\":\"com.mtw.supplier.ecs.components.HpComponent\",\"generators\":[{\"type\":\"com.mtw.supplier.ecs.FixedIntegerGenerator\",\"value\":3},{\"type\":\"com.mtw.supplier.ecs.FixedIntegerGenerator\",\"value\":9}]},{\"qualifiedClassName\":\"com.mtw.supplier.ecs.components.AIComponent\",\"generators\":[]}]}"
+        val jsonString = "{\"componentDefs\":[{\"qualifiedClassName\":\"com.mtw.supplier.ecs.components.HpComponent\",\"generators\":[{\"type\":\"com.mtw.supplier.ecs.defs.FixedIntegerGenerator\",\"value\":3},{\"type\":\"com.mtw.supplier.ecs.defs.FixedIntegerGenerator\",\"value\":9}]},{\"qualifiedClassName\":\"com.mtw.supplier.ecs.components.AIComponent\",\"generators\":[]}]}"
         val json = Json(JsonConfiguration.Stable, testComponentModule)
         val entityDef: EntityDef = json.parse(EntityDef.serializer(), jsonString)
 
