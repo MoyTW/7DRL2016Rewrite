@@ -36,6 +36,7 @@ class ComponentDef(
 
     private fun constructorMatches(params: List<KParameter>): Boolean {
         if (params.any{ it.name == "seen1" }) return false
+        if (params.size < generators.size) return false
         for (i in params.indices) {
             val param = params[i]
             if (!(param.isOptional && generators.getOrNull(i) == null) &&
@@ -47,10 +48,26 @@ class ComponentDef(
         return true
     }
 
+    fun buildComponent(): Component {
+        val generated = generators.map { it.generate() }.toTypedArray()
+        return matchingConstuctor.call(*generated) as Component
+    }
+
     class InvalidComponentDefException: Exception("something went wrong loading rip you")
 }
 
 @Serializable
 class EntityDef(
     val componentDefs: List<ComponentDef>
-)
+) {
+    fun buildEntity(id: Int?, name: String): Entity {
+        if (id == null) {
+            TODO("Auto-increment entity IDs aren't a thing yet")
+        }
+        val entity = Entity(id, name)
+        for (componentDef in componentDefs) {
+            entity.addComponent(componentDef.buildComponent())
+        }
+        return entity
+    }
+}
