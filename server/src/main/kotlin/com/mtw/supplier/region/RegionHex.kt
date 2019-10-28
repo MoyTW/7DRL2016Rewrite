@@ -14,6 +14,7 @@ class RegionHex(
     var vegetationPercentage: Int,
     var elevation: Int,
     val hexEffects: MutableList<HexEffects> = mutableListOf(),
+    val possibleEncounterIdsToProbabilities: MutableMap<Int, Int> = mutableMapOf(),
     // These parameters are not used, and are vestigal SatelliteData requirements.
     override var passable: Boolean = true,
     override var opaque: Boolean = false,

@@ -11,28 +11,80 @@ import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.test.context.junit4.SpringRunner
 
 @RunWith(SpringRunner::class)
-@SpringBootTest
 class RegionTests {
-    val json = Json(JsonConfiguration.Stable)
-    val coordinates00 = CubeCoordinates(0, 0)
-    val coordinates11 = CubeCoordinates(1, 1)
+    private val json = Json(JsonConfiguration.Stable.copy(prettyPrint = true))
+    private val coordinates00 = CubeCoordinates(0, 0)
+    private val coordinates11 = CubeCoordinates(1, 1)
 
     @Test
     fun testEmptyRegionSerializationToJson() {
         val region = Region(1, 1, RegionGridLayout.RECTANGULAR, RegionGridOrientation.FLAT_TOP)
         val jsonData = json.stringify(Region.serializer(), region)
+        val expected = """
+            {
+                "gridHeight": 1,
+                "gridWidth": 1,
+                "gridLayout": "RECTANGULAR",
+                "gridOrientation": "FLAT_TOP",
+                "cubeCoordinatesToRegionHexes": [
+                ]
+            }
+            """.trimIndent()
         Assert.assertEquals(
-            "{\"gridHeight\":1,\"gridWidth\":1,\"gridLayout\":\"RECTANGULAR\",\"gridOrientation\":\"FLAT_TOP\",\"gridHexRadius\":6.0,\"cubeCoordinatesToRegionHexes\":[]}",
+            expected,
             jsonData)
     }
 
     @Test
     fun testRegionAndRegionHexSerializationToJson() {
-        val expected = "{\"gridHeight\":2,\"gridWidth\":2,\"gridLayout\":\"RECTANGULAR\",\"gridOrientation\":\"FLAT_TOP\",\"gridHexRadius\":6.0," +
-            "\"cubeCoordinatesToRegionHexes\":[" +
-            "{\"gridX\":0,\"gridZ\":0},{\"vegetationPercentage\":50,\"elevation\":69,\"hexEffects\":[],\"passable\":true,\"opaque\":false,\"movementCost\":0.0}," +
-            "{\"gridX\":1,\"gridZ\":1},{\"vegetationPercentage\":1,\"elevation\":1,\"hexEffects\":[],\"passable\":true,\"opaque\":false,\"movementCost\":0.0}" +
-            "]}"
+        val expected = """
+            {
+                "gridHeight": 2,
+                "gridWidth": 2,
+                "gridLayout": "RECTANGULAR",
+                "gridOrientation": "FLAT_TOP",
+                "cubeCoordinatesToRegionHexes": [
+                    {
+                        "gridX": 0,
+                        "gridZ": 0
+                    },
+                    {
+                        "coordinates": {
+                            "gridX": 0,
+                            "gridZ": 0
+                        },
+                        "vegetationPercentage": 50,
+                        "elevation": 69,
+                        "hexEffects": [
+                        ],
+                        "possibleEncounterIdsToProbabilities": {
+                        },
+                        "passable": true,
+                        "opaque": false,
+                        "movementCost": 0.0
+                    },
+                    {
+                        "gridX": 1,
+                        "gridZ": 1
+                    },
+                    {
+                        "coordinates": {
+                            "gridX": 1,
+                            "gridZ": 1
+                        },
+                        "vegetationPercentage": 1,
+                        "elevation": 1,
+                        "hexEffects": [
+                        ],
+                        "possibleEncounterIdsToProbabilities": {
+                        },
+                        "passable": true,
+                        "opaque": false,
+                        "movementCost": 0.0
+                    }
+                ]
+            }
+        """.trimIndent()
 
         val region = Region(2, 2, RegionGridLayout.RECTANGULAR, RegionGridOrientation.FLAT_TOP)
         region.setHex(coordinates00, RegionHex(coordinates00,50, 69))
@@ -45,11 +97,54 @@ class RegionTests {
 
     @Test
     fun testRegionAndRegionHexSerializationFromJson() {
-        val jsonString = "{\"gridHeight\":2,\"gridWidth\":2,\"gridLayout\":\"RECTANGULAR\",\"gridOrientation\":\"FLAT_TOP\",\"gridHexRadius\":6.0," +
-            "\"cubeCoordinatesToRegionHexes\":[" +
-            "{\"gridX\":0,\"gridZ\":0},{\"vegetationPercentage\":50,\"elevation\":69,\"hexEffects\":[],\"passable\":true,\"opaque\":false,\"movementCost\":0.0}," +
-            "{\"gridX\":1,\"gridZ\":1},{\"vegetationPercentage\":1,\"elevation\":1,\"hexEffects\":[],\"passable\":true,\"opaque\":false,\"movementCost\":0.0}" +
-            "]}"
+        val jsonString = """
+            {
+                "gridHeight": 2,
+                "gridWidth": 2,
+                "gridLayout": "RECTANGULAR",
+                "gridOrientation": "FLAT_TOP",
+                "cubeCoordinatesToRegionHexes": [
+                    {
+                        "gridX": 0,
+                        "gridZ": 0
+                    },
+                    {
+                        "coordinates": {
+                            "gridX": 0,
+                            "gridZ": 0
+                        },
+                        "vegetationPercentage": 50,
+                        "elevation": 69,
+                        "hexEffects": [
+                        ],
+                        "possibleEncounterIdsToProbabilities": {
+                        },
+                        "passable": true,
+                        "opaque": false,
+                        "movementCost": 0.0
+                    },
+                    {
+                        "gridX": 1,
+                        "gridZ": 1
+                    },
+                    {
+                        "coordinates": {
+                            "gridX": 1,
+                            "gridZ": 1
+                        },
+                        "vegetationPercentage": 1,
+                        "elevation": 1,
+                        "hexEffects": [
+                        ],
+                        "possibleEncounterIdsToProbabilities": {
+                        },
+                        "passable": true,
+                        "opaque": false,
+                        "movementCost": 0.0
+                    }
+                ]
+            }
+        """.trimIndent()
 
         val region = json.parse(Region.serializer(), jsonString)
         Assert.assertEquals(2, region.gridHeight)
