@@ -26,6 +26,14 @@ class RegionTests {
                 "gridWidth": 1,
                 "gridLayout": "RECTANGULAR",
                 "gridOrientation": "FLAT_TOP",
+                "encounterRegistry": {
+                    "regionalEncounters": [
+                    ]
+                },
+                "factionRegistry": {
+                    "factions": {
+                    }
+                },
                 "cubeCoordinatesToRegionHexes": [
                 ]
             }
@@ -43,6 +51,14 @@ class RegionTests {
                 "gridWidth": 2,
                 "gridLayout": "RECTANGULAR",
                 "gridOrientation": "FLAT_TOP",
+                "encounterRegistry": {
+                    "regionalEncounters": [
+                    ]
+                },
+                "factionRegistry": {
+                    "factions": {
+                    }
+                },
                 "cubeCoordinatesToRegionHexes": [
                     {
                         "gridX": 0,

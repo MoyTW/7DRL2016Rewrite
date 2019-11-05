@@ -38,7 +38,9 @@ class Region(
     val gridHeight: Int,
     val gridWidth: Int,
     val gridLayout: RegionGridLayout,
-    val gridOrientation: RegionGridOrientation
+    val gridOrientation: RegionGridOrientation,
+    val encounterRegistry: RegionalEncounterRegistry = RegionalEncounterRegistry(),
+    val factionRegistry: RegionalFactionRegistry = RegionalFactionRegistry()
 ) {
     @Transient
     private val grid = HexagonalGridBuilder<RegionHex>()

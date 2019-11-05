@@ -13,7 +13,7 @@ class RegionalEncounter constructor(
 
 @Serializable
 class RegionalEncounterRegistry(
-    private val regionalEncounters: MutableList<RegionalEncounter>
+    private val regionalEncounters: MutableList<RegionalEncounter> = mutableListOf()
 ) {
     fun addRegionalEncounter(name: String, entityDefs: List<EntityDef>) {
         this.regionalEncounters.add(RegionalEncounter(this.regionalEncounters.size + 1, name, entityDefs))
