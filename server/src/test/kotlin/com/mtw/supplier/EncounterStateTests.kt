@@ -8,8 +8,6 @@ import com.mtw.supplier.ecs.components.HpComponent
 import com.mtw.supplier.encounter.state.EncounterState
 import com.mtw.supplier.encounter.state.EncounterNode
 import com.mtw.supplier.encounter.EncounterRunner
-import com.mtw.supplier.region.RegionalFaction
-import com.mtw.supplier.region.RegionalFactionRegistry
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.springframework.boot.test.context.SpringBootTest
@@ -21,11 +19,6 @@ class EncounterStateTests {
 
     @Test
     fun doesStuff() {
-        val registry = RegionalFactionRegistry()
-            .addFaction(RegionalFaction(0, "beasts", mutableMapOf(0 to 100.0, 1 to 10.0, 2 to -100.0)))
-            .addFaction(RegionalFaction(1, "druids", mutableMapOf(0 to 100.0, 1 to 100.0, 2 to -100.0)))
-            .addFaction(RegionalFaction(2, "mercenaries", mutableMapOf(0 to -100.0, 1 to -100.0, 2 to 10.0)))
-
         val fighterOne = Entity(1, "wolf")
             .addComponent(AIComponent())
             .addComponent(HpComponent(5, 5))
@@ -58,7 +51,7 @@ class EncounterStateTests {
         plainsBridge.exits.add(plains)
         plains.exits.add(plainsBridge)
 
-        val encounterState = EncounterState(registry)
+        val encounterState = EncounterState()
             .addNode(temple)
             .addNode(templeBridge)
             .addNode(centerBridge)

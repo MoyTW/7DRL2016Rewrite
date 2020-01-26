@@ -2,11 +2,9 @@ package com.mtw.supplier.encounter.state
 
 import com.mtw.supplier.ecs.Entity
 import com.mtw.supplier.ecs.components.EncounterLocationComponent
-import com.mtw.supplier.region.RegionalFactionRegistry
 
 
 class EncounterState(
-    val factionRegistry: RegionalFactionRegistry,
     private var _currentTime: Int = 1,
     private var _completed: Boolean = false
 ) {
