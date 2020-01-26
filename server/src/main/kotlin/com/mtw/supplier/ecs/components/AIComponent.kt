@@ -20,7 +20,7 @@ class AIComponent : Component() {
     fun decideNextAction(encounterState: EncounterState): Action {
         val parentEntity = encounterState.getEntity(this.parentId)
         // TODO: All of this is a placeholder
-        val firstOtherAliveEnemy = encounterState.getEntities()
+        val firstOtherAliveEnemy = encounterState.entities()
             .firstOrNull {
                 it != parentEntity &&
                 it.hasComponent(AIComponent::class) &&
@@ -30,11 +30,10 @@ class AIComponent : Component() {
             ?: return WaitAction(parentEntity)
 
 
-        val parentLocation = parentEntity.getComponent(EncounterLocationComponent::class).locationNodeId
-        val firstOtherEntityLocation = firstOtherAliveEnemy
-            .getComponent(EncounterLocationComponent::class)
-            .locationNodeId
+        val parentLocation = parentEntity.getComponent(EncounterLocationComponent::class).position
+        val firstOtherEntityLocation = firstOtherAliveEnemy.getComponent(EncounterLocationComponent::class).position
 
+        /*
         // wow ugly!
         return if (encounterState.getNodeDirectlyConnected(parentLocation, firstOtherEntityLocation)) {
             AttackAction(parentEntity, firstOtherAliveEnemy)
@@ -46,6 +45,9 @@ class AIComponent : Component() {
                 WaitAction(parentEntity)
             }
         }
+
+         */
+        return WaitAction(parentEntity)
     }
 
     /**
@@ -53,10 +55,14 @@ class AIComponent : Component() {
      * I feel compelled to defend my mediocre-to-bad on-the-spot algorithm skills because it's been so long since I've
      * actually written a classical algorithm, versus business logic & APIs & sequence diagrams & kafka streams lol
      */
+    /*
     fun badDepthFirstSearch(startNode: Int, endNode: Int, encounterState: EncounterState): List<Int>? {
         return dfsRecurse(startNode, endNode, encounterState, setOf())
     }
 
+     */
+
+    /*
     private fun dfsRecurse(startNode: Int, endNode: Int, encounterState: EncounterState, visitedNodes: Set<Int>): MutableList<Int>? {
         val exits = encounterState.getDirectlyConnectedNodes(startNode)
 
@@ -78,4 +84,6 @@ class AIComponent : Component() {
             }
         }
     }
+
+     */
 }

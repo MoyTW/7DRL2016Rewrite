@@ -6,8 +6,8 @@ import com.mtw.supplier.ecs.components.FactionComponent
 import com.mtw.supplier.ecs.components.FighterComponent
 import com.mtw.supplier.ecs.components.HpComponent
 import com.mtw.supplier.encounter.state.EncounterState
-import com.mtw.supplier.encounter.state.EncounterNode
 import com.mtw.supplier.encounter.EncounterRunner
+import com.mtw.supplier.encounter.state.EncounterPosition
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.springframework.boot.test.context.SpringBootTest
@@ -30,35 +30,9 @@ class EncounterStateTests {
             .addComponent(FighterComponent(5, 100, 100))
             .addComponent(FactionComponent(2))
 
-        // Build nodes
-        val temple = EncounterNode(111, "temple", 3)
-        val templeBridge = EncounterNode(222, "templeBridge", 2)
-        val centerBridge = EncounterNode(333, "centerBridge", 2)
-        val plainsBridge = EncounterNode(444, "plainsBridge", 2)
-        val plains = EncounterNode(555, "plains", 8)
-
-        // Link nodes
-        // TODO: private exits
-        temple.exits.add(templeBridge)
-        templeBridge.exits.add(temple)
-
-        templeBridge.exits.add(centerBridge)
-        centerBridge.exits.add(templeBridge)
-
-        centerBridge.exits.add(plainsBridge)
-        plainsBridge.exits.add(centerBridge)
-
-        plainsBridge.exits.add(plains)
-        plains.exits.add(plainsBridge)
-
-        val encounterState = EncounterState()
-            .addNode(temple)
-            .addNode(templeBridge)
-            .addNode(centerBridge)
-            .addNode(plainsBridge)
-            .addNode(plains)
-            .placeEntity(fighterOne, temple.id)
-            .placeEntity(fighterTwo, plains.id)
+        val encounterState = EncounterState(5, 1)
+            .placeEntity(fighterOne, EncounterPosition(1, 1))
+            .placeEntity(fighterTwo, EncounterPosition(5, 1))
         val encounterRunner = EncounterRunner()
         encounterRunner.runEncounter(encounterState)
     }

@@ -5,13 +5,12 @@ import com.mtw.supplier.ecs.components.FactionComponent
 import com.mtw.supplier.encounter.state.EncounterState
 import com.mtw.supplier.encounter.rulebook.Rulebook
 import org.slf4j.LoggerFactory
-import java.lang.UnsupportedOperationException
 
 class EncounterRunner {
     fun runTurn(encounterState: EncounterState) {
         logger.info("========== START OF TURN ${encounterState.currentTime} ==========")
         // TODO: Caching of various iterables, if crawling nodes is slow?
-        for(entity in encounterState.getEntities()) {
+        for(entity in encounterState.entities()) {
             if (entity.hasComponent(AIComponent::class)) {
                 val nextAction = entity.getComponent(AIComponent::class).decideNextAction(encounterState)
                 logger.debug("Action: $nextAction")
@@ -20,7 +19,7 @@ class EncounterRunner {
         }
 
         // lol
-        val remainingAIEntities = encounterState.getEntities().filter { it.hasComponent(AIComponent::class) }
+        val remainingAIEntities = encounterState.entities().filter { it.hasComponent(AIComponent::class) }
         val anyHostileRelationships = remainingAIEntities.any { leftEntity ->
             remainingAIEntities.any { rightEntity ->
                 leftEntity.getComponent(FactionComponent::class).isHostileTo(rightEntity.id, encounterState)

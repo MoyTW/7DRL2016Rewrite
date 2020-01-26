@@ -27,35 +27,35 @@ object Rulebook {
     }
 
     private fun resolveMoveAction(action: MoveAction, encounterState: EncounterState) {
-        val currentNodeId = action.actor
+        val currentPosition = action.actor
             .getComponent(EncounterLocationComponent::class)
-            .locationNodeId
+            .position
 
-        val targetNodeSameAsCurrentNode = currentNodeId == action.targetNodeId
-        val targetNodeHasRoom = encounterState.getNodeHasRoom(action.actor, action.targetNodeId)
-        val targetNodeReachable = encounterState.getNodeDirectlyConnected(currentNodeId, action.targetNodeId)
+        val targetNodeSameAsCurrentNode = currentPosition == action.targetPosition
+        val targetNodeHasRoom = encounterState.positionBlocked(action.targetPosition)
+        val targetNodeAdjacent = encounterState.positionsAdjacent(currentPosition, action.targetPosition)
 
         if (targetNodeSameAsCurrentNode) {
-            logger.info("[MOVE]:[INVALID] Target node [${encounterState.getNodeName(action.targetNodeId)}, ${action.targetNodeId}] and source node are identical!")
+            logger.info("[MOVE]:[INVALID] Target node ${action.targetPosition} and source node are identical!")
         } else if (!targetNodeHasRoom) {
-            logger.info("[MOVE]:[INVALID] Target node [${encounterState.getNodeName(action.targetNodeId)}, ${action.targetNodeId}] full!")
-        } else if (!targetNodeReachable) {
-            logger.info("[MOVE]:[INVALID] Target node [${encounterState.getNodeName(action.targetNodeId)}, ${action.targetNodeId}] not adjacent!")
+            logger.info("[MOVE]:[INVALID] Target node ${action.targetPosition} full!")
+        } else if (!targetNodeAdjacent) {
+            logger.info("[MOVE]:[INVALID] Target node ${action.targetPosition} not adjacent!")
         } else {
-            encounterState.relocateEntity(action.actor, action.targetNodeId)
-            logger.info("[MOVE]:[SUCCESS] [${encounterState.getNodeName(currentNodeId)}, $currentNodeId] to [${encounterState.getNodeName(action.targetNodeId)}, ${action.targetNodeId}]")
+            encounterState.teleportEntity(action.actor, action.targetPosition)
+            logger.info("[MOVE]:[SUCCESS] $currentPosition] to ${action.targetPosition}")
         }
     }
 
     private fun resolveAttackAction(action: AttackAction, encounterState: EncounterState) {
         val attacker = action.actor
-        val attackerNodeId = attacker.getComponent(EncounterLocationComponent::class).locationNodeId
+        val attackerPos = attacker.getComponent(EncounterLocationComponent::class).position
 
         val defender = action.target
-        val defenderNodeId = defender.getComponent(EncounterLocationComponent::class).locationNodeId
+        val defenderPos = defender.getComponent(EncounterLocationComponent::class).position
 
         // TODO: Range & visibility & such
-        if (!encounterState.getNodeDirectlyConnected(attackerNodeId, defenderNodeId)) {
+        if (!encounterState.positionsAdjacent(attackerPos, defenderPos)) {
             logger.info("[ATTACK]:[INVALID] [${action.actor.name}] cannot reach [${action.target.name}]")
         } else {
             val attackerFighter = attacker.getComponent(FighterComponent::class)
