@@ -1,17 +1,22 @@
 package com.mtw.supplier.encounter.state
 
 import com.mtw.supplier.ecs.Entity
+import com.mtw.supplier.ecs.components.CollisionComponent
 import com.mtw.supplier.ecs.components.EncounterLocationComponent
 import kotlinx.serialization.Serializable
 
 @Serializable
 private class EncounterNode(
+    // Whether or not the node itself is passable
+    val terrainBlocked: Boolean = false,
     val entities: MutableList<Entity> = mutableListOf()
 ) {
-    // TODO: Collision!
-    fun passable(): Boolean {
-        return true
-    }
+    // Whether or not the node itself is occupied
+    val occupied: Boolean
+        get() = entities.any{ it.hasComponent(CollisionComponent::class) && it.getComponent(CollisionComponent::class).collidable }
+
+    val blocked: Boolean
+        get() = terrainBlocked || occupied
 }
 
 @Serializable
@@ -22,7 +27,7 @@ internal class EncounterMap(
     private val nodes: Array<Array<EncounterNode>> = Array(width) { Array(height) { EncounterNode() } }
 
     internal fun positionBlocked(pos: EncounterPosition): Boolean {
-        return nodes[pos.x][pos.y].passable()
+        return nodes[pos.x][pos.y].blocked
     }
 
     internal fun positionsAdjacent(pos1: EncounterPosition, pos2: EncounterPosition): Boolean {
@@ -43,7 +48,7 @@ internal class EncounterMap(
         if (entity.hasComponent(EncounterLocationComponent::class)) {
             throw EntityAlreadyHasLocation("Specified entity ${entity.name} already has a location, cannot be placed!")
         } else if (this.positionBlocked(targetPosition)) {
-            throw NodeHasInsufficientSpaceException("Node [{$targetPosition.x}][${targetPosition.y}] is full, cannot place ${entity.name}")
+            throw NodeHasInsufficientSpaceException("Node $targetPosition is full, cannot place ${entity.name}")
         }
 
         this.nodes[targetPosition.x][targetPosition.y].entities.add(entity)
