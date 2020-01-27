@@ -18,7 +18,7 @@ class EncounterState(
         get() = this._completed
 
     // TODO: Map sizing
-    private val encounterMap: EncounterMap = EncounterMap(50, 50)
+    private val encounterMap: EncounterMap = EncounterMap(width, height)
 
     fun advanceTime(timeDiff: Int = 1) {
         this._currentTime += timeDiff
@@ -47,8 +47,12 @@ class EncounterState(
         return this.encounterMap.positionBlocked(pos)
     }
 
-    fun positionsAdjacent(pos1: EncounterPosition, pos2: EncounterPosition): Boolean {
-        return this.encounterMap.positionsAdjacent(pos1, pos2)
+    fun arePositionsAdjacent(pos1: EncounterPosition, pos2: EncounterPosition): Boolean {
+        return this.encounterMap.arePositionsAdjacent(pos1, pos2)
+    }
+
+    fun adjacentUnblockedPositions(pos: EncounterPosition): List<EncounterPosition> {
+        return this.encounterMap.adjacentUnblockedPositions(pos)
     }
 
     /**

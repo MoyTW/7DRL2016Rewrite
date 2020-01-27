@@ -7,6 +7,7 @@ import com.mtw.supplier.encounter.rulebook.Action
 import com.mtw.supplier.encounter.rulebook.actions.AttackAction
 import com.mtw.supplier.encounter.rulebook.actions.MoveAction
 import com.mtw.supplier.encounter.rulebook.actions.WaitAction
+import com.mtw.supplier.encounter.state.EncounterPosition
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -33,9 +34,8 @@ class AIComponent : Component() {
         val parentLocation = parentEntity.getComponent(EncounterLocationComponent::class).position
         val firstOtherEntityLocation = firstOtherAliveEnemy.getComponent(EncounterLocationComponent::class).position
 
-        /*
         // wow ugly!
-        return if (encounterState.getNodeDirectlyConnected(parentLocation, firstOtherEntityLocation)) {
+        return if (encounterState.arePositionsAdjacent(parentLocation, firstOtherEntityLocation)) {
             AttackAction(parentEntity, firstOtherAliveEnemy)
         } else  {
             val pathToFirstOtherEntity = badDepthFirstSearch(parentLocation, firstOtherEntityLocation, encounterState)
@@ -45,9 +45,6 @@ class AIComponent : Component() {
                 WaitAction(parentEntity)
             }
         }
-
-         */
-        return WaitAction(parentEntity)
     }
 
     /**
@@ -55,19 +52,21 @@ class AIComponent : Component() {
      * I feel compelled to defend my mediocre-to-bad on-the-spot algorithm skills because it's been so long since I've
      * actually written a classical algorithm, versus business logic & APIs & sequence diagrams & kafka streams lol
      */
-    /*
-    fun badDepthFirstSearch(startNode: Int, endNode: Int, encounterState: EncounterState): List<Int>? {
+    fun badDepthFirstSearch(startNode: EncounterPosition,
+                            endNode: EncounterPosition,
+                            encounterState: EncounterState): List<EncounterPosition>? {
         return dfsRecurse(startNode, endNode, encounterState, setOf())
     }
 
-     */
-
-    /*
-    private fun dfsRecurse(startNode: Int, endNode: Int, encounterState: EncounterState, visitedNodes: Set<Int>): MutableList<Int>? {
-        val exits = encounterState.getDirectlyConnectedNodes(startNode)
+    private fun dfsRecurse(startNode: EncounterPosition,
+                           endNode: EncounterPosition,
+                           encounterState: EncounterState,
+                           visitedNodes: Set<EncounterPosition>): MutableList<EncounterPosition>? {
+        val exits = encounterState.adjacentUnblockedPositions(startNode)
 
         return when {
-            startNode == endNode -> mutableListOf(startNode)
+            // TODO: Because blocking counts *collision* this will get very wacky quickly with predicting movement!
+            encounterState.arePositionsAdjacent(startNode, endNode) -> mutableListOf(startNode)
             exits.isEmpty() -> null
             else -> return exits.map { exitId ->
                 if (exitId !in visitedNodes) {
@@ -84,6 +83,4 @@ class AIComponent : Component() {
             }
         }
     }
-
-     */
 }

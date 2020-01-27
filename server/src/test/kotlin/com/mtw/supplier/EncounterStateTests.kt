@@ -32,8 +32,8 @@ class EncounterStateTests {
             .addComponent(CollisionComponent(true))
 
         val encounterState = EncounterState(5, 1)
-            .placeEntity(fighterOne, EncounterPosition(1, 1))
-            .placeEntity(fighterTwo, EncounterPosition(5, 1))
+            .placeEntity(fighterOne, EncounterPosition(0, 0))
+            .placeEntity(fighterTwo, EncounterPosition(4, 0))
         val encounterRunner = EncounterRunner()
         encounterRunner.runEncounter(encounterState)
     }

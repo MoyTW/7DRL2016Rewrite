@@ -26,14 +26,31 @@ internal class EncounterMap(
 ) {
     private val nodes: Array<Array<EncounterNode>> = Array(width) { Array(height) { EncounterNode() } }
 
+    internal fun isInBounds(x: Int, y: Int): Boolean {
+        return x in 0 until width && y in 0 until height
+    }
+
     internal fun positionBlocked(pos: EncounterPosition): Boolean {
         return nodes[pos.x][pos.y].blocked
     }
 
-    internal fun positionsAdjacent(pos1: EncounterPosition, pos2: EncounterPosition): Boolean {
-        val dx = kotlin.math.abs(pos1.x - pos1.y)
+    internal fun arePositionsAdjacent(pos1: EncounterPosition, pos2: EncounterPosition): Boolean {
+        val dx = kotlin.math.abs(pos1.x - pos2.x)
         val dy = kotlin.math.abs(pos1.y - pos2.y)
-        return dx < 2 && dy < 2 && dx + dy != 0
+        val adjacent = dx < 2 && dy < 2 && (dx + dy != 0)
+        return adjacent
+    }
+
+    internal fun adjacentUnblockedPositions(pos: EncounterPosition): List<EncounterPosition> {
+        val adjacentUnblockedPositions = mutableListOf<EncounterPosition>()
+        for(x in (pos.x - 1..pos.x + 1)) {
+            for (y in (pos.y - 1..pos.y + 1)) {
+                if (x != y && isInBounds(x, y) && !nodes[x][y].blocked) {
+                    adjacentUnblockedPositions.add(EncounterPosition(x, y))
+                }
+            }
+        }
+        return adjacentUnblockedPositions
     }
 
     internal fun entities(): List<Entity> {

@@ -32,15 +32,15 @@ object Rulebook {
             .position
 
         val targetNodeSameAsCurrentNode = currentPosition == action.targetPosition
-        val targetNodeHasRoom = encounterState.positionBlocked(action.targetPosition)
-        val targetNodeAdjacent = encounterState.positionsAdjacent(currentPosition, action.targetPosition)
+        val targetNodeBlocked = encounterState.positionBlocked(action.targetPosition)
+        val targetNodeAdjacent = encounterState.arePositionsAdjacent(currentPosition, action.targetPosition)
 
         if (targetNodeSameAsCurrentNode) {
             logger.info("[MOVE]:[INVALID] Target node ${action.targetPosition} and source node are identical!")
-        } else if (!targetNodeHasRoom) {
+        } else if (targetNodeBlocked) {
             logger.info("[MOVE]:[INVALID] Target node ${action.targetPosition} full!")
         } else if (!targetNodeAdjacent) {
-            logger.info("[MOVE]:[INVALID] Target node ${action.targetPosition} not adjacent!")
+            logger.info("[MOVE]:[INVALID] Current node $currentPosition is not adjacent to target node ${action.targetPosition}!")
         } else {
             encounterState.teleportEntity(action.actor, action.targetPosition)
             logger.info("[MOVE]:[SUCCESS] $currentPosition] to ${action.targetPosition}")
@@ -55,7 +55,7 @@ object Rulebook {
         val defenderPos = defender.getComponent(EncounterLocationComponent::class).position
 
         // TODO: Range & visibility & such
-        if (!encounterState.positionsAdjacent(attackerPos, defenderPos)) {
+        if (!encounterState.arePositionsAdjacent(attackerPos, defenderPos)) {
             logger.info("[ATTACK]:[INVALID] [${action.actor.name}] cannot reach [${action.target.name}]")
         } else {
             val attackerFighter = attacker.getComponent(FighterComponent::class)

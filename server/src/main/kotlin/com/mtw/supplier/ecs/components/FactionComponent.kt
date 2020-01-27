@@ -10,6 +10,6 @@ class FactionComponent(var factionId: Int, override var _parentId: Int? = null) 
         val parentEntity = encounterState.getEntity(this.parentId)
         val otherEntity = encounterState.getEntity(otherEntityId)
 
-        return parentEntity.getComponent(FactionComponent::class).factionId == otherEntity.getComponent(FactionComponent::class).factionId
+        return parentEntity.getComponent(FactionComponent::class).factionId != otherEntity.getComponent(FactionComponent::class).factionId
     }
 }
