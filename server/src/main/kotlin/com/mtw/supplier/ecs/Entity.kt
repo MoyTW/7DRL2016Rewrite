@@ -39,5 +39,10 @@ class Entity(
         return first as T
     }
 
+    @Suppress("UNCHECKED_CAST")
+    fun <T : Component> getComponentOrNull(clazz: KClass<T>): T? {
+        return components.firstOrNull { clazz.isInstance(it) } as T?
+    }
+
     class ComponentNotFoundException(message: String): Exception(message)
 }

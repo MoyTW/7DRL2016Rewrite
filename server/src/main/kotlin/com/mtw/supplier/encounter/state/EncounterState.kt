@@ -20,7 +20,7 @@ class EncounterState(
     // TODO: Map sizing
     private val encounterMap: EncounterMap = EncounterMap(width, height)
 
-    fun advanceTime(timeDiff: Int = 1) {
+    fun advanceTime(timeDiff: Int) {
         this._currentTime += timeDiff
     }
 

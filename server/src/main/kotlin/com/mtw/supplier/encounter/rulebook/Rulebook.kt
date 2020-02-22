@@ -43,7 +43,7 @@ object Rulebook {
             logger.info("[MOVE]:[INVALID] Current node $currentPosition is not adjacent to target node ${action.targetPosition}!")
         } else {
             encounterState.teleportEntity(action.actor, action.targetPosition)
-            logger.info("[MOVE]:[SUCCESS] $currentPosition] to ${action.targetPosition}")
+            logger.info("[MOVE]:[SUCCESS] ${action.actor.name} $currentPosition to ${action.targetPosition}")
         }
     }
 
