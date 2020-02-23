@@ -6,8 +6,8 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 class EncounterState(
-    public val width: Int = 10,
-    public val height: Int = 10,
+    private val width: Int = 10,
+    private val height: Int = 10,
     private var _currentTime: Int = 0,
     private var _completed: Boolean = false
 ) {
@@ -19,6 +19,10 @@ class EncounterState(
 
     // TODO: Map sizing
     private val encounterMap: EncounterMap = EncounterMap(width, height)
+
+    fun getEncounterTileMap(): EncounterTileMapView {
+        return encounterMap
+    }
 
     fun advanceTime(timeDiff: Int) {
         this._currentTime += timeDiff

@@ -1,19 +1,14 @@
 package com.mtw.supplier
 
-import com.mtw.supplier.ecs.Component
 import com.mtw.supplier.ecs.Entity
 import com.mtw.supplier.ecs.components.*
-import com.mtw.supplier.encounter.EncounterRunner
 import com.mtw.supplier.encounter.state.EncounterPosition
 import com.mtw.supplier.encounter.state.EncounterState
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonConfiguration
-import kotlinx.serialization.modules.SerializersModule
 import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.boot.runApplication
-import org.springframework.stereotype.Controller
 import org.springframework.web.bind.annotation.GetMapping
-import org.springframework.web.bind.annotation.ResponseBody
 import org.springframework.web.bind.annotation.RestController
 
 @SpringBootApplication
@@ -21,18 +16,7 @@ class SupplierApplication
 
 @RestController
 class RootController {
-	private final val gameModule = SerializersModule {
-		polymorphic(Component::class) {
-			AIComponent::class with AIComponent.serializer()
-			EncounterLocationComponent::class with EncounterLocationComponent.serializer()
-			HpComponent::class with HpComponent.serializer()
-			FighterComponent::class with FighterComponent.serializer()
-			FactionComponent::class with FactionComponent.serializer()
-			CollisionComponent::class with CollisionComponent.serializer()
-			ActionTimeComponent::class with ActionTimeComponent.serializer()
-			SpeedComponent::class with SpeedComponent.serializer()
-		}
-	}
+	private final val gameModule = Serializers.componentSerializersModuleBuilder()
 	private val json = Json(JsonConfiguration.Stable.copy(prettyPrint = true), context = gameModule)
 
 	@GetMapping("/health")

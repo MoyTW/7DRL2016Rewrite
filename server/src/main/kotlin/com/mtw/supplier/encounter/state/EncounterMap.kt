@@ -5,26 +5,41 @@ import com.mtw.supplier.ecs.components.CollisionComponent
 import com.mtw.supplier.ecs.components.EncounterLocationComponent
 import kotlinx.serialization.Serializable
 
+interface EncounterTileView {
+    val occupied: Boolean
+    val blocked: Boolean
+}
+
+interface EncounterTileMapView {
+    val width: Int
+    val height: Int
+    fun getTileView(x: Int, y: Int): EncounterTileView
+}
+
 @Serializable
-private class EncounterNode(
+private class EncounterNodeView(
     // Whether or not the node itself is passable
     val terrainBlocked: Boolean = false,
     val entities: MutableList<Entity> = mutableListOf()
-) {
+): EncounterTileView {
     // Whether or not the node itself is occupied
-    val occupied: Boolean
+    override val occupied: Boolean
         get() = entities.any{ it.hasComponent(CollisionComponent::class) && it.getComponent(CollisionComponent::class).collidable }
 
-    val blocked: Boolean
+    override val blocked: Boolean
         get() = terrainBlocked || occupied
 }
 
 @Serializable
 internal class EncounterMap(
-    private val width: Int,
-    private val height: Int
-) {
-    private val nodes: Array<Array<EncounterNode>> = Array(width) { Array(height) { EncounterNode() } }
+    override val width: Int,
+    override val height: Int
+): EncounterTileMapView {
+    private val nodes: Array<Array<EncounterNodeView>> = Array(width) { Array(height) { EncounterNodeView() } }
+
+    override fun getTileView(x: Int, y: Int): EncounterTileView {
+        return nodes[x][y]
+    }
 
     internal fun isInBounds(x: Int, y: Int): Boolean {
         return x in 0 until width && y in 0 until height

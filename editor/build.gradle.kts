@@ -50,6 +50,7 @@ dependencies {
     implementation("no.tornado:tornadofx:1.7.17") {
         exclude("org.jetbrains.kotlin")
     }
+    implementation("io.github.rybalkinsd:kohttp:0.11.1")
 }
 
 tasks.withType<KotlinCompile> {

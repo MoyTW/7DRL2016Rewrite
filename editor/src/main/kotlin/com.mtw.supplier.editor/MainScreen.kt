@@ -1,28 +1,102 @@
 package com.mtw.supplier.editor
 
-import com.mtw.supplier.region.*
-import javafx.beans.property.SimpleDoubleProperty
-import javafx.beans.property.SimpleIntegerProperty
+import com.mtw.supplier.Serializers
+import com.mtw.supplier.encounter.state.EncounterState
+import io.github.rybalkinsd.kohttp.dsl.httpGet
+import io.github.rybalkinsd.kohttp.ext.asString
+//import com.mtw.supplier.region.*
 import javafx.scene.Group
 import javafx.scene.control.ScrollPane
-import javafx.scene.image.Image
 import javafx.scene.image.ImageView
 import javafx.scene.layout.StackPane
 import javafx.scene.paint.Color
-import javafx.stage.FileChooser
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonConfiguration
-import org.hexworks.mixite.core.api.HexagonOrientation
-import org.hexworks.mixite.core.api.HexagonalGrid
-import org.hexworks.mixite.core.api.HexagonalGridBuilder
-import org.hexworks.mixite.core.api.HexagonalGridLayout
-import org.hexworks.mixite.core.api.contract.SatelliteData
+import okhttp3.Response
 import tornadofx.*
-import java.io.File
-import java.nio.file.Paths
-import kotlin.math.roundToInt
 
 
+class GameScreen: View() {
+    private val json = Json(JsonConfiguration.Stable.copy(prettyPrint = true),
+        context = Serializers.componentSerializersModuleBuilder())
+
+    private var mainScrollPane: ScrollPane by singleAssign()
+    private var regionLinesStackpane: StackPane by singleAssign()
+
+    private var encounterState: EncounterState? = null
+
+    override val root = borderpane {
+        top = menubar {
+            menu("File") {
+                item("Refersh", "Shortcut+R").action {
+                    println("REFRESH")
+                }
+                item("Quit", "Shortcut+Q").action {
+                    println("QUIT")
+                }
+            }
+        }
+        center {
+            mainScrollPane = scrollpane {
+                stackpane {
+                    regionLinesStackpane = stackpane ()
+                }
+            }
+            encounterState = refreshEncounterState()
+            encounterStateRender()
+        }
+    }
+
+    private fun refreshEncounterState(): EncounterState? {
+        val response: Response = httpGet {
+            host = "localhost"
+            port = 8080
+            path = "/game"
+        }
+        response.use {
+            val body = response.asString()
+            return if (body != null) {
+                json.parse(EncounterState.serializer(), body)
+            } else {
+                null
+            }
+        }
+    }
+
+    private fun squares(encounterState: EncounterState?): Group {
+        if (encounterState == null) {
+            return group()
+        }
+
+        val tiles = encounterState.getEncounterTileMap()
+        return group {
+            val tileSize = 40.0
+            for (x in 0 until tiles.width) {
+                for (y in 0 until tiles.height) {
+                    val tile = tiles.getTileView(x, y)
+                    rectangle {
+                        this.x = x * tileSize
+                        this.y = y * tileSize
+                        width = tileSize
+                        height = tileSize
+                        stroke = Color.GRAY
+                        fill = if (tile.blocked) {
+                            Color.WHITE
+                        } else {
+                            Color.BLACK
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    fun encounterStateRender() {
+        regionLinesStackpane.replaceChildren(squares(this.encounterState))
+    }
+}
+
+/*
 class MainScreen : View() {
     data class RegionData(var name: String, var path: File?, var region: Region, var grid: HexagonalGrid<SatelliteData>)
     data class BackgroundFile(var path: File?)
@@ -255,3 +329,4 @@ class MainScreen : View() {
 
     }
 }
+*/
