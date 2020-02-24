@@ -17,7 +17,7 @@ interface EncounterTileMapView {
 }
 
 @Serializable
-private class EncounterNodeView(
+private class EncounterNode(
     // Whether or not the node itself is passable
     val terrainBlocked: Boolean = false,
     val entities: MutableList<Entity> = mutableListOf()
@@ -35,7 +35,7 @@ internal class EncounterMap(
     override val width: Int,
     override val height: Int
 ): EncounterTileMapView {
-    private val nodes: Array<Array<EncounterNodeView>> = Array(width) { Array(height) { EncounterNodeView() } }
+    private val nodes: Array<Array<EncounterNode>> = Array(width) { Array(height) { EncounterNode() } }
 
     override fun getTileView(x: Int, y: Int): EncounterTileView {
         return nodes[x][y]
