@@ -9,13 +9,14 @@ object Serializers {
     fun componentSerializersModuleBuilder(): SerialModule {
         return SerializersModule {
             polymorphic(Component::class) {
+                ActionTimeComponent::class with ActionTimeComponent.serializer()
                 AIComponent::class with AIComponent.serializer()
+                CollisionComponent::class with CollisionComponent.serializer()
                 EncounterLocationComponent::class with EncounterLocationComponent.serializer()
+                FactionComponent::class with FactionComponent.serializer()
                 HpComponent::class with HpComponent.serializer()
                 FighterComponent::class with FighterComponent.serializer()
-                FactionComponent::class with FactionComponent.serializer()
-                CollisionComponent::class with CollisionComponent.serializer()
-                ActionTimeComponent::class with ActionTimeComponent.serializer()
+                PlayerComponent::class with PlayerComponent.serializer()
                 SpeedComponent::class with SpeedComponent.serializer()
             }
         }

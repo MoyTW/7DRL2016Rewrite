@@ -51,10 +51,19 @@ class RootController {
 			.addComponent(CollisionComponent(true))
 			.addComponent(ActionTimeComponent(30))
 			.addComponent(SpeedComponent(30))
+		val player = Entity(3, "player")
+			.addComponent(PlayerComponent())
+			.addComponent(HpComponent(50, 50))
+			.addComponent(FighterComponent(5, 100, 100))
+			.addComponent(FactionComponent(2))
+			.addComponent(CollisionComponent(true))
+			.addComponent(ActionTimeComponent(5))
+			.addComponent(SpeedComponent(5))
 
 		return EncounterState(15, 7)
 			.placeEntity(wolf, EncounterPosition(0, 1))
 			.placeEntity(mercenary, EncounterPosition(12, 5))
+			.placeEntity(player, EncounterPosition(5, 3))
 	}
 }
 
