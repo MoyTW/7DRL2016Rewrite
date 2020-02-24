@@ -38,49 +38,44 @@ class AIComponent : Component() {
         return if (encounterState.arePositionsAdjacent(parentLocation, firstOtherEntityLocation)) {
             AttackAction(parentEntity, firstOtherAliveEnemy)
         } else  {
-            val pathToFirstOtherEntity = badDepthFirstSearch(parentLocation, firstOtherEntityLocation, encounterState)
+            val pathToFirstOtherEntity = lowEffortBfs(parentLocation, firstOtherEntityLocation, encounterState)
             if (pathToFirstOtherEntity != null) {
-                MoveAction(parentEntity, pathToFirstOtherEntity[pathToFirstOtherEntity.size - 2])
+                MoveAction(parentEntity, pathToFirstOtherEntity[0])
             } else {
                 WaitAction(parentEntity)
             }
         }
     }
 
-    /**
-     * look this is from memory ok it's not pretty
-     * I feel compelled to defend my mediocre-to-bad on-the-spot algorithm skills because it's been so long since I've
-     * actually written a classical algorithm, versus business logic & APIs & sequence diagrams & kafka streams lol
-     */
-    fun badDepthFirstSearch(startNode: EncounterPosition,
-                            endNode: EncounterPosition,
-                            encounterState: EncounterState): List<EncounterPosition>? {
-        return dfsRecurse(startNode, endNode, encounterState, setOf())
-    }
+    fun lowEffortBfs(startNode: EncounterPosition,
+                     endNode: EncounterPosition,
+                     encounterState: EncounterState): List<EncounterPosition>? {
+        val nextToVisit: MutableList<EncounterPosition> = mutableListOf(startNode)
+        val visited: MutableSet<EncounterPosition> = mutableSetOf(startNode)
+        val pathTracker: MutableMap<EncounterPosition, EncounterPosition> = mutableMapOf()
 
-    private fun dfsRecurse(startNode: EncounterPosition,
-                           endNode: EncounterPosition,
-                           encounterState: EncounterState,
-                           visitedNodes: Set<EncounterPosition>): MutableList<EncounterPosition>? {
-        val exits = encounterState.adjacentUnblockedPositions(startNode)
+        while (nextToVisit.isNotEmpty()) {
+            val current = nextToVisit[0]
+            nextToVisit.removeAt(0)
 
-        return when {
-            // TODO: Because blocking counts *collision* this will get very wacky quickly with predicting movement!
-            encounterState.arePositionsAdjacent(startNode, endNode) -> mutableListOf(startNode)
-            exits.isEmpty() -> null
-            else -> return exits.map { exitId ->
-                if (exitId !in visitedNodes) {
-                    val newVisitedNodes = visitedNodes.toMutableSet() // this should copy it!
-                    newVisitedNodes.add(startNode)
-                    val recurseResult = dfsRecurse(exitId, endNode, encounterState, newVisitedNodes)
-                    recurseResult?.add(startNode)
-                    recurseResult
-                } else {
-                    null
+            if (encounterState.arePositionsAdjacent(current, endNode)) {
+                val path = mutableListOf(endNode, current)
+                while (pathTracker.containsKey(path.last())) {
+                    path.add(pathTracker[path.last()]!!)
                 }
-            }.firstOrNull {
-                it != null
+                path.remove(startNode)
+                return path.reversed()
+            }
+
+            visited.add(current)
+
+            encounterState.adjacentUnblockedPositions(current).map {
+                if (!visited.contains(it)) {
+                    nextToVisit.add(it)
+                    pathTracker[it] = current
+                }
             }
         }
+        return null
     }
 }
