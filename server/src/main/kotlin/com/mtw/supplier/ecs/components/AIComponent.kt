@@ -9,6 +9,8 @@ import com.mtw.supplier.encounter.rulebook.actions.MoveAction
 import com.mtw.supplier.encounter.rulebook.actions.WaitAction
 import com.mtw.supplier.encounter.state.EncounterPosition
 import kotlinx.serialization.Serializable
+import java.util.*
+import kotlin.math.abs
 
 @Serializable
 class AIComponent : Component() {
@@ -38,7 +40,7 @@ class AIComponent : Component() {
         return if (encounterState.arePositionsAdjacent(parentLocation, firstOtherEntityLocation)) {
             AttackAction(parentEntity, firstOtherAliveEnemy)
         } else  {
-            val pathToFirstOtherEntity = lowEffortBfs(parentLocation, firstOtherEntityLocation, encounterState)
+            val pathToFirstOtherEntity = aStarWithNewGrid(parentLocation, firstOtherEntityLocation, encounterState)
             if (pathToFirstOtherEntity != null) {
                 MoveAction(parentEntity, pathToFirstOtherEntity[0])
             } else {
@@ -47,32 +49,45 @@ class AIComponent : Component() {
         }
     }
 
-    fun lowEffortBfs(startNode: EncounterPosition,
-                     endNode: EncounterPosition,
-                     encounterState: EncounterState): List<EncounterPosition>? {
-        val nextToVisit: MutableList<EncounterPosition> = mutableListOf(startNode)
-        val visited: MutableSet<EncounterPosition> = mutableSetOf(startNode)
-        val pathTracker: MutableMap<EncounterPosition, EncounterPosition> = mutableMapOf()
+    fun aStarHeuristic(startPos: EncounterPosition, endPos: EncounterPosition): Double {
+        return abs(startPos.x.toDouble() - endPos.x.toDouble()) +
+            abs(startPos.y.toDouble() - endPos.y.toDouble())
+    }
 
-        while (nextToVisit.isNotEmpty()) {
-            val current = nextToVisit[0]
-            nextToVisit.removeAt(0)
+     companion object {
+         val aStarComparator = Comparator<Pair<EncounterPosition, Double>> { o1, o2 -> o1!!.second.compareTo(o2!!.second) }
+     }
 
-            if (encounterState.arePositionsAdjacent(current, endNode)) {
-                val path = mutableListOf(endNode, current)
-                while (pathTracker.containsKey(path.last())) {
-                    path.add(pathTracker[path.last()]!!)
+    fun aStarWithNewGrid(startPos: EncounterPosition,
+                         endPos: EncounterPosition,
+                         encounterState: EncounterState): List<EncounterPosition>? {
+        val frontier = PriorityQueue<Pair<EncounterPosition, Double>>(aStarComparator)
+        frontier.add(Pair(startPos, 0.0))
+
+        val cameFrom: MutableMap<EncounterPosition, EncounterPosition> = mutableMapOf()
+
+        val costSoFar: MutableMap<EncounterPosition, Double> = mutableMapOf()
+        costSoFar[startPos] = 0.0
+
+        while (frontier.isNotEmpty()) {
+            val currentPos = frontier.poll().first
+
+            if (encounterState.arePositionsAdjacent(currentPos, endPos)) {
+                val path = mutableListOf(endPos, currentPos)
+                while (cameFrom.containsKey(path.last())) {
+                    path.add(cameFrom[path.last()]!!)
                 }
-                path.remove(startNode)
+                path.remove(startPos)
                 return path.reversed()
             }
 
-            visited.add(current)
-
-            encounterState.adjacentUnblockedPositions(current).map {
-                if (!visited.contains(it)) {
-                    nextToVisit.add(it)
-                    pathTracker[it] = current
+            for (nextPos in encounterState.adjacentUnblockedPositions(currentPos)) {
+               val newNextPosCost = costSoFar[currentPos]!!.plus(1.0) // Fixed cost of 1
+                if (!costSoFar.containsKey(nextPos) || newNextPosCost < costSoFar[nextPos]!!) {
+                    costSoFar[nextPos] = newNextPosCost
+                    val priority = newNextPosCost + aStarHeuristic(nextPos, endPos)
+                    frontier.add(Pair(nextPos, priority))
+                    cameFrom[nextPos] = currentPos
                 }
             }
         }
