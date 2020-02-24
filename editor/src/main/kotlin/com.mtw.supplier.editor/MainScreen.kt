@@ -3,11 +3,14 @@ package com.mtw.supplier.editor
 import com.mtw.supplier.Serializers
 import com.mtw.supplier.encounter.state.EncounterState
 import io.github.rybalkinsd.kohttp.dsl.httpGet
+import io.github.rybalkinsd.kohttp.dsl.httpPost
 import io.github.rybalkinsd.kohttp.ext.asString
 //import com.mtw.supplier.region.*
 import javafx.scene.Group
 import javafx.scene.control.ScrollPane
 import javafx.scene.image.ImageView
+import javafx.scene.input.KeyCode
+import javafx.scene.input.KeyEvent
 import javafx.scene.layout.StackPane
 import javafx.scene.paint.Color
 import kotlinx.serialization.json.Json
@@ -15,8 +18,9 @@ import kotlinx.serialization.json.JsonConfiguration
 import okhttp3.Response
 import tornadofx.*
 
-
 class GameScreen: View() {
+    private val SERVER_PORT = 8080
+
     private val json = Json(JsonConfiguration.Stable.copy(prettyPrint = true),
         context = Serializers.componentSerializersModuleBuilder())
 
@@ -40,6 +44,10 @@ class GameScreen: View() {
             mainScrollPane = scrollpane {
                 stackpane {
                     regionLinesStackpane = stackpane ()
+                    // TODO: Figure out a better way
+                    keyboard {
+                        addEventFilter(KeyEvent.KEY_PRESSED) { handleKeyPress(it) }
+                    }
                 }
             }
             encounterState = refreshEncounterState()
@@ -47,10 +55,32 @@ class GameScreen: View() {
         }
     }
 
+    private fun handleKeyPress(event: KeyEvent) {
+        if (event.code == KeyCode.NUMPAD5) {
+            encounterState = postWaitAction()
+        }
+    }
+
+    private fun postWaitAction(): EncounterState? {
+        val response: Response = httpPost {
+            host = "localhost"
+            port = SERVER_PORT
+            path = "/game/player/action/wait"
+        }
+        response.use {
+            val body = response.asString()
+            return if (body != null) {
+                json.parse(EncounterState.serializer(), body)
+            } else {
+                null
+            }
+        }
+    }
+
     private fun refreshEncounterState(): EncounterState? {
         val response: Response = httpGet {
             host = "localhost"
-            port = 8080
+            port = SERVER_PORT
             path = "/game/state"
         }
         response.use {

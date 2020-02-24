@@ -68,8 +68,9 @@ internal class EncounterMap(
         return adjacentUnblockedPositions
     }
 
+    // TODO: A more cogent sorting function than creation order?
     internal fun entities(): List<Entity> {
-        return this.nodes.flatten().flatMap { it.entities }
+        return this.nodes.flatten().flatMap { it.entities }.sortedBy { it.id }
     }
 
     /**

@@ -1,15 +1,14 @@
 package com.mtw.supplier.encounter
 
 import com.mtw.supplier.ecs.Entity
-import com.mtw.supplier.ecs.components.AIComponent
-import com.mtw.supplier.ecs.components.ActionTimeComponent
-import com.mtw.supplier.ecs.components.FactionComponent
-import com.mtw.supplier.ecs.components.SpeedComponent
+import com.mtw.supplier.ecs.components.*
+import com.mtw.supplier.encounter.rulebook.Action
 import com.mtw.supplier.encounter.state.EncounterState
 import com.mtw.supplier.encounter.rulebook.Rulebook
 import org.slf4j.LoggerFactory
 
-class EncounterRunner {
+object EncounterRunner {
+    private val logger = LoggerFactory.getLogger(EncounterRunner::class.java)
 
     private fun ticksToNextEvent(encounterState: EncounterState): Int {
         var ticksToNext = 99999999
@@ -22,7 +21,7 @@ class EncounterRunner {
         return ticksToNext
     }
 
-    private fun passTimeAndGetReadyEntities(encounterState: EncounterState, ticks: Int): List<Entity> {
+    private fun passTimeAndGetReadyEntities(encounterState: EncounterState, ticks: Int): MutableList<Entity> {
         val readyEntities = mutableListOf<Entity>()
 
         for (entity in encounterState.entities()) {
@@ -38,14 +37,28 @@ class EncounterRunner {
         return readyEntities
     }
 
-    fun runTurn(encounterState: EncounterState) {
+    fun runPlayerTurn(encounterState: EncounterState, playerAction: Action) {
+        Rulebook.resolveAction(playerAction, encounterState)
+        val speedComponent = playerAction.actor.getComponent(SpeedComponent::class)
+        playerAction.actor.getComponent(ActionTimeComponent::class).endTurn(speedComponent)
+    }
+
+    fun runUntilPlayerReady(encounterState: EncounterState) {
+        // Run the clock until the next entity is ready
         val ticksToNext = ticksToNextEvent(encounterState)
         val readyEntities = passTimeAndGetReadyEntities(encounterState, ticksToNext)
         encounterState.advanceTime(ticksToNext)
 
+        // If the player is the next ready entity, abort
+        if (readyEntities.first().hasComponent(PlayerComponent::class)) {
+            return
+        }
+
         logger.info("========== START OF TURN ${encounterState.currentTime} ==========")
         // TODO: Caching of various iterables, if crawling nodes is slow?
-        for(entity in readyEntities) {
+        while (readyEntities.isNotEmpty() && !readyEntities.first().hasComponent(PlayerComponent::class)) {
+            val entity = readyEntities.first()
+            readyEntities.removeAt(0)
             if (entity.hasComponent(AIComponent::class)) {
                 val nextAction = entity.getComponent(AIComponent::class).decideNextAction(encounterState)
                 logger.debug("Action: $nextAction")
@@ -76,7 +89,7 @@ class EncounterRunner {
             encounterState.currentTime >= timeLimit -> throw CannotRunTimeLimitedException()
             else -> {
                 while (!encounterState.completed && encounterState.currentTime < timeLimit) {
-                    this.runTurn(encounterState)
+                    this.runUntilPlayerReady(encounterState)
                 }
             }
         }
@@ -84,8 +97,4 @@ class EncounterRunner {
 
     class CannotRunCompletedEncounterException : Exception("Cannot run next turn on a completed encounter!")
     class CannotRunTimeLimitedException : Exception("Cannot run next turn on an encounter past the time limit!")
-
-    companion object {
-        private val logger = LoggerFactory.getLogger(EncounterRunner::class.java)
-    }
 }

@@ -1,6 +1,7 @@
 package com.mtw.supplier.encounter.state
 
 import com.mtw.supplier.ecs.Entity
+import com.mtw.supplier.ecs.components.PlayerComponent
 import kotlinx.serialization.Serializable
 
 
@@ -40,6 +41,10 @@ class EncounterState(
     // TODO: Possibly maintain internal list
     fun entities(): List<Entity> {
         return this.encounterMap.entities()
+    }
+
+    fun playerEntity(): Entity {
+        return this.entities().first { it.hasComponent(PlayerComponent::class) }
     }
 
     fun getEntity(entityId: Int): Entity {
