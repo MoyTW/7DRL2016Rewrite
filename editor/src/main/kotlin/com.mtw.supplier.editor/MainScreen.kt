@@ -137,7 +137,7 @@ class GameScreen: View() {
                     val tile = tiles.getTileView(x, y)
                     rectangle {
                         this.x = x * tileSize
-                        this.y = y * tileSize
+                        this.y = -y * tileSize
                         width = tileSize
                         height = tileSize
                         stroke = Color.GRAY
