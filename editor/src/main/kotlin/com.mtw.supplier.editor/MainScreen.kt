@@ -1,5 +1,6 @@
 package com.mtw.supplier.editor
 
+import com.mtw.supplier.Direction
 import com.mtw.supplier.Serializers
 import com.mtw.supplier.encounter.state.EncounterState
 import io.github.rybalkinsd.kohttp.dsl.httpGet
@@ -56,9 +57,17 @@ class GameScreen: View() {
     }
 
     private fun handleKeyPress(event: KeyEvent) {
-        if (event.code == KeyCode.NUMPAD5) {
-            encounterState = postWaitAction()
-            encounterStateRender()
+        when (event.code) {
+            KeyCode.NUMPAD1 -> { encounterState = postMoveAction(Direction.SW); encounterStateRender() }
+            KeyCode.NUMPAD2 -> { encounterState = postMoveAction(Direction.S); encounterStateRender() }
+            KeyCode.NUMPAD3 -> { encounterState = postMoveAction(Direction.SE); encounterStateRender() }
+            KeyCode.NUMPAD4 -> { encounterState = postMoveAction(Direction.W); encounterStateRender() }
+            KeyCode.NUMPAD5 -> { encounterState = postWaitAction(); encounterStateRender() }
+            KeyCode.NUMPAD6 -> { encounterState = postMoveAction(Direction.E); encounterStateRender() }
+            KeyCode.NUMPAD7 -> { encounterState = postMoveAction(Direction.NW); encounterStateRender() }
+            KeyCode.NUMPAD8 -> { encounterState = postMoveAction(Direction.N); encounterStateRender() }
+            KeyCode.NUMPAD9 -> { encounterState = postMoveAction(Direction.NE); encounterStateRender() }
+            else -> {}
         }
     }
 
@@ -67,6 +76,27 @@ class GameScreen: View() {
             host = "localhost"
             port = SERVER_PORT
             path = "/game/player/action/wait"
+        }
+        response.use {
+            val body = response.asString()
+            return if (body != null) {
+                json.parse(EncounterState.serializer(), body)
+            } else {
+                null
+            }
+        }
+    }
+
+    private fun postMoveAction(direction: Direction): EncounterState? {
+        val response: Response = httpPost {
+            host = "localhost"
+            port = SERVER_PORT
+            path = "/game/player/action/move"
+            body {
+                json {
+                    "direction" to direction.name
+                }
+            }
         }
         response.use {
             val body = response.asString()

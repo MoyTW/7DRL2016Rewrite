@@ -57,8 +57,8 @@ class RootController {
 		val newPlayerPos = oldPlayerPos.copy(
 			x = oldPlayerPos.x + request.direction.dx, y = oldPlayerPos.y + request.direction.dy)
 
-		MoveAction(gameState.playerEntity(), newPlayerPos)
-		EncounterRunner.runPlayerTurn(gameState, WaitAction(gameState.playerEntity()))
+		val action = MoveAction(gameState.playerEntity(), newPlayerPos)
+		EncounterRunner.runPlayerTurn(gameState, action)
 		EncounterRunner.runUntilPlayerReady(gameState)
 
 		return json.stringify(EncounterState.serializer(), gameState)
@@ -66,7 +66,8 @@ class RootController {
 
 	@PostMapping("/game/player/action/wait")
 	fun gamePlayerActionWait(): String {
-		EncounterRunner.runPlayerTurn(gameState, WaitAction(gameState.playerEntity()))
+		val action = WaitAction(gameState.playerEntity())
+		EncounterRunner.runPlayerTurn(gameState, action)
 		EncounterRunner.runUntilPlayerReady(gameState)
 
 		return json.stringify(EncounterState.serializer(), gameState)
