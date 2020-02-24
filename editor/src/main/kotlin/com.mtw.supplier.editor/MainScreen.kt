@@ -58,6 +58,7 @@ class GameScreen: View() {
     private fun handleKeyPress(event: KeyEvent) {
         if (event.code == KeyCode.NUMPAD5) {
             encounterState = postWaitAction()
+            encounterStateRender()
         }
     }
 
