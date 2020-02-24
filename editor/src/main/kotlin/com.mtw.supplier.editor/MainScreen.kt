@@ -51,7 +51,7 @@ class GameScreen: View() {
         val response: Response = httpGet {
             host = "localhost"
             port = 8080
-            path = "/game"
+            path = "/game/state"
         }
         response.use {
             val body = response.asString()
