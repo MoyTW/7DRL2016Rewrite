@@ -98,13 +98,13 @@ class RootController {
 			.addComponent(FactionComponent(2))
 			.addComponent(CollisionComponent(true))
 			.addComponent(ActionTimeComponent(5))
-			.addComponent(SpeedComponent(5))
+			.addComponent(SpeedComponent(20))
 
 		val state = EncounterState(15, 7)
 			.placeEntity(wolf, EncounterPosition(0, 1))
 			.placeEntity(mercenary, EncounterPosition(12, 5))
 			.placeEntity(player, EncounterPosition(5, 3))
-		EncounterRunner.runUntilPlayerReady(state)
+		EncounterRunner.runNextActiveTick(state)
 		return state
 	}
 }

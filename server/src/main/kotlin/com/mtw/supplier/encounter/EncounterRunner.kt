@@ -38,12 +38,25 @@ object EncounterRunner {
     }
 
     fun runPlayerTurn(encounterState: EncounterState, playerAction: Action) {
+        if (encounterState.completed) { return }
+
         Rulebook.resolveAction(playerAction, encounterState)
         val speedComponent = playerAction.actor.getComponent(SpeedComponent::class)
         playerAction.actor.getComponent(ActionTimeComponent::class).endTurn(speedComponent)
     }
 
     fun runUntilPlayerReady(encounterState: EncounterState) {
+        if (encounterState.completed) { return }
+
+        var isPlayerReady = runNextActiveTick(encounterState)
+        while (!isPlayerReady && !encounterState.completed) {
+            isPlayerReady = runNextActiveTick(encounterState)
+        }
+    }
+
+    fun runNextActiveTick(encounterState: EncounterState): Boolean {
+        if (encounterState.completed) { return false }
+
         // Run the clock until the next entity is ready
         val ticksToNext = ticksToNextEvent(encounterState)
         val readyEntities = passTimeAndGetReadyEntities(encounterState, ticksToNext)
@@ -51,7 +64,7 @@ object EncounterRunner {
 
         // If the player is the next ready entity, abort
         if (readyEntities.first().hasComponent(PlayerComponent::class)) {
-            return
+            return true
         }
 
         logger.info("========== START OF TURN ${encounterState.currentTime} ==========")
@@ -81,6 +94,7 @@ object EncounterRunner {
         }
 
         logger.info("========== END OF TURN ${encounterState.currentTime} ==========")
+        return false
     }
 
     fun runEncounter(encounterState: EncounterState, timeLimit: Int = 1000) {
@@ -89,7 +103,7 @@ object EncounterRunner {
             encounterState.currentTime >= timeLimit -> throw CannotRunTimeLimitedException()
             else -> {
                 while (!encounterState.completed && encounterState.currentTime < timeLimit) {
-                    this.runUntilPlayerReady(encounterState)
+                    this.runNextActiveTick(encounterState)
                 }
             }
         }
