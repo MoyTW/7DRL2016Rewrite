@@ -9,6 +9,7 @@ import io.github.rybalkinsd.kohttp.ext.asString
 //import com.mtw.supplier.region.*
 import javafx.scene.Group
 import javafx.scene.Node
+import javafx.scene.control.ListView
 import javafx.scene.control.ScrollPane
 import javafx.scene.input.KeyCode
 import javafx.scene.input.KeyEvent
@@ -28,8 +29,7 @@ class GameScreen: View() {
 
     private var mainScrollPane: ScrollPane by singleAssign()
     private var regionLinesStackpane: StackPane by singleAssign()
-    private var logScrollPane: ScrollPane by singleAssign()
-    private var logVBox: VBox by singleAssign()
+    private var logListView: ListView<String> by singleAssign()
 
     private var encounterState: EncounterState? = null
 
@@ -59,9 +59,8 @@ class GameScreen: View() {
             }
         }
         bottom {
-            logScrollPane = scrollpane {
+            logListView = listview<String> {
                 this.maxHeight = 200.0
-                logVBox = vbox { }
             }
         }
         encounterState = refreshEncounterState()
@@ -180,21 +179,13 @@ class GameScreen: View() {
         }
     }
 
-    private fun messages(encounterState: EncounterState?): List<Node> {
-        if (encounterState == null) {
-            return emptyList()
-        }
-
-        return encounterState.messageLog.getMessages().map {
-            text(it)
-        }.reversed()
-    }
-
-    fun encounterStateRender() {
+    private fun encounterStateRender() {
         regionLinesStackpane.replaceChildren(squares(this.encounterState))
-        logVBox.children.clear()
-        logVBox.children.addAll(messages(this.encounterState))
-        logScrollPane.vvalue = 10.0
-        logScrollPane.vvalue = 100.0
+        val messages = encounterState?.messageLog?.getMessages()?.reversed()
+        if (messages != null) {
+            logListView.items.clear()
+            logListView.items.addAll(messages)
+            logListView.scrollTo(messages.size - 1)
+        }
     }
 }
