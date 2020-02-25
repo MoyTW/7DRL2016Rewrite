@@ -34,7 +34,8 @@ class GameScreen: View() {
         top = menubar {
             menu("File") {
                 item("Refersh", "Shortcut+R").action {
-                    println("REFRESH")
+                    encounterState = resetGame()
+                    encounterStateRender()
                 }
                 item("Quit", "Shortcut+Q").action {
                     println("QUIT")
@@ -113,6 +114,22 @@ class GameScreen: View() {
             host = "localhost"
             port = SERVER_PORT
             path = "/game/state"
+        }
+        response.use {
+            val body = response.asString()
+            return if (body != null) {
+                json.parse(EncounterState.serializer(), body)
+            } else {
+                null
+            }
+        }
+    }
+
+    private fun resetGame(): EncounterState? {
+        val response: Response = httpPost {
+            host = "localhost"
+            port = SERVER_PORT
+            path = "/game/reset"
         }
         response.use {
             val body = response.asString()
