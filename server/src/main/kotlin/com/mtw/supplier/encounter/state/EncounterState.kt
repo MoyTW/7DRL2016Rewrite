@@ -2,8 +2,37 @@ package com.mtw.supplier.encounter.state
 
 import com.mtw.supplier.ecs.Entity
 import com.mtw.supplier.ecs.components.PlayerComponent
+import com.mtw.supplier.encounter.rulebook.Action
 import kotlinx.serialization.Serializable
+import org.slf4j.LoggerFactory
+import java.util.*
 
+@Serializable
+class EncounterMessageLog {
+    private val LOG_LENGTH = 100
+    private val eventLog: MutableList<String> = mutableListOf()
+
+    private fun addEntry(text: String) {
+        if (eventLog.size >= LOG_LENGTH) {
+            eventLog.removeAt(LOG_LENGTH - 1)
+        }
+        eventLog.add(0, text)
+    }
+
+    fun logAction(action: Action, status: String, text: String) {
+        val actionString = "[${action.actor.name}]:[${action.actionType.name}]:[$status] $text"
+        addEntry(actionString)
+    }
+
+    fun logEvent(eventType: String, text: String) {
+        val eventString = "<EVENT>:<$eventType> $text"
+        addEntry(eventString)
+    }
+
+    fun getMessages(): List<String> {
+        return eventLog
+    }
+}
 
 @Serializable
 class EncounterState(
@@ -12,6 +41,8 @@ class EncounterState(
     private var _currentTime: Int = 0,
     private var _completed: Boolean = false
 ) {
+    val messageLog: EncounterMessageLog = EncounterMessageLog()
+
     val currentTime: Int
         get() = this._currentTime
 

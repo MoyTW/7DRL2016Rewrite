@@ -9,20 +9,20 @@ import com.mtw.supplier.encounter.state.EncounterState
 import com.mtw.supplier.encounter.rulebook.actions.AttackAction
 import com.mtw.supplier.encounter.rulebook.actions.MoveAction
 import com.mtw.supplier.encounter.rulebook.actions.WaitAction
-import org.slf4j.LoggerFactory
+import com.mtw.supplier.encounter.state.EncounterMessageLog
 import java.util.*
 import kotlin.math.ceil
 import kotlin.math.roundToInt
 
 object Rulebook {
-    private val logger = LoggerFactory.getLogger(Rulebook::class.java)
+
 
     fun resolveAction(action: Action, encounterState: EncounterState) {
         when (action.actionType) {
             ActionType.MOVE -> resolveMoveAction(action as MoveAction, encounterState)
             ActionType.ATTACK -> resolveAttackAction(action as AttackAction, encounterState)
             ActionType.USE_ITEM -> TODO()
-            ActionType.WAIT -> resolveWaitAction(action as WaitAction)
+            ActionType.WAIT -> resolveWaitAction(action as WaitAction, encounterState.messageLog)
         }
     }
 
@@ -34,20 +34,21 @@ object Rulebook {
         val targetNodeSameAsCurrentNode = currentPosition == action.targetPosition
         val targetNodeBlocked = encounterState.positionBlocked(action.targetPosition)
         val targetNodeAdjacent = encounterState.arePositionsAdjacent(currentPosition, action.targetPosition)
-
+        
         if (targetNodeSameAsCurrentNode) {
-            logger.info("[MOVE]:[INVALID] Target node ${action.targetPosition} and source node are identical!")
+            encounterState.messageLog.logAction(action, "INVALID", "Target node ${action.targetPosition} and source node are identical!")
         } else if (targetNodeBlocked) {
-            logger.info("[MOVE]:[INVALID] Target node ${action.targetPosition} full!")
+            encounterState.messageLog.logAction(action, "INVALID", "Target node ${action.targetPosition} blocked!")
         } else if (!targetNodeAdjacent) {
-            logger.info("[MOVE]:[INVALID] Current node $currentPosition is not adjacent to target node ${action.targetPosition}!")
+            encounterState.messageLog.logAction(action, "INVALID", "Current node $currentPosition is not adjacent to target node ${action.targetPosition}!")
         } else {
             encounterState.teleportEntity(action.actor, action.targetPosition)
-            logger.info("[MOVE]:[SUCCESS] ${action.actor.name} $currentPosition to ${action.targetPosition}")
+            encounterState.messageLog.logAction(action, "SUCCESS", "${action.actor.name} $currentPosition to ${action.targetPosition}")
         }
     }
 
     private fun resolveAttackAction(action: AttackAction, encounterState: EncounterState) {
+        println("ATTACK!")
         val attacker = action.actor
         val attackerPos = attacker.getComponent(EncounterLocationComponent::class).position
 
@@ -56,7 +57,7 @@ object Rulebook {
 
         // TODO: Range & visibility & such
         if (!encounterState.arePositionsAdjacent(attackerPos, defenderPos)) {
-            logger.info("[ATTACK]:[INVALID] [${action.actor.name}] cannot reach [${action.target.name}]")
+            encounterState.messageLog.logAction(action, "INVALID", "[${action.actor.name}] cannot reach [${action.target.name}]")
         } else {
             val attackerFighter = attacker.getComponent(FighterComponent::class)
             val defenderFighter = defender.getComponent(FighterComponent::class)
@@ -69,39 +70,39 @@ object Rulebook {
             val modifiedAttackRoll = d100Roll + attackerFighter.toHit - defenderFighter.toDodge
             when {
                 modifiedAttackRoll < 30 -> {
-                    logger.info("[ATTACK]:[MISS] (raw=$d100Roll,final=$modifiedAttackRoll) [${action.actor.name}] missed [${action.target.name}]")
+                    encounterState.messageLog.logAction(action, "MISS", "(raw=$d100Roll,final=$modifiedAttackRoll) [${action.actor.name}] missed [${action.target.name}]")
                 }
                 modifiedAttackRoll in 31..50 -> {
                     val damage = ceil(attackerFighter.hitDamage * .5).roundToInt()
-                    logger.info("[ATTACK]:[GRAZE] (raw=$d100Roll,final=$modifiedAttackRoll) [${action.actor.name}] grazed [${action.target.name}] for $damage damage!")
-                    applyDamage(damage, defender)
+                    encounterState.messageLog.logAction(action, "GRAZE", "(raw=$d100Roll,final=$modifiedAttackRoll) [${action.actor.name}] grazed [${action.target.name}] for $damage damage!")
+                    applyDamage(damage, defender, encounterState.messageLog)
                 }
                 modifiedAttackRoll in 51..100 -> {
                     val damage = attackerFighter.hitDamage
-                    logger.info("[ATTACK]:[HIT] (raw=$d100Roll,final=$modifiedAttackRoll) [${action.actor.name}] hit [${action.target.name}] for $damage damage!")
-                    applyDamage(damage, defender)
+                    encounterState.messageLog.logAction(action, "HIT", "(raw=$d100Roll,final=$modifiedAttackRoll) [${action.actor.name}] hit [${action.target.name}] for $damage damage!")
+                    applyDamage(damage, defender, encounterState.messageLog)
                 }
                 modifiedAttackRoll > 100 -> {
                     val damage = ceil(attackerFighter.hitDamage * 1.25).roundToInt()
-                    logger.info("[ATTACK]:[CRIT] (raw=$d100Roll,final=$modifiedAttackRoll) [${action.actor.name}] critically hit [${action.target.name}] for $damage damage!")
-                    applyDamage(damage, defender)
+                    encounterState.messageLog.logAction(action, "CRIT", "(raw=$d100Roll,final=$modifiedAttackRoll) [${action.actor.name}] critically hit [${action.target.name}] for $damage damage!")
+                    applyDamage(damage, defender, encounterState.messageLog)
                 }
             }
         }
     }
 
     // TODO: Better rules
-    private fun applyDamage(damage: Int, entity: Entity) {
+    private fun applyDamage(damage: Int, entity: Entity, messageLog: EncounterMessageLog) {
         val hpComponent = entity.getComponent(HpComponent::class)
         hpComponent.removeHp(damage)
         if (hpComponent.currentHp < 0) {
             // TODO: "No AI == dead" is a sketchy definition of dead!
             entity.removeComponent(AIComponent::class)
-            logger.info("<EVENT>:<DEATH> [${entity.name}] is dead!")
+            messageLog.logEvent("DEATH", "[${entity.name}] is dead!")
         }
     }
 
-    private fun resolveWaitAction(action: WaitAction) {
-        logger.info("[WAIT]:[SUCCESS] [${action.actor.name}] is waiting!")
+    private fun resolveWaitAction(action: WaitAction, messageLog: EncounterMessageLog) {
+        messageLog.logAction(action, "SUCCESS", "[${action.actor.name}] is waiting!")
     }
 }

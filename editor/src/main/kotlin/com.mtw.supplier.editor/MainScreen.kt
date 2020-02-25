@@ -8,11 +8,12 @@ import io.github.rybalkinsd.kohttp.dsl.httpPost
 import io.github.rybalkinsd.kohttp.ext.asString
 //import com.mtw.supplier.region.*
 import javafx.scene.Group
+import javafx.scene.Node
 import javafx.scene.control.ScrollPane
-import javafx.scene.image.ImageView
 import javafx.scene.input.KeyCode
 import javafx.scene.input.KeyEvent
 import javafx.scene.layout.StackPane
+import javafx.scene.layout.VBox
 import javafx.scene.paint.Color
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonConfiguration
@@ -27,18 +28,22 @@ class GameScreen: View() {
 
     private var mainScrollPane: ScrollPane by singleAssign()
     private var regionLinesStackpane: StackPane by singleAssign()
+    private var logScrollPane: ScrollPane by singleAssign()
+    private var logVBox: VBox by singleAssign()
 
     private var encounterState: EncounterState? = null
 
     override val root = borderpane {
-        top = menubar {
-            menu("File") {
-                item("Refersh", "Shortcut+R").action {
-                    encounterState = resetGame()
-                    encounterStateRender()
-                }
-                item("Quit", "Shortcut+Q").action {
-                    println("QUIT")
+        top {
+            menubar {
+                menu("File") {
+                    item("Refersh", "Shortcut+R").action {
+                        encounterState = resetGame()
+                        encounterStateRender()
+                    }
+                    item("Quit", "Shortcut+Q").action {
+                        println("QUIT")
+                    }
                 }
             }
         }
@@ -52,9 +57,15 @@ class GameScreen: View() {
                     }
                 }
             }
-            encounterState = refreshEncounterState()
-            encounterStateRender()
         }
+        bottom {
+            logScrollPane = scrollpane {
+                this.maxHeight = 200.0
+                logVBox = vbox { }
+            }
+        }
+        encounterState = refreshEncounterState()
+        encounterStateRender()
     }
 
     private fun handleKeyPress(event: KeyEvent) {
@@ -169,7 +180,21 @@ class GameScreen: View() {
         }
     }
 
+    private fun messages(encounterState: EncounterState?): List<Node> {
+        if (encounterState == null) {
+            return emptyList()
+        }
+
+        return encounterState.messageLog.getMessages().map {
+            text(it)
+        }.reversed()
+    }
+
     fun encounterStateRender() {
         regionLinesStackpane.replaceChildren(squares(this.encounterState))
+        logVBox.children.clear()
+        logVBox.children.addAll(messages(this.encounterState))
+        logScrollPane.vvalue = 10.0
+        logScrollPane.vvalue = 100.0
     }
 }
