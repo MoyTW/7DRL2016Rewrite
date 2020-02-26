@@ -1,5 +1,6 @@
 package com.mtw.supplier.ecs
 
+import com.mtw.supplier.encounter.state.EncounterState
 import kotlinx.serialization.Serializable
 import java.lang.UnsupportedOperationException
 
@@ -9,6 +10,10 @@ abstract class Component {
 
     val parentId: Int
         get() = _parentId!!
+
+    fun getParent(encounterState: EncounterState): Entity {
+        return encounterState.getEntity(this.parentId)
+    }
 
     internal fun notifyAdded(parentId: Int) {
         if (this._parentId != null) {

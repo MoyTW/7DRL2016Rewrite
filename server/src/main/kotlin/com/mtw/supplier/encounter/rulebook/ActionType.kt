@@ -4,5 +4,6 @@ enum class ActionType {
     MOVE,
     ATTACK,
     USE_ITEM,
-    WAIT
+    WAIT,
+    SELF_DESTRUCT
 }

@@ -8,6 +8,7 @@ import com.mtw.supplier.ecs.components.HpComponent
 import com.mtw.supplier.encounter.state.EncounterState
 import com.mtw.supplier.encounter.rulebook.actions.AttackAction
 import com.mtw.supplier.encounter.rulebook.actions.MoveAction
+import com.mtw.supplier.encounter.rulebook.actions.SelfDestructAction
 import com.mtw.supplier.encounter.rulebook.actions.WaitAction
 import com.mtw.supplier.encounter.state.EncounterMessageLog
 import java.util.*
@@ -23,6 +24,7 @@ object Rulebook {
             ActionType.ATTACK -> resolveAttackAction(action as AttackAction, encounterState)
             ActionType.USE_ITEM -> TODO()
             ActionType.WAIT -> resolveWaitAction(action as WaitAction, encounterState.messageLog)
+            ActionType.SELF_DESTRUCT -> resolveSelfDestructionAction(action as SelfDestructAction, encounterState)
         }
     }
 
@@ -104,5 +106,10 @@ object Rulebook {
 
     private fun resolveWaitAction(action: WaitAction, messageLog: EncounterMessageLog) {
         messageLog.logAction(action, "SUCCESS", "[${action.actor.name}] is waiting!")
+    }
+
+    private fun resolveSelfDestructionAction(action: SelfDestructAction, encounterState: EncounterState) {
+        encounterState.removeEntity(action.actor)
+        encounterState.messageLog.logAction(action, "SUCCESS", "[${action.actor.name}] self-destructed!")
     }
 }

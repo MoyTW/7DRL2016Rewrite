@@ -3,6 +3,7 @@ package com.mtw.supplier
 import com.mtw.supplier.ecs.Entity
 import com.mtw.supplier.ecs.components.*
 import com.mtw.supplier.ecs.components.ai.AIComponent
+import com.mtw.supplier.ecs.components.ai.TestAIComponent
 import com.mtw.supplier.encounter.EncounterRunner
 import com.mtw.supplier.encounter.rulebook.actions.MoveAction
 import com.mtw.supplier.encounter.rulebook.actions.WaitAction
@@ -77,7 +78,7 @@ class RootController {
 	// TODO: Proppa level gen & not literally in controller lol
 	private final fun generateNewGameState(): EncounterState {
 		val wolf = Entity(1, "wolf")
-			.addComponent(AIComponent())
+			.addComponent(TestAIComponent())
 			.addComponent(HpComponent(20, 20))
 			.addComponent(FighterComponent(5, 5, 5))
 			.addComponent(FactionComponent(0))
@@ -85,7 +86,7 @@ class RootController {
 			.addComponent(ActionTimeComponent(5))
 			.addComponent(SpeedComponent(5))
 		val mercenary = Entity(2, "strongMercenary")
-			.addComponent(AIComponent())
+			.addComponent(TestAIComponent())
 			.addComponent(HpComponent(50, 50))
 			.addComponent(FighterComponent(5, 100, 100))
 			.addComponent(FactionComponent(2))
