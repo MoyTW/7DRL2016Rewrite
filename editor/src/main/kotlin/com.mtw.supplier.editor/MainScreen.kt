@@ -3,6 +3,7 @@ package com.mtw.supplier.editor
 import com.mtw.supplier.Direction
 import com.mtw.supplier.Serializers
 import com.mtw.supplier.encounter.state.EncounterState
+import com.mtw.supplier.utils.XYCoordinates
 import io.github.rybalkinsd.kohttp.dsl.httpGet
 import io.github.rybalkinsd.kohttp.dsl.httpPost
 import io.github.rybalkinsd.kohttp.ext.asString
@@ -150,26 +151,35 @@ class GameScreen: View() {
     }
 
     private fun squares(encounterState: EncounterState?): Group {
+        val UNEXPLORED_COLOR = Color.BLACK
+        val EXPLORED_COLOR = Color.DARKGRAY
+        val VISIBLE_COLOR = Color.LIGHTGRAY
+        val OCCUPIED_COLOR = Color.RED
+
         if (encounterState == null) {
             return group()
         }
 
         val tiles = encounterState.getEncounterTileMap()
+        val fov = encounterState.fovCache
+
         return group {
             val tileSize = 20.0
             for (x in 0 until tiles.width) {
                 for (y in 0 until tiles.height) {
+
                     val tile = tiles.getTileView(x, y)
                     rectangle {
                         this.x = x * tileSize
                         this.y = -y * tileSize
                         width = tileSize
                         height = tileSize
-                        stroke = Color.GRAY
-                        fill = if (tile.blocksMovement) {
-                            Color.WHITE
-                        } else {
-                            Color.BLACK
+                        stroke = Color.WHITE
+                        fill = when {
+                            tile?.explored == false -> { UNEXPLORED_COLOR }
+                            !fov!!.isInFoV(XYCoordinates(x, y)) -> { EXPLORED_COLOR }
+                            tile?.entities?.isNotEmpty() == true -> { OCCUPIED_COLOR }
+                            else -> { VISIBLE_COLOR }
                         }
                     }
                 }

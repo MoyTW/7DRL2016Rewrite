@@ -2,6 +2,7 @@ package com.mtw.supplier.encounter.state
 
 import com.mtw.supplier.ecs.Entity
 import com.mtw.supplier.ecs.components.CollisionComponent
+import com.mtw.supplier.ecs.components.EncounterLocationComponent
 import com.mtw.supplier.ecs.components.PlayerComponent
 import com.mtw.supplier.encounter.rulebook.Action
 import com.mtw.supplier.utils.XYCoordinates
@@ -43,12 +44,23 @@ class EncounterState(
     private var entityIdIdx: Int = 0 // TODO: uh this be dumb tho
 ) {
     val messageLog: EncounterMessageLog = EncounterMessageLog()
+    var fovCache: FoVCache? = null
 
     val currentTime: Int
         get() = this._currentTime
 
     val completed: Boolean
         get() = this._completed
+
+    fun calculatePlayerFoVAndMarkExploration() {
+        this.fovCache = FoVCache.computeFoV(this.encounterMap,
+            this.playerEntity().getComponent(EncounterLocationComponent::class).position,
+            5
+        ) // TOOD: Vision radius
+        for (pos in this.fovCache!!.visiblePositions) {
+            encounterMap.markExplored(pos)
+        }
+    }
 
     fun getNextEntityId(): Int {
         entityIdIdx += 1

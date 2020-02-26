@@ -11,12 +11,13 @@ interface EncounterTileView {
     val blocksMovement: Boolean
     val explored: Boolean
     val blocksVision: Boolean
+    val entities: List<Entity>
 }
 
 interface EncounterTileMapView {
     val width: Int
     val height: Int
-    fun getTileView(x: Int, y: Int): EncounterTileView
+    fun getTileView(x: Int, y: Int): EncounterTileView?
 }
 
 @Serializable
@@ -24,7 +25,7 @@ private class EncounterNode(
     // Whether or not the node itself is passable
     private var _explored: Boolean = false,
     val terrainBlocked: Boolean = false,
-    val entities: MutableList<Entity> = mutableListOf()
+    override val entities: MutableList<Entity> = mutableListOf()
 ): EncounterTileView {
 
     override val blocksMovement: Boolean
@@ -49,12 +50,21 @@ internal class EncounterMap(
 ): EncounterTileMapView {
     private val nodes: Array<Array<EncounterNode>> = Array(width) { Array(height) { EncounterNode() } }
 
-    override fun getTileView(x: Int, y: Int): EncounterTileView {
-        return nodes[x][y]
+    override fun getTileView(x: Int, y: Int): EncounterTileView? {
+        // yeah, yeah, exceptions, control flow, you could do a width/height. TODO: cleanup maybe
+        return try {
+            nodes[x][y]
+        } catch (e: ArrayIndexOutOfBoundsException) {
+            null
+        }
     }
 
     internal fun isInBounds(x: Int, y: Int): Boolean {
         return x in 0 until width && y in 0 until height
+    }
+
+    internal fun markExplored(pos: XYCoordinates) {
+        nodes[pos.x][pos.y].markExplored()
     }
 
     internal fun positionBlocked(pos: XYCoordinates): Boolean {

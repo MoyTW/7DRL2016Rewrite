@@ -106,7 +106,7 @@ class RootController {
 		state.placeEntity(wolf, XYCoordinates(0, 1))
 			 .placeEntity(mercenary, XYCoordinates(12, 5))
 			 .placeEntity(player, XYCoordinates(5, 3))
-		EncounterRunner.runNextActiveTick(state)
+		EncounterRunner.runUntilPlayerReady(state)
 		return state
 	}
 }

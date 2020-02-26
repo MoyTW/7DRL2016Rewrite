@@ -40,15 +40,7 @@ object EncounterRunner {
         return readyEntities
     }
 
-    fun runPlayerTurn(encounterState: EncounterState, playerAction: Action) {
-        if (encounterState.completed) { return }
-
-        val player = playerAction.actor
-
-        Rulebook.resolveAction(playerAction, encounterState)
-        val speedComponent = playerAction.actor.getComponent(SpeedComponent::class)
-        player.getComponent(ActionTimeComponent::class).endTurn(speedComponent)
-
+    private fun fireLaser(encounterState: EncounterState, player: Entity) {
         val hostileEntities = encounterState.entities().filter {
             it.hasComponent(AIComponent::class) && it.hasComponent(FactionComponent::class) }
         // TODO: Range and stuff
@@ -72,6 +64,21 @@ object EncounterRunner {
         }
     }
 
+    fun runPlayerTurn(encounterState: EncounterState, playerAction: Action) {
+        if (encounterState.completed) { return }
+
+        // Move the player
+        Rulebook.resolveAction(playerAction, encounterState)
+        val speedComponent = playerAction.actor.getComponent(SpeedComponent::class)
+        playerAction.actor.getComponent(ActionTimeComponent::class).endTurn(speedComponent)
+
+        // Update the FoV for the player
+        encounterState.calculatePlayerFoVAndMarkExploration()
+
+        // Shoot the player's laser
+        fireLaser(encounterState, playerAction.actor)
+    }
+
     fun runUntilPlayerReady(encounterState: EncounterState) {
         if (encounterState.completed) { return }
 
@@ -79,6 +86,7 @@ object EncounterRunner {
         while (!isPlayerReady && !encounterState.completed) {
             isPlayerReady = runNextActiveTick(encounterState)
         }
+        encounterState.calculatePlayerFoVAndMarkExploration()
     }
 
     fun runNextActiveTick(encounterState: EncounterState): Boolean {
