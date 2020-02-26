@@ -74,6 +74,10 @@ internal class EncounterMap(
         return this.nodes.flatten().flatMap { it.entities }.sortedBy { it.id }
     }
 
+    internal fun getEntitiesAtPosition(pos: XYCoordinates): List<Entity> {
+        return this.nodes[pos.x][pos.y].entities
+    }
+
     /**
      * @throws EntityAlreadyHasLocation when a node already has a location
      * @throws NodeHasInsufficientSpaceException when node cannot find space for the entity

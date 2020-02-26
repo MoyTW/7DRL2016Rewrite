@@ -65,7 +65,7 @@ object EncounterRunner {
             val laser = Entity(encounterState.getNextEntityId(), "laser")
                 .addComponent(PathAIComponent(path))
                 .addComponent(FighterComponent(5, 0, 0))
-                .addComponent(CollisionComponent(false))
+                .addComponent(CollisionComponent(collidable = false, attackOnHit = true, selfDestructOnHit = true))
                 .addComponent(ActionTimeComponent(0))
                 .addComponent(SpeedComponent(0))
             encounterState.placeEntity(laser, playerPos, ignoreCollision = true)

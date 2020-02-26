@@ -1,6 +1,7 @@
 package com.mtw.supplier.encounter.state
 
 import com.mtw.supplier.ecs.Entity
+import com.mtw.supplier.ecs.components.CollisionComponent
 import com.mtw.supplier.ecs.components.PlayerComponent
 import com.mtw.supplier.encounter.rulebook.Action
 import com.mtw.supplier.utils.XYCoordinates
@@ -87,6 +88,10 @@ class EncounterState(
         return entities().firstOrNull { it.id == entityId } ?: throw EntityIdNotFoundException(entityId)
     }
     class EntityIdNotFoundException(entityId: Int): Exception("Entity id $entityId could not be found!")
+
+    fun getBlockingEntityAtPosition(pos: XYCoordinates): Entity? {
+        return this.encounterMap.getEntitiesAtPosition(pos).firstOrNull { it.getComponentOrNull(CollisionComponent::class)?.collidable ?: false }
+    }
 
     fun positionBlocked(pos: XYCoordinates): Boolean {
         return this.encounterMap.positionBlocked(pos)

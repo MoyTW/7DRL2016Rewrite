@@ -1,6 +1,7 @@
 package com.mtw.supplier.encounter.rulebook
 
 import com.mtw.supplier.ecs.Entity
+import com.mtw.supplier.ecs.components.CollisionComponent
 import com.mtw.supplier.ecs.components.ai.AIComponent
 import com.mtw.supplier.ecs.components.EncounterLocationComponent
 import com.mtw.supplier.ecs.components.FighterComponent
@@ -40,7 +41,18 @@ object Rulebook {
         if (targetNodeSameAsCurrentNode) {
             encounterState.messageLog.logAction(action, "INVALID", "Target node ${action.targetPosition} and source node are identical!")
         } else if (targetNodeBlocked) {
-            encounterState.messageLog.logAction(action, "INVALID", "Target node ${action.targetPosition} blocked!")
+            val collisionComponent = action.actor.getComponent(CollisionComponent::class)
+            if (collisionComponent.attackOnHit) {
+                val blockingEntity = encounterState.getBlockingEntityAtPosition(action.targetPosition)
+                if (blockingEntity != null) {
+                    resolveAction(AttackAction(action.actor, blockingEntity), encounterState)
+                }
+            }
+            if (collisionComponent.selfDestructOnHit) {
+                resolveAction(SelfDestructAction(action.actor), encounterState)
+            } else {
+                encounterState.messageLog.logAction(action, "INVALID", "Target node ${action.targetPosition} blocked!")
+            }
         } else if (!targetNodeAdjacent) {
             encounterState.messageLog.logAction(action, "INVALID", "Current node $currentPosition is not adjacent to target node ${action.targetPosition}!")
         } else {
