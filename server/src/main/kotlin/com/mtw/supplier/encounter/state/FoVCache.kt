@@ -10,15 +10,21 @@ import kotlin.math.sqrt
  * Keeps a list of coordinates visible from the current position.
  */
 @Serializable
-class FoVCache(
-    private val visiblePositions: Set<XYCoordinates> = mutableSetOf()
-) {
+class FoVCache internal constructor(val visiblePositions: Set<XYCoordinates>) {
+
     fun isInFoV(pos: XYCoordinates): Boolean {
         return visiblePositions.contains(pos)
     }
 
-    fun recompute(tileMapView: EncounterTileMapView, xyCoordinates: XYCoordinates, radius: Int) {
-        TODO()
+    companion object {
+        fun computeFoV(tileMapView: EncounterTileMapView, center: XYCoordinates, radius: Int): FoVCache {
+            val visibleCells = RPASCal.calcVisibleCellsFrom(center, radius) {
+                tileMapView.getTileView(it.x, it.y)?.blocksVision == false
+            }.filter {
+                0 <= it.x && it.x < tileMapView.width && 0 <= it.y && it.y < tileMapView.height
+            }.toSet()
+            return FoVCache(visibleCells)
+        }
     }
 }
 
@@ -40,16 +46,16 @@ object RPASCal {
     fun calcVisibleCellsFrom(center: XYCoordinates, radius: Int,
                              isTransparent: (cell: XYCoordinates) -> Boolean): Set<XYCoordinates> {
         return mutableSetOf(center)
-            .intersect(visibleCellsInQuadrantFrom(center, Quadrant.NE, radius, isTransparent))
-            .intersect(visibleCellsInQuadrantFrom(center, Quadrant.SE, radius, isTransparent))
-            .intersect(visibleCellsInQuadrantFrom(center, Quadrant.SW, radius, isTransparent))
-            .intersect(visibleCellsInQuadrantFrom(center, Quadrant.NW, radius, isTransparent))
+            .union(visibleCellsInQuadrantFrom(center, Quadrant.NE, radius, isTransparent))
+            .union(visibleCellsInQuadrantFrom(center, Quadrant.SE, radius, isTransparent))
+            .union(visibleCellsInQuadrantFrom(center, Quadrant.SW, radius, isTransparent))
+            .union(visibleCellsInQuadrantFrom(center, Quadrant.NW, radius, isTransparent))
     }
 
     private fun visibleCellsInQuadrantFrom(center: XYCoordinates, quadrant: Quadrant, radius: Int,
                                            isTransparent: (cell: XYCoordinates) -> Boolean): Set<XYCoordinates> {
         return visibleCellsInOctantFrom(center, quadrant, radius, isTransparent, true)
-            .intersect(visibleCellsInOctantFrom(center, quadrant, radius, isTransparent, false))
+            .union(visibleCellsInOctantFrom(center, quadrant, radius, isTransparent, false))
     }
 
     private fun visibleCellsInOctantFrom(center: XYCoordinates, quadrant: Quadrant, radius: Int,
