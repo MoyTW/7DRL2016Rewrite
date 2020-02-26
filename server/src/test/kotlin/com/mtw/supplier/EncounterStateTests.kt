@@ -5,7 +5,7 @@ import com.mtw.supplier.ecs.components.*
 import com.mtw.supplier.ecs.components.ai.AIComponent
 import com.mtw.supplier.encounter.state.EncounterState
 import com.mtw.supplier.encounter.EncounterRunner
-import com.mtw.supplier.encounter.state.EncounterPosition
+import com.mtw.supplier.utils.XYCoordinates
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
@@ -35,8 +35,8 @@ class EncounterStateTests {
             .addComponent(SpeedComponent(30))
 
         val encounterState = EncounterState(5, 1)
-            .placeEntity(fighterOne, EncounterPosition(0, 0))
-            .placeEntity(fighterTwo, EncounterPosition(4, 0))
+            .placeEntity(fighterOne, XYCoordinates(0, 0))
+            .placeEntity(fighterTwo, XYCoordinates(4, 0))
         EncounterRunner.runEncounter(encounterState)
     }
 }

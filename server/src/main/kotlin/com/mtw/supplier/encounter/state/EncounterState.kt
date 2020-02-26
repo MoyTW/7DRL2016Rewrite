@@ -3,6 +3,7 @@ package com.mtw.supplier.encounter.state
 import com.mtw.supplier.ecs.Entity
 import com.mtw.supplier.ecs.components.PlayerComponent
 import com.mtw.supplier.encounter.rulebook.Action
+import com.mtw.supplier.utils.XYCoordinates
 import kotlinx.serialization.Serializable
 import org.slf4j.LoggerFactory
 import java.util.*
@@ -83,15 +84,15 @@ class EncounterState(
     }
     class EntityIdNotFoundException(entityId: Int): Exception("Entity id $entityId could not be found!")
 
-    fun positionBlocked(pos: EncounterPosition): Boolean {
+    fun positionBlocked(pos: XYCoordinates): Boolean {
         return this.encounterMap.positionBlocked(pos)
     }
 
-    fun arePositionsAdjacent(pos1: EncounterPosition, pos2: EncounterPosition): Boolean {
+    fun arePositionsAdjacent(pos1: XYCoordinates, pos2: XYCoordinates): Boolean {
         return this.encounterMap.arePositionsAdjacent(pos1, pos2)
     }
 
-    fun adjacentUnblockedPositions(pos: EncounterPosition): List<EncounterPosition> {
+    fun adjacentUnblockedPositions(pos: XYCoordinates): List<XYCoordinates> {
         return this.encounterMap.adjacentUnblockedPositions(pos)
     }
 
@@ -99,7 +100,7 @@ class EncounterState(
      * @throws EntityAlreadyHasLocation when a node already has a location
      * @throws NodeHasInsufficientSpaceException when node cannot find space for the entity
      */
-    fun placeEntity(entity: Entity, targetPosition: EncounterPosition): EncounterState {
+    fun placeEntity(entity: Entity, targetPosition: XYCoordinates): EncounterState {
         this.encounterMap.placeEntity(entity, targetPosition)
         return this
     }
@@ -109,7 +110,7 @@ class EncounterState(
         return this
     }
 
-    fun teleportEntity(entity: Entity, targetPosition: EncounterPosition) {
+    fun teleportEntity(entity: Entity, targetPosition: XYCoordinates) {
         this.encounterMap.teleportEntity(entity, targetPosition)
     }
 }

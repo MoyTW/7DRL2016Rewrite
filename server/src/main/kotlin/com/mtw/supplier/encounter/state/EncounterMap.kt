@@ -3,6 +3,7 @@ package com.mtw.supplier.encounter.state
 import com.mtw.supplier.ecs.Entity
 import com.mtw.supplier.ecs.components.CollisionComponent
 import com.mtw.supplier.ecs.components.EncounterLocationComponent
+import com.mtw.supplier.utils.XYCoordinates
 import kotlinx.serialization.Serializable
 
 interface EncounterTileView {
@@ -45,23 +46,23 @@ internal class EncounterMap(
         return x in 0 until width && y in 0 until height
     }
 
-    internal fun positionBlocked(pos: EncounterPosition): Boolean {
+    internal fun positionBlocked(pos: XYCoordinates): Boolean {
         return nodes[pos.x][pos.y].blocked
     }
 
-    internal fun arePositionsAdjacent(pos1: EncounterPosition, pos2: EncounterPosition): Boolean {
+    internal fun arePositionsAdjacent(pos1: XYCoordinates, pos2: XYCoordinates): Boolean {
         val dx = kotlin.math.abs(pos1.x - pos2.x)
         val dy = kotlin.math.abs(pos1.y - pos2.y)
         val adjacent = dx < 2 && dy < 2 && (dx + dy != 0)
         return adjacent
     }
 
-    internal fun adjacentUnblockedPositions(pos: EncounterPosition): List<EncounterPosition> {
-        val adjacentUnblockedPositions = mutableListOf<EncounterPosition>()
+    internal fun adjacentUnblockedPositions(pos: XYCoordinates): List<XYCoordinates> {
+        val adjacentUnblockedPositions = mutableListOf<XYCoordinates>()
         for(x in (pos.x - 1..pos.x + 1)) {
             for (y in (pos.y - 1..pos.y + 1)) {
                 if (x != y && isInBounds(x, y) && !nodes[x][y].blocked) {
-                    adjacentUnblockedPositions.add(EncounterPosition(x, y))
+                    adjacentUnblockedPositions.add(XYCoordinates(x, y))
                 }
             }
         }
@@ -77,7 +78,7 @@ internal class EncounterMap(
      * @throws EntityAlreadyHasLocation when a node already has a location
      * @throws NodeHasInsufficientSpaceException when node cannot find space for the entity
      */
-    internal fun placeEntity(entity: Entity, targetPosition: EncounterPosition) {
+    internal fun placeEntity(entity: Entity, targetPosition: XYCoordinates) {
         if (entity.hasComponent(EncounterLocationComponent::class)) {
             throw EntityAlreadyHasLocation("Specified entity ${entity.name} already has a location, cannot be placed!")
         } else if (this.positionBlocked(targetPosition)) {
@@ -102,7 +103,7 @@ internal class EncounterMap(
     }
     class EntityHasNoLocation(message: String): Exception(message)
 
-    internal fun teleportEntity(entity: Entity, targetPosition: EncounterPosition) {
+    internal fun teleportEntity(entity: Entity, targetPosition: XYCoordinates) {
         this.removeEntity(entity)
         this.placeEntity(entity, targetPosition)
     }

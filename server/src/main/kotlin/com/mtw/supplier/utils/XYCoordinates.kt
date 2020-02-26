@@ -1,9 +1,9 @@
-package com.mtw.supplier.encounter.state
+package com.mtw.supplier.utils
 
 import kotlinx.serialization.Serializable
 
 @Serializable
-data class EncounterPosition(
+data class XYCoordinates(
     val x: Int,
     val y: Int
 )

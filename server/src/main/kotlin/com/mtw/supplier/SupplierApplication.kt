@@ -2,12 +2,11 @@ package com.mtw.supplier
 
 import com.mtw.supplier.ecs.Entity
 import com.mtw.supplier.ecs.components.*
-import com.mtw.supplier.ecs.components.ai.AIComponent
 import com.mtw.supplier.ecs.components.ai.TestAIComponent
 import com.mtw.supplier.encounter.EncounterRunner
 import com.mtw.supplier.encounter.rulebook.actions.MoveAction
 import com.mtw.supplier.encounter.rulebook.actions.WaitAction
-import com.mtw.supplier.encounter.state.EncounterPosition
+import com.mtw.supplier.utils.XYCoordinates
 import com.mtw.supplier.encounter.state.EncounterState
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonConfiguration
@@ -103,9 +102,9 @@ class RootController {
 			.addComponent(SpeedComponent(20))
 
 		val state = EncounterState(15, 7)
-			.placeEntity(wolf, EncounterPosition(0, 1))
-			.placeEntity(mercenary, EncounterPosition(12, 5))
-			.placeEntity(player, EncounterPosition(5, 3))
+			.placeEntity(wolf, XYCoordinates(0, 1))
+			.placeEntity(mercenary, XYCoordinates(12, 5))
+			.placeEntity(player, XYCoordinates(5, 3))
 		EncounterRunner.runNextActiveTick(state)
 		return state
 	}

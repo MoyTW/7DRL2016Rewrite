@@ -1,6 +1,5 @@
 package com.mtw.supplier.ecs.components.ai
 
-import com.mtw.supplier.ecs.Component
 import com.mtw.supplier.ecs.Entity
 import com.mtw.supplier.ecs.components.EncounterLocationComponent
 import com.mtw.supplier.ecs.components.FactionComponent
@@ -9,7 +8,7 @@ import com.mtw.supplier.encounter.rulebook.Action
 import com.mtw.supplier.encounter.rulebook.actions.AttackAction
 import com.mtw.supplier.encounter.rulebook.actions.MoveAction
 import com.mtw.supplier.encounter.rulebook.actions.WaitAction
-import com.mtw.supplier.encounter.state.EncounterPosition
+import com.mtw.supplier.utils.XYCoordinates
 import kotlinx.serialization.Serializable
 import java.util.*
 import kotlin.math.abs
@@ -52,24 +51,24 @@ class TestAIComponent : AIComponent() {
         }
     }
 
-    fun aStarHeuristic(startPos: EncounterPosition, endPos: EncounterPosition): Double {
+    fun aStarHeuristic(startPos: XYCoordinates, endPos: XYCoordinates): Double {
         return abs(startPos.x.toDouble() - endPos.x.toDouble()) +
             abs(startPos.y.toDouble() - endPos.y.toDouble())
     }
 
     companion object {
-        val aStarComparator = Comparator<Pair<EncounterPosition, Double>> { o1, o2 -> o1!!.second.compareTo(o2!!.second) }
+        val aStarComparator = Comparator<Pair<XYCoordinates, Double>> { o1, o2 -> o1!!.second.compareTo(o2!!.second) }
     }
 
-    fun aStarWithNewGrid(startPos: EncounterPosition,
-                         endPos: EncounterPosition,
-                         encounterState: EncounterState): List<EncounterPosition>? {
-        val frontier = PriorityQueue<Pair<EncounterPosition, Double>>(aStarComparator)
+    fun aStarWithNewGrid(startPos: XYCoordinates,
+                         endPos: XYCoordinates,
+                         encounterState: EncounterState): List<XYCoordinates>? {
+        val frontier = PriorityQueue<Pair<XYCoordinates, Double>>(aStarComparator)
         frontier.add(Pair(startPos, 0.0))
 
-        val cameFrom: MutableMap<EncounterPosition, EncounterPosition> = mutableMapOf()
+        val cameFrom: MutableMap<XYCoordinates, XYCoordinates> = mutableMapOf()
 
-        val costSoFar: MutableMap<EncounterPosition, Double> = mutableMapOf()
+        val costSoFar: MutableMap<XYCoordinates, Double> = mutableMapOf()
         costSoFar[startPos] = 0.0
 
         while (frontier.isNotEmpty()) {
