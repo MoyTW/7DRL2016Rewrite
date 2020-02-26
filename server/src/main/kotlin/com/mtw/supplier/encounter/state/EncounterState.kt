@@ -5,8 +5,6 @@ import com.mtw.supplier.ecs.components.PlayerComponent
 import com.mtw.supplier.encounter.rulebook.Action
 import com.mtw.supplier.utils.XYCoordinates
 import kotlinx.serialization.Serializable
-import org.slf4j.LoggerFactory
-import java.util.*
 
 @Serializable
 class EncounterMessageLog {

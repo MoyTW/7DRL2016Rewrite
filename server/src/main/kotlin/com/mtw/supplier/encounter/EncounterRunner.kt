@@ -44,6 +44,13 @@ object EncounterRunner {
         Rulebook.resolveAction(playerAction, encounterState)
         val speedComponent = playerAction.actor.getComponent(SpeedComponent::class)
         playerAction.actor.getComponent(ActionTimeComponent::class).endTurn(speedComponent)
+
+        val hostileEntities = encounterState.entities().filter {
+            it.hasComponent(AIComponent::class) && it.hasComponent(FactionComponent::class) }
+        // TODO: Range and stuff
+        if (hostileEntities.isNotEmpty()) {
+            val target = hostileEntities[0]
+        }
     }
 
     fun runUntilPlayerReady(encounterState: EncounterState) {
