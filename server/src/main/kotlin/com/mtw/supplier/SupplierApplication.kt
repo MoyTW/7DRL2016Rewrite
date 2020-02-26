@@ -76,7 +76,7 @@ class RootController {
 
 	// TODO: Proppa level gen & not literally in controller lol
 	private final fun generateNewGameState(): EncounterState {
-		val state = EncounterState(15, 7)
+		val state = EncounterState(40, 40)
 
 		val wolf = Entity(state.getNextEntityId(), "wolf")
 			.addComponent(TestAIComponent())

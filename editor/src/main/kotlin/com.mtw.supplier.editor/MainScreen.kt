@@ -158,7 +158,7 @@ class GameScreen: View() {
 
         val tiles = encounterState.getEncounterTileMap()
         return group {
-            val tileSize = 40.0
+            val tileSize = 20.0
             for (x in 0 until tiles.width) {
                 for (y in 0 until tiles.height) {
                     val tile = tiles.getTileView(x, y)
