@@ -5,7 +5,7 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 class CollisionComponent(
-    var collidable: Boolean,
+    var blocksMovement: Boolean,
     var blocksVision: Boolean,
     var attackOnHit: Boolean,
     var selfDestructOnHit: Boolean,
@@ -13,13 +13,13 @@ class CollisionComponent(
 ): Component() {
     companion object {
         fun defaultProjectile(): CollisionComponent = CollisionComponent(
-            collidable = false,
+            blocksMovement = false,
             blocksVision = false,
             attackOnHit = true,
             selfDestructOnHit = true
         )
         fun defaultFighter(): CollisionComponent = CollisionComponent(
-            collidable = true,
+            blocksMovement = true,
             blocksVision = false,
             attackOnHit = false,
             selfDestructOnHit = false

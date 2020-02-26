@@ -6,9 +6,11 @@ import com.mtw.supplier.ecs.components.EncounterLocationComponent
 import com.mtw.supplier.utils.XYCoordinates
 import kotlinx.serialization.Serializable
 
+
 interface EncounterTileView {
-    val occupied: Boolean
-    val blocked: Boolean
+    val blocksMovement: Boolean
+    val explored: Boolean
+    val blocksVision: Boolean
 }
 
 interface EncounterTileMapView {
@@ -20,15 +22,24 @@ interface EncounterTileMapView {
 @Serializable
 private class EncounterNode(
     // Whether or not the node itself is passable
+    private var _explored: Boolean = false,
     val terrainBlocked: Boolean = false,
     val entities: MutableList<Entity> = mutableListOf()
 ): EncounterTileView {
-    // Whether or not the node itself is occupied
-    override val occupied: Boolean
-        get() = entities.any{ it.hasComponent(CollisionComponent::class) && it.getComponent(CollisionComponent::class).collidable }
 
-    override val blocked: Boolean
-        get() = terrainBlocked || occupied
+    override val blocksMovement: Boolean
+        get() = terrainBlocked ||
+            entities.any{ it.getComponentOrNull(CollisionComponent::class)?.blocksMovement ?: false }
+
+    override val explored: Boolean
+        get() = _explored
+
+    override val blocksVision: Boolean
+        get() = entities.any{ it.getComponentOrNull(CollisionComponent::class)?.blocksVision ?: false }
+
+    fun markExplored() {
+        this._explored = true
+    }
 }
 
 @Serializable
@@ -47,7 +58,7 @@ internal class EncounterMap(
     }
 
     internal fun positionBlocked(pos: XYCoordinates): Boolean {
-        return nodes[pos.x][pos.y].blocked
+        return nodes[pos.x][pos.y].blocksMovement
     }
 
     internal fun arePositionsAdjacent(pos1: XYCoordinates, pos2: XYCoordinates): Boolean {
@@ -61,7 +72,7 @@ internal class EncounterMap(
         val adjacentUnblockedPositions = mutableListOf<XYCoordinates>()
         for(x in (pos.x - 1..pos.x + 1)) {
             for (y in (pos.y - 1..pos.y + 1)) {
-                if (x != y && isInBounds(x, y) && !nodes[x][y].blocked) {
+                if (x != y && isInBounds(x, y) && !nodes[x][y].blocksMovement) {
                     adjacentUnblockedPositions.add(XYCoordinates(x, y))
                 }
             }

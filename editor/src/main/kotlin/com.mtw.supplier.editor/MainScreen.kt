@@ -8,13 +8,11 @@ import io.github.rybalkinsd.kohttp.dsl.httpPost
 import io.github.rybalkinsd.kohttp.ext.asString
 //import com.mtw.supplier.region.*
 import javafx.scene.Group
-import javafx.scene.Node
 import javafx.scene.control.ListView
 import javafx.scene.control.ScrollPane
 import javafx.scene.input.KeyCode
 import javafx.scene.input.KeyEvent
 import javafx.scene.layout.StackPane
-import javafx.scene.layout.VBox
 import javafx.scene.paint.Color
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonConfiguration
@@ -168,7 +166,7 @@ class GameScreen: View() {
                         width = tileSize
                         height = tileSize
                         stroke = Color.GRAY
-                        fill = if (tile.blocked) {
+                        fill = if (tile.blocksMovement) {
                             Color.WHITE
                         } else {
                             Color.BLACK

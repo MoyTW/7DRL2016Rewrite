@@ -90,7 +90,7 @@ class EncounterState(
     class EntityIdNotFoundException(entityId: Int): Exception("Entity id $entityId could not be found!")
 
     fun getBlockingEntityAtPosition(pos: XYCoordinates): Entity? {
-        return this.encounterMap.getEntitiesAtPosition(pos).firstOrNull { it.getComponentOrNull(CollisionComponent::class)?.collidable ?: false }
+        return this.encounterMap.getEntitiesAtPosition(pos).firstOrNull { it.getComponentOrNull(CollisionComponent::class)?.blocksMovement ?: false }
     }
 
     fun positionBlocked(pos: XYCoordinates): Boolean {
