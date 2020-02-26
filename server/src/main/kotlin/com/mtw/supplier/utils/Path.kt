@@ -32,8 +32,14 @@ object PathBuilder {
      */
     fun linePath(start: XYCoordinates, end: XYCoordinates): Path {
         val acc = mutableListOf<XYCoordinates>()
+        acc.add(start)
+
         val isVertical = start.x - end.x == 0
-        val dError: Float? = if (isVertical) { abs(end.y.toFloat() - start.y.toFloat()) / (end.x.toFloat() - start.x.toFloat()) } else null
+        val dError: Float? = if (isVertical) {
+            null
+        } else {
+            abs((end.y.toFloat() - start.y.toFloat()) / (end.x.toFloat() - start.x.toFloat()))
+        }
 
         val yErr = if (end.y - start.y > 0) 1 else -1
         val xDiff = if (end.x - start.x > 0) 1 else -1
@@ -41,7 +47,7 @@ object PathBuilder {
         var error = 0F
         var cX: Int = start.x
         var cY: Int = start.y
-        val steps: Int = 0
+        var steps: Int = 0
 
         while (!(cX == end.x && cY == end.y) && steps < 100) {
             if (isVertical) {
@@ -56,8 +62,8 @@ object PathBuilder {
                 error += dError!!
                 acc.add(XYCoordinates(cX, cY))
             }
+            steps += 1
         }
-        acc.add(XYCoordinates(cX, cY))
         return Path(acc)
     }
 }

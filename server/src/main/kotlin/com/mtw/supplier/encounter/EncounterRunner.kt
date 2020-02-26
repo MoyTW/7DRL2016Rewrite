@@ -3,9 +3,11 @@ package com.mtw.supplier.encounter
 import com.mtw.supplier.ecs.Entity
 import com.mtw.supplier.ecs.components.*
 import com.mtw.supplier.ecs.components.ai.AIComponent
+import com.mtw.supplier.ecs.components.ai.PathAIComponent
 import com.mtw.supplier.encounter.rulebook.Action
 import com.mtw.supplier.encounter.state.EncounterState
 import com.mtw.supplier.encounter.rulebook.Rulebook
+import com.mtw.supplier.utils.PathBuilder
 import org.slf4j.LoggerFactory
 
 object EncounterRunner {
@@ -41,15 +43,32 @@ object EncounterRunner {
     fun runPlayerTurn(encounterState: EncounterState, playerAction: Action) {
         if (encounterState.completed) { return }
 
+        val player = playerAction.actor
+
         Rulebook.resolveAction(playerAction, encounterState)
         val speedComponent = playerAction.actor.getComponent(SpeedComponent::class)
-        playerAction.actor.getComponent(ActionTimeComponent::class).endTurn(speedComponent)
+        player.getComponent(ActionTimeComponent::class).endTurn(speedComponent)
 
         val hostileEntities = encounterState.entities().filter {
             it.hasComponent(AIComponent::class) && it.hasComponent(FactionComponent::class) }
         // TODO: Range and stuff
         if (hostileEntities.isNotEmpty()) {
+            val playerPos = player.getComponent(EncounterLocationComponent::class).position
+
             val target = hostileEntities[0]
+            val path = PathBuilder.linePath(playerPos, target.getComponent(EncounterLocationComponent::class).position)
+            println(playerPos)
+            for (coords in path.positions) {
+                println(coords)
+            }
+
+            val laser = Entity(encounterState.getNextEntityId(), "laser")
+                .addComponent(PathAIComponent(path))
+                .addComponent(FighterComponent(5, 0, 0))
+                .addComponent(CollisionComponent(false))
+                .addComponent(ActionTimeComponent(0))
+                .addComponent(SpeedComponent(0))
+            encounterState.placeEntity(laser, playerPos, ignoreCollision = true)
         }
     }
 

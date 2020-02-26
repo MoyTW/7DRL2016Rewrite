@@ -5,21 +5,22 @@ import com.mtw.supplier.encounter.rulebook.actions.MoveAction
 import com.mtw.supplier.encounter.rulebook.actions.SelfDestructAction
 import com.mtw.supplier.utils.XYCoordinates
 import com.mtw.supplier.encounter.state.EncounterState
+import com.mtw.supplier.utils.Path
 import kotlinx.serialization.Serializable
 import java.util.*
 
 @Serializable
-class ProjectileAIComponent(
-    val path: Queue<XYCoordinates>
+class PathAIComponent(
+    val path: Path
 ) : AIComponent() {
     override var _parentId: Int? = null
 
     override fun decideNextAction(encounterState: EncounterState): Action {
-        if (path.isNotEmpty()) {
-            val nextPos = path.poll()
-            return MoveAction(this.getParent(encounterState), nextPos)
+        return if (!path.atEnd()) {
+            val nextPos = path.step()
+            MoveAction(this.getParent(encounterState), nextPos)
         } else {
-            return SelfDestructAction(this.getParent(encounterState))
+            SelfDestructAction(this.getParent(encounterState))
         }
     }
 }

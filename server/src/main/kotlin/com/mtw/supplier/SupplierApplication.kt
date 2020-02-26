@@ -76,7 +76,9 @@ class RootController {
 
 	// TODO: Proppa level gen & not literally in controller lol
 	private final fun generateNewGameState(): EncounterState {
-		val wolf = Entity(1, "wolf")
+		val state = EncounterState(15, 7)
+
+		val wolf = Entity(state.getNextEntityId(), "wolf")
 			.addComponent(TestAIComponent())
 			.addComponent(HpComponent(20, 20))
 			.addComponent(FighterComponent(5, 5, 5))
@@ -84,7 +86,7 @@ class RootController {
 			.addComponent(CollisionComponent(true))
 			.addComponent(ActionTimeComponent(5))
 			.addComponent(SpeedComponent(5))
-		val mercenary = Entity(2, "strongMercenary")
+		val mercenary = Entity(state.getNextEntityId(), "strongMercenary")
 			.addComponent(TestAIComponent())
 			.addComponent(HpComponent(50, 50))
 			.addComponent(FighterComponent(5, 100, 100))
@@ -92,7 +94,7 @@ class RootController {
 			.addComponent(CollisionComponent(true))
 			.addComponent(ActionTimeComponent(30))
 			.addComponent(SpeedComponent(30))
-		val player = Entity(3, "player")
+		val player = Entity(state.getNextEntityId(), "player")
 			.addComponent(PlayerComponent())
 			.addComponent(HpComponent(50, 50))
 			.addComponent(FighterComponent(5, 100, 100))
@@ -101,10 +103,9 @@ class RootController {
 			.addComponent(ActionTimeComponent(5))
 			.addComponent(SpeedComponent(20))
 
-		val state = EncounterState(15, 7)
-			.placeEntity(wolf, XYCoordinates(0, 1))
-			.placeEntity(mercenary, XYCoordinates(12, 5))
-			.placeEntity(player, XYCoordinates(5, 3))
+		state.placeEntity(wolf, XYCoordinates(0, 1))
+			 .placeEntity(mercenary, XYCoordinates(12, 5))
+			 .placeEntity(player, XYCoordinates(5, 3))
 		EncounterRunner.runNextActiveTick(state)
 		return state
 	}

@@ -78,10 +78,10 @@ internal class EncounterMap(
      * @throws EntityAlreadyHasLocation when a node already has a location
      * @throws NodeHasInsufficientSpaceException when node cannot find space for the entity
      */
-    internal fun placeEntity(entity: Entity, targetPosition: XYCoordinates) {
+    internal fun placeEntity(entity: Entity, targetPosition: XYCoordinates, ignoreCollision: Boolean) {
         if (entity.hasComponent(EncounterLocationComponent::class)) {
             throw EntityAlreadyHasLocation("Specified entity ${entity.name} already has a location, cannot be placed!")
-        } else if (this.positionBlocked(targetPosition)) {
+        } else if (!ignoreCollision && this.positionBlocked(targetPosition)) {
             throw NodeHasInsufficientSpaceException("Node $targetPosition is full, cannot place ${entity.name}")
         }
 
@@ -103,9 +103,9 @@ internal class EncounterMap(
     }
     class EntityHasNoLocation(message: String): Exception(message)
 
-    internal fun teleportEntity(entity: Entity, targetPosition: XYCoordinates) {
+    internal fun teleportEntity(entity: Entity, targetPosition: XYCoordinates, ignoreCollision: Boolean) {
         this.removeEntity(entity)
-        this.placeEntity(entity, targetPosition)
+        this.placeEntity(entity, targetPosition, ignoreCollision)
     }
 
 }
