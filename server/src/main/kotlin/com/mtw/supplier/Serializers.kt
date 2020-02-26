@@ -2,6 +2,7 @@ package com.mtw.supplier
 
 import com.mtw.supplier.ecs.Component
 import com.mtw.supplier.ecs.components.*
+import com.mtw.supplier.ecs.components.ai.AIComponent
 import kotlinx.serialization.modules.SerialModule
 import kotlinx.serialization.modules.SerializersModule
 

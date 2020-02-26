@@ -2,6 +2,7 @@ package com.mtw.supplier.encounter
 
 import com.mtw.supplier.ecs.Entity
 import com.mtw.supplier.ecs.components.*
+import com.mtw.supplier.ecs.components.ai.AIComponent
 import com.mtw.supplier.encounter.rulebook.Action
 import com.mtw.supplier.encounter.state.EncounterState
 import com.mtw.supplier.encounter.rulebook.Rulebook

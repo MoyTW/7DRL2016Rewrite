@@ -1,7 +1,7 @@
 package com.mtw.supplier.encounter.rulebook
 
 import com.mtw.supplier.ecs.Entity
-import com.mtw.supplier.ecs.components.AIComponent
+import com.mtw.supplier.ecs.components.ai.AIComponent
 import com.mtw.supplier.ecs.components.EncounterLocationComponent
 import com.mtw.supplier.ecs.components.FighterComponent
 import com.mtw.supplier.ecs.components.HpComponent
