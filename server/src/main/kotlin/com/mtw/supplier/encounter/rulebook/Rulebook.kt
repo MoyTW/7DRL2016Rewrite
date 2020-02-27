@@ -13,6 +13,9 @@ import kotlin.math.roundToInt
 
 object Rulebook {
 
+    fun resolveActions(actions: List<Action>, encounterState: EncounterState) {
+        actions.forEach { resolveAction(it, encounterState) }
+    }
 
     fun resolveAction(action: Action, encounterState: EncounterState) {
         when (action.actionType) {
@@ -80,14 +83,20 @@ object Rulebook {
     }
 
     private fun resolveFireProjectileAction(action: FireProjectileAction, encounterState: EncounterState) {
-        val projectile = Entity(encounterState.getNextEntityId(), action.projectileType.displayName)
-            .addComponent(PathAIComponent(action.path))
-            .addComponent(FighterComponent(action.damage, 0, 0))
-            .addComponent(CollisionComponent.defaultProjectile())
-            .addComponent(ActionTimeComponent(action.speed))
-            .addComponent(SpeedComponent(action.speed))
-        encounterState.placeEntity(projectile, action.path.currentPosition(), ignoreCollision = true)
-        encounterState.messageLog.logAction(action, "SUCCESS", "${action.actor.name} fired ${action.projectileType}")
+        val shooterPos = action.actor.getComponent(EncounterLocationComponent::class).position
+        repeat (action.numProjectiles) {
+            val path = action.pathBuilder.build(shooterPos)
+            val projectile = Entity(encounterState.getNextEntityId(), action.projectileType.displayName)
+                .addComponent(PathAIComponent(path))
+                .addComponent(FighterComponent(action.damage, 0, 0))
+                .addComponent(CollisionComponent.defaultProjectile())
+                .addComponent(ActionTimeComponent(action.speed))
+                .addComponent(SpeedComponent(action.speed))
+            encounterState.placeEntity(projectile, path.currentPosition(), ignoreCollision = true)
+
+            encounterState.messageLog.logAction(action, "SUCCESS",
+                "${action.actor.name} at $shooterPos fired ${action.projectileType} from ${path.currentPosition()}")
+        }
     }
 
     private fun resolveMoveAction(action: MoveAction, encounterState: EncounterState) {

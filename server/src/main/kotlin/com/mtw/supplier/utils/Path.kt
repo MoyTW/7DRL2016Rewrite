@@ -26,7 +26,25 @@ class Path(val positions: List<XYCoordinates>) {
     }
 }
 
-object PathBuilder {
+interface PathBuilder {
+    fun build(startPos: XYCoordinates): Path
+}
+
+class LinePathBuilder(val targetPos: XYCoordinates, val spread: Int = 0): PathBuilder {
+    override fun build(startPos: XYCoordinates): Path {
+        val end = if (spread > 0) {
+            // What? This is the same formula as the one I wrote in the 7DRL2016 but it's an incoherent formula
+            // To be honest, though, I didn't have a...ton of time, so, that might be why. Maybe I just assumed spread
+            // was 1 or something...?
+            val dx: Int = (0..(spread * 2 + 1)).random() - 2
+            val dy: Int = (0..(spread * 2 + 1)).random() - 2
+            XYCoordinates(targetPos.x + dx, targetPos.y + dy)
+        } else {
+            targetPos
+        }
+        return linePath(startPos, end)
+    }
+
     /**
      * Defines a straight-line path from (x0, y0) to (x1, y1), inclusive.
      */

@@ -2,6 +2,7 @@ package com.mtw.supplier
 
 import com.mtw.supplier.ecs.Entity
 import com.mtw.supplier.ecs.components.*
+import com.mtw.supplier.ecs.components.ai.EnemyScoutAIComponent
 import com.mtw.supplier.ecs.components.ai.TestAIComponent
 import com.mtw.supplier.encounter.EncounterRunner
 import com.mtw.supplier.encounter.rulebook.actions.MoveAction
@@ -78,34 +79,27 @@ class RootController {
 	private final fun generateNewGameState(): EncounterState {
 		val state = EncounterState(40, 40)
 
-		val wolf = Entity(state.getNextEntityId(), "wolf")
-			.addComponent(TestAIComponent())
-			.addComponent(HpComponent(20, 20))
-			.addComponent(FighterComponent(5, 5, 5))
+		val activatedAi = EnemyScoutAIComponent()
+		activatedAi.isActive = true
+		val scout = Entity(state.getNextEntityId(), "Scout")
+			.addComponent(activatedAi)
+			.addComponent(HpComponent(10, 10))
+			.addComponent(FighterComponent(0, 0, 0))
 			.addComponent(FactionComponent(0))
 			.addComponent(CollisionComponent.defaultFighter())
-			.addComponent(ActionTimeComponent(5))
-			.addComponent(SpeedComponent(5))
-		val mercenary = Entity(state.getNextEntityId(), "strongMercenary")
-			.addComponent(TestAIComponent())
-			.addComponent(HpComponent(50, 50))
-			.addComponent(FighterComponent(5, 100, 100))
-			.addComponent(FactionComponent(2))
-			.addComponent(CollisionComponent.defaultFighter())
-			.addComponent(ActionTimeComponent(30))
-			.addComponent(SpeedComponent(30))
+			.addComponent(ActionTimeComponent(75))
+			.addComponent(SpeedComponent(75))
 		val player = Entity(state.getNextEntityId(), "player")
 			.addComponent(PlayerComponent())
 			.addComponent(HpComponent(50, 50))
 			.addComponent(FighterComponent(5, 100, 100))
 			.addComponent(FactionComponent(2))
 			.addComponent(CollisionComponent.defaultFighter())
-			.addComponent(ActionTimeComponent(5))
-			.addComponent(SpeedComponent(20))
+			.addComponent(ActionTimeComponent(100))
+			.addComponent(SpeedComponent(100))
 
-		state.placeEntity(wolf, XYCoordinates(0, 1))
-			 .placeEntity(mercenary, XYCoordinates(12, 5))
-			 .placeEntity(player, XYCoordinates(5, 3))
+		state.placeEntity(scout, XYCoordinates(10, 10))
+			 .placeEntity(player, XYCoordinates(25, 25))
 		EncounterRunner.runUntilPlayerReady(state)
 		return state
 	}

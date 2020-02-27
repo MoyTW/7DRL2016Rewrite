@@ -9,6 +9,7 @@ import com.mtw.supplier.encounter.state.EncounterState
 import com.mtw.supplier.encounter.rulebook.Rulebook
 import com.mtw.supplier.encounter.rulebook.actions.FireProjectileAction
 import com.mtw.supplier.encounter.rulebook.actions.ProjectileType
+import com.mtw.supplier.utils.LinePathBuilder
 import com.mtw.supplier.utils.PathBuilder
 import org.slf4j.LoggerFactory
 
@@ -45,18 +46,14 @@ object EncounterRunner {
     private fun fireLaser(encounterState: EncounterState, player: Entity) {
         val hostileEntities = encounterState.entities().filter {
             it.hasComponent(AIComponent::class) && it.hasComponent(FactionComponent::class) }
-        // TODO: Range and stuff
+        // TODO: Range and FOV stuff
         if (hostileEntities.isNotEmpty()) {
             val playerPos = player.getComponent(EncounterLocationComponent::class).position
 
             val target = hostileEntities[0]
-            val path = PathBuilder.linePath(playerPos, target.getComponent(EncounterLocationComponent::class).position)
-            println(playerPos)
-            for (coords in path.positions) {
-                println(coords)
-            }
-
-            Rulebook.resolveAction(FireProjectileAction(player, 5, path, 0, ProjectileType.LASER), encounterState)
+            val pathBuilder = LinePathBuilder(target.getComponent(EncounterLocationComponent::class).position)
+            // TODO: Do damage
+            //Rulebook.resolveAction(FireProjectileAction(player, 0, pathBuilder, 0, ProjectileType.LASER), encounterState)
         }
     }
 
@@ -104,20 +101,23 @@ object EncounterRunner {
             val entity = readyEntities.first()
             readyEntities.removeAt(0)
             if (entity.hasComponent(AIComponent::class)) {
-                val nextAction = entity.getComponent(AIComponent::class).decideNextAction(encounterState)
-                logger.debug("Action: $nextAction")
-                Rulebook.resolveAction(nextAction, encounterState)
+                val nextActions = entity.getComponent(AIComponent::class).decideNextActions(encounterState)
+                logger.debug("Actions: $nextActions")
+                Rulebook.resolveActions(nextActions, encounterState)
                 val speedComponent = entity.getComponent(SpeedComponent::class)
                 entity.getComponent(ActionTimeComponent::class).endTurn(speedComponent)
             }
         }
 
         // lol
-        val remainingAIEntities = encounterState.entities().filter { it.hasComponent(AIComponent::class) }
+        val remainingAIEntities = encounterState.entities().filter {
+            it.hasComponent(AIComponent::class) && it.hasComponent(FactionComponent::class)
+        }
         val anyHostileRelationships = remainingAIEntities.any { leftEntity ->
+            val faction = leftEntity.getComponent(FactionComponent::class)
             remainingAIEntities.any { rightEntity ->
-                leftEntity.getComponent(FactionComponent::class).isHostileTo(rightEntity.id, encounterState)
-            }
+                faction.isHostileTo(rightEntity.id, encounterState)
+            } || faction.isHostileTo(encounterState.playerEntity().id, encounterState)
         }
         if (!anyHostileRelationships) {
             logger.info("!!!!!!!!!! ENCOUNTER HAS NO REMAINING HOSTILES, SHOULD END! !!!!!!!!!!")

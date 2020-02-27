@@ -14,13 +14,14 @@ class PathAIComponent(
     val path: Path
 ) : AIComponent() {
     override var _parentId: Int? = null
+    override var isActive: Boolean = true
 
-    override fun decideNextAction(encounterState: EncounterState): Action {
+    override fun decideNextActions(encounterState: EncounterState): List<Action> {
         return if (!path.atEnd()) {
             val nextPos = path.step()
-            MoveAction(this.getParent(encounterState), nextPos)
+            listOf(MoveAction(this.getParent(encounterState), nextPos))
         } else {
-            SelfDestructAction(this.getParent(encounterState))
+            listOf(SelfDestructAction(this.getParent(encounterState)))
         }
     }
 }

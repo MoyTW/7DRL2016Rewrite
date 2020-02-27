@@ -8,5 +8,6 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 abstract class AIComponent : Component() {
-    abstract fun decideNextAction(encounterState: EncounterState): Action
+    abstract var isActive: Boolean
+    abstract fun decideNextActions(encounterState: EncounterState): List<Action>
 }
