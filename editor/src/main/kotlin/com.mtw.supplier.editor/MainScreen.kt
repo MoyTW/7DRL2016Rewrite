@@ -2,6 +2,9 @@ package com.mtw.supplier.editor
 
 import com.mtw.supplier.Direction
 import com.mtw.supplier.Serializers
+import com.mtw.supplier.ecs.components.PlayerComponent
+import com.mtw.supplier.ecs.components.ai.AIComponent
+import com.mtw.supplier.ecs.components.ai.PathAIComponent
 import com.mtw.supplier.encounter.state.EncounterState
 import com.mtw.supplier.utils.XYCoordinates
 import io.github.rybalkinsd.kohttp.dsl.httpGet
@@ -154,7 +157,8 @@ class GameScreen: View() {
         val UNEXPLORED_COLOR = Color.BLACK
         val EXPLORED_COLOR = Color.DARKGRAY
         val VISIBLE_COLOR = Color.LIGHTGRAY
-        val OCCUPIED_COLOR = Color.RED
+        val PROJECTILE_COLOR = Color.ORANGERED
+        val ENEMY_COLOR = Color.DARKRED
 
         if (encounterState == null) {
             return group()
@@ -178,10 +182,38 @@ class GameScreen: View() {
                         fill = when {
                             tile?.explored == false -> { UNEXPLORED_COLOR }
                             !fov!!.isInFoV(XYCoordinates(x, y)) -> { EXPLORED_COLOR }
-                            tile?.entities?.isNotEmpty() == true -> { OCCUPIED_COLOR }
                             else -> { VISIBLE_COLOR }
                         }
                     }
+                    tile?.entities?.map {
+                        if (it.hasComponent(PathAIComponent::class)) {
+                            circle {
+                                centerX = x * tileSize - (tileSize / 2)
+                                centerY = -(y * tileSize - (tileSize / 2))
+                                radius = tileSize / 4
+                                fill = PROJECTILE_COLOR
+                            }
+                        } else if (it.hasComponent(AIComponent::class)) {
+                            rectangle {
+                                this.x = x * tileSize
+                                this.y = -y * tileSize
+                                width = tileSize * .75
+                                height = tileSize * .75
+                                rotate = 45.0
+                                fill = ENEMY_COLOR
+                            }
+                        } else if (it.hasComponent(PlayerComponent::class)) {
+                            rectangle {
+                                this.x = x * tileSize
+                                this.y = -y * tileSize
+                                width = tileSize * .75
+                                height = tileSize * .75
+                                rotate = 45.0
+                                fill = Color.GREEN
+                            }
+                        } else { }
+                    }
+
                 }
             }
         }
