@@ -24,19 +24,21 @@ interface EncounterTileMapView {
 private class EncounterNode(
     // Whether or not the node itself is passable
     private var _explored: Boolean = false,
-    val terrainBlocked: Boolean = false,
+    var terrainBlocksMovement: Boolean = false,
+    var terrainBlocksVision: Boolean = false,
     override val entities: MutableList<Entity> = mutableListOf()
 ): EncounterTileView {
 
     override val blocksMovement: Boolean
-        get() = terrainBlocked ||
+        get() = terrainBlocksMovement ||
             entities.any{ it.getComponentOrNull(CollisionComponent::class)?.blocksMovement ?: false }
 
     override val explored: Boolean
         get() = _explored
 
     override val blocksVision: Boolean
-        get() = entities.any{ it.getComponentOrNull(CollisionComponent::class)?.blocksVision ?: false }
+        get() = terrainBlocksVision ||
+            entities.any{ it.getComponentOrNull(CollisionComponent::class)?.blocksVision ?: false }
 
     fun markExplored() {
         this._explored = true
@@ -61,6 +63,11 @@ internal class EncounterMap(
 
     internal fun isInBounds(x: Int, y: Int): Boolean {
         return x in 0 until width && y in 0 until height
+    }
+
+    internal fun markBlockStatus(pos: XYCoordinates, terrainBlocksMovement: Boolean, terrainBlocksVision: Boolean) {
+        nodes[pos.x][pos.y].terrainBlocksMovement = terrainBlocksMovement
+        nodes[pos.x][pos.y].terrainBlocksVision = terrainBlocksVision
     }
 
     internal fun markExplored(pos: XYCoordinates) {
