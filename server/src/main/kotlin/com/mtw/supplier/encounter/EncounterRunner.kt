@@ -7,6 +7,8 @@ import com.mtw.supplier.ecs.components.ai.PathAIComponent
 import com.mtw.supplier.encounter.rulebook.Action
 import com.mtw.supplier.encounter.state.EncounterState
 import com.mtw.supplier.encounter.rulebook.Rulebook
+import com.mtw.supplier.encounter.rulebook.actions.FireProjectileAction
+import com.mtw.supplier.encounter.rulebook.actions.ProjectileType
 import com.mtw.supplier.utils.PathBuilder
 import org.slf4j.LoggerFactory
 
@@ -54,13 +56,7 @@ object EncounterRunner {
                 println(coords)
             }
 
-            val laser = Entity(encounterState.getNextEntityId(), "laser")
-                .addComponent(PathAIComponent(path))
-                .addComponent(FighterComponent(5, 0, 0))
-                .addComponent(CollisionComponent.defaultProjectile())
-                .addComponent(ActionTimeComponent(0))
-                .addComponent(SpeedComponent(0))
-            encounterState.placeEntity(laser, playerPos, ignoreCollision = true)
+            Rulebook.resolveAction(FireProjectileAction(player, 5, path, 0, ProjectileType.LASER), encounterState)
         }
     }
 

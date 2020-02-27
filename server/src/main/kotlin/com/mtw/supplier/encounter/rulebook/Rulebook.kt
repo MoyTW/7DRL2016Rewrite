@@ -1,16 +1,11 @@
 package com.mtw.supplier.encounter.rulebook
 
 import com.mtw.supplier.ecs.Entity
-import com.mtw.supplier.ecs.components.CollisionComponent
+import com.mtw.supplier.ecs.components.*
 import com.mtw.supplier.ecs.components.ai.AIComponent
-import com.mtw.supplier.ecs.components.EncounterLocationComponent
-import com.mtw.supplier.ecs.components.FighterComponent
-import com.mtw.supplier.ecs.components.HpComponent
+import com.mtw.supplier.ecs.components.ai.PathAIComponent
+import com.mtw.supplier.encounter.rulebook.actions.*
 import com.mtw.supplier.encounter.state.EncounterState
-import com.mtw.supplier.encounter.rulebook.actions.AttackAction
-import com.mtw.supplier.encounter.rulebook.actions.MoveAction
-import com.mtw.supplier.encounter.rulebook.actions.SelfDestructAction
-import com.mtw.supplier.encounter.rulebook.actions.WaitAction
 import com.mtw.supplier.encounter.state.EncounterMessageLog
 import java.util.*
 import kotlin.math.ceil
@@ -21,48 +16,16 @@ object Rulebook {
 
     fun resolveAction(action: Action, encounterState: EncounterState) {
         when (action.actionType) {
-            ActionType.MOVE -> resolveMoveAction(action as MoveAction, encounterState)
             ActionType.ATTACK -> resolveAttackAction(action as AttackAction, encounterState)
+            ActionType.FIRE_PROJECTILE -> resolveFireProjectileAction(action as FireProjectileAction, encounterState)
+            ActionType.MOVE -> resolveMoveAction(action as MoveAction, encounterState)
             ActionType.USE_ITEM -> TODO()
             ActionType.WAIT -> resolveWaitAction(action as WaitAction, encounterState.messageLog)
             ActionType.SELF_DESTRUCT -> resolveSelfDestructionAction(action as SelfDestructAction, encounterState)
         }
     }
 
-    private fun resolveMoveAction(action: MoveAction, encounterState: EncounterState) {
-        val currentPosition = action.actor
-            .getComponent(EncounterLocationComponent::class)
-            .position
-
-        val targetNodeSameAsCurrentNode = currentPosition == action.targetPosition
-        val targetNodeBlocked = encounterState.positionBlocked(action.targetPosition)
-        val targetNodeAdjacent = encounterState.arePositionsAdjacent(currentPosition, action.targetPosition)
-        
-        if (targetNodeSameAsCurrentNode) {
-            encounterState.messageLog.logAction(action, "INVALID", "Target node ${action.targetPosition} and source node are identical!")
-        } else if (targetNodeBlocked) {
-            val collisionComponent = action.actor.getComponent(CollisionComponent::class)
-            if (collisionComponent.attackOnHit) {
-                val blockingEntity = encounterState.getBlockingEntityAtPosition(action.targetPosition)
-                if (blockingEntity != null) {
-                    resolveAction(AttackAction(action.actor, blockingEntity), encounterState)
-                }
-            }
-            if (collisionComponent.selfDestructOnHit) {
-                resolveAction(SelfDestructAction(action.actor), encounterState)
-            } else {
-                encounterState.messageLog.logAction(action, "INVALID", "Target node ${action.targetPosition} blocked!")
-            }
-        } else if (!targetNodeAdjacent) {
-            encounterState.messageLog.logAction(action, "INVALID", "Current node $currentPosition is not adjacent to target node ${action.targetPosition}!")
-        } else {
-            encounterState.teleportEntity(action.actor, action.targetPosition)
-            encounterState.messageLog.logAction(action, "SUCCESS", "${action.actor.name} $currentPosition to ${action.targetPosition}")
-        }
-    }
-
     private fun resolveAttackAction(action: AttackAction, encounterState: EncounterState) {
-        println("ATTACK!")
         val attacker = action.actor
         val attackerPos = attacker.getComponent(EncounterLocationComponent::class).position
 
@@ -113,6 +76,49 @@ object Rulebook {
             // TODO: "No AI == dead" is a sketchy definition of dead!
             entity.removeComponent(AIComponent::class)
             messageLog.logEvent("DEATH", "[${entity.name}] is dead!")
+        }
+    }
+
+    private fun resolveFireProjectileAction(action: FireProjectileAction, encounterState: EncounterState) {
+        val projectile = Entity(encounterState.getNextEntityId(), action.projectileType.displayName)
+            .addComponent(PathAIComponent(action.path))
+            .addComponent(FighterComponent(action.damage, 0, 0))
+            .addComponent(CollisionComponent.defaultProjectile())
+            .addComponent(ActionTimeComponent(action.speed))
+            .addComponent(SpeedComponent(action.speed))
+        encounterState.placeEntity(projectile, action.path.currentPosition(), ignoreCollision = true)
+        encounterState.messageLog.logAction(action, "SUCCESS", "${action.actor.name} fired ${action.projectileType}")
+    }
+
+    private fun resolveMoveAction(action: MoveAction, encounterState: EncounterState) {
+        val currentPosition = action.actor
+            .getComponent(EncounterLocationComponent::class)
+            .position
+
+        val targetNodeSameAsCurrentNode = currentPosition == action.targetPosition
+        val targetNodeBlocked = encounterState.positionBlocked(action.targetPosition)
+        val targetNodeAdjacent = encounterState.arePositionsAdjacent(currentPosition, action.targetPosition)
+
+        if (targetNodeSameAsCurrentNode) {
+            encounterState.messageLog.logAction(action, "INVALID", "Target node ${action.targetPosition} and source node are identical!")
+        } else if (targetNodeBlocked) {
+            val collisionComponent = action.actor.getComponent(CollisionComponent::class)
+            if (collisionComponent.attackOnHit) {
+                val blockingEntity = encounterState.getBlockingEntityAtPosition(action.targetPosition)
+                if (blockingEntity != null) {
+                    resolveAction(AttackAction(action.actor, blockingEntity), encounterState)
+                }
+            }
+            if (collisionComponent.selfDestructOnHit) {
+                resolveAction(SelfDestructAction(action.actor), encounterState)
+            } else {
+                encounterState.messageLog.logAction(action, "INVALID", "Target node ${action.targetPosition} blocked!")
+            }
+        } else if (!targetNodeAdjacent) {
+            encounterState.messageLog.logAction(action, "INVALID", "Current node $currentPosition is not adjacent to target node ${action.targetPosition}!")
+        } else {
+            encounterState.teleportEntity(action.actor, action.targetPosition)
+            encounterState.messageLog.logAction(action, "SUCCESS", "${action.actor.name} $currentPosition to ${action.targetPosition}")
         }
     }
 

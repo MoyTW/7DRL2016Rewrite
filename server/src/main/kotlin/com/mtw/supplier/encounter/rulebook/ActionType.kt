@@ -5,5 +5,6 @@ enum class ActionType {
     ATTACK,
     USE_ITEM,
     WAIT,
-    SELF_DESTRUCT
+    SELF_DESTRUCT,
+    FIRE_PROJECTILE
 }
