@@ -157,21 +157,21 @@ class GameScreen: View() {
     }
 
     private fun mapXToScreenXCenter(x: Int): Double {
-        return (x * TILE_SIZE).toDouble() + (TILE_SIZE.toDouble() / 2f)
+        return (x * TILE_SIZE) + (TILE_SIZE / 2f)
     }
 
     private fun mapYToScreenYCenter(y: Int): Double {
-        return -(y * TILE_SIZE.toDouble() + (TILE_SIZE.toDouble() / 2f))
+        return -(y * TILE_SIZE + (TILE_SIZE / 2f))
     }
 
     companion object {
-        val TILE_SIZE = 20
+        val TILE_SIZE = 20.0
     }
 
     private fun mapShapes(encounterState: EncounterState?): Group {
         val UNEXPLORED_COLOR = Color.BLACK
-        val EXPLORED_COLOR = Color.DARKGRAY
-        val VISIBLE_COLOR = Color.LIGHTGRAY
+        val EXPLORED_COLOR = Color.GRAY
+        val VISIBLE_COLOR = Color.DARKGRAY
         val PROJECTILE_COLOR = Color.ORANGERED
         val PROJECTILE_PATH_COLOR = Color.ORCHID
         val ENEMY_COLOR = Color.DARKRED
@@ -184,17 +184,18 @@ class GameScreen: View() {
         val tiles = encounterState.getEncounterTileMap()
         val fov = encounterState.fovCache
 
-        return group {
-            val tileSize = 20.0
-            for (x in 0 until tiles.width) {
-                for (y in 0 until tiles.height) {
+        val g = group()
 
-                    val tile = tiles.getTileView(x, y)
+        for (x in 0 until tiles.width) {
+            for (y in 0 until tiles.height) {
+
+                val tile = tiles.getTileView(x, y)
+                g.group {
                     rectangle {
-                        this.x = x * tileSize
-                        this.y = -y * tileSize - tileSize
-                        width = tileSize
-                        height = tileSize
+                        this.x = x * TILE_SIZE
+                        this.y = -y * TILE_SIZE - TILE_SIZE
+                        width = TILE_SIZE
+                        height = TILE_SIZE
                         stroke = Color.WHITE
                         fill = when {
                             tile?.explored == false -> { UNEXPLORED_COLOR }
@@ -204,27 +205,29 @@ class GameScreen: View() {
                     }
                 }
             }
-            val mapEntities = encounterState.entities().filter { it.hasComponent(EncounterLocationComponent::class) }
-            val nonPathAIEntities = mapEntities.filter { it.hasComponent(AIComponent::class) && !it.hasComponent(PathAIComponent::class) }
-            val pathEntities = mapEntities.filter { it.hasComponent(PathAIComponent::class) }
+        }
+        val mapEntities = encounterState.entities().filter { it.hasComponent(EncounterLocationComponent::class) }
+        val nonPathAIEntities = mapEntities.filter { it.hasComponent(AIComponent::class) && !it.hasComponent(PathAIComponent::class) }
+        val pathEntities = mapEntities.filter { it.hasComponent(PathAIComponent::class) }
 
-            pathEntities.map {
-                val path = it.getComponent(PathAIComponent::class).path
-                val projectileSpeed = it.getComponent(SpeedComponent::class).speed
-                val projectileTicks = it.getComponent(ActionTimeComponent::class)!!.ticksUntilTurn
+        pathEntities.map {
+            val path = it.getComponent(PathAIComponent::class).path
+            val projectileSpeed = it.getComponent(SpeedComponent::class).speed
+            val projectileTicks = it.getComponent(ActionTimeComponent::class)!!.ticksUntilTurn
 
-                val playerSpeed = encounterState.playerEntity().getComponent(SpeedComponent::class).speed
-                val playerTicks = encounterState.playerEntity().getComponent(ActionTimeComponent::class)!!.ticksUntilTurn
-                if (projectileTicks <= playerTicks) {
-                    val turns = ((playerTicks - projectileTicks) + playerSpeed) / projectileSpeed
-                    val stops = path.project(turns)
-                    if (stops.size > 1) {
-                        for (stop in stops.subList(1, stops.size)) {
+            val playerSpeed = encounterState.playerEntity().getComponent(SpeedComponent::class).speed
+            val playerTicks = encounterState.playerEntity().getComponent(ActionTimeComponent::class)!!.ticksUntilTurn
+            if (projectileTicks <= playerTicks) {
+                val turns = ((playerTicks - projectileTicks) + playerSpeed) / projectileSpeed
+                val stops = path.project(turns)
+                if (stops.size > 1) {
+                    for (stop in stops.subList(1, stops.size)) {
+                        g.group {
                             rectangle {
-                                this.x = stop.x * tileSize
-                                this.y = -(stop.y * tileSize + tileSize)
-                                width = tileSize
-                                height = tileSize
+                                this.x = stop.x * TILE_SIZE
+                                this.y = -(stop.y * TILE_SIZE + TILE_SIZE)
+                                width = TILE_SIZE
+                                height = TILE_SIZE
                                 stroke = Color.WHITE
                                 fill = PROJECTILE_PATH_COLOR
                             }
@@ -232,18 +235,20 @@ class GameScreen: View() {
                     }
                 }
             }
-            pathEntities.map {
-                val path = it.getComponent(PathAIComponent::class).path
-                val projectileSpeed = it.getComponent(SpeedComponent::class).speed
-                val projectileTicks = it.getComponent(ActionTimeComponent::class)!!.ticksUntilTurn
+        }
+        pathEntities.map {
+            val path = it.getComponent(PathAIComponent::class).path
+            val projectileSpeed = it.getComponent(SpeedComponent::class).speed
+            val projectileTicks = it.getComponent(ActionTimeComponent::class)!!.ticksUntilTurn
 
-                val playerSpeed = encounterState.playerEntity().getComponent(SpeedComponent::class).speed
-                val playerTicks = encounterState.playerEntity().getComponent(ActionTimeComponent::class)!!.ticksUntilTurn
-                if (projectileTicks <= playerTicks) {
-                    val turns = ((playerTicks - projectileTicks) + playerSpeed) / projectileSpeed
-                    val stops = path.project(turns)
-                    if (stops.isNotEmpty()) {
-                        for (stop in stops) {
+            val playerSpeed = encounterState.playerEntity().getComponent(SpeedComponent::class).speed
+            val playerTicks = encounterState.playerEntity().getComponent(ActionTimeComponent::class)!!.ticksUntilTurn
+            if (projectileTicks <= playerTicks) {
+                val turns = ((playerTicks - projectileTicks) + playerSpeed) / projectileSpeed
+                val stops = path.project(turns)
+                if (stops.isNotEmpty()) {
+                    for (stop in stops) {
+                        g.group {
                             line(mapXToScreenXCenter(stops.first().x),
                                 mapYToScreenYCenter(stops.first().y),
                                 mapXToScreenXCenter(stops.last().x),
@@ -252,34 +257,41 @@ class GameScreen: View() {
                     }
                 }
             }
-            pathEntities.map {
-                val entityPos = it.getComponent(EncounterLocationComponent::class).position
+        }
+        pathEntities.map {
+            val entityPos = it.getComponent(EncounterLocationComponent::class).position
+            g.group {
                 circle {
                     centerX = mapXToScreenXCenter(entityPos.x)
                     centerY = mapYToScreenYCenter(entityPos.y)
-                    radius = tileSize / 6
+                    radius = TILE_SIZE / 6
                     fill = PROJECTILE_COLOR
                 }
             }
+        }
 
-            nonPathAIEntities.map {
-                val entityPos = it.getComponent(EncounterLocationComponent::class).position
+        nonPathAIEntities.map {
+            val entityPos = it.getComponent(EncounterLocationComponent::class).position
+            g.group {
                 circle {
                     centerX = mapXToScreenXCenter(entityPos.x)
                     centerY = mapYToScreenYCenter(entityPos.y)
-                    radius = tileSize / 2 - 1
+                    radius = TILE_SIZE / 2 - 1
                     fill = ENEMY_COLOR
                 }
             }
+        }
 
-            val playerPos = encounterState.playerEntity().getComponent(EncounterLocationComponent::class).position
+        val playerPos = encounterState.playerEntity().getComponent(EncounterLocationComponent::class).position
+        g.group {
             circle {
                 centerX = mapXToScreenXCenter(playerPos.x)
                 centerY = mapYToScreenYCenter(playerPos.y)
-                radius = tileSize / 2 - 1
+                radius = TILE_SIZE / 2 - 1
                 fill = PLAYER_COLOR
             }
         }
+        return g
     }
 
     private fun encounterStateRender() {
