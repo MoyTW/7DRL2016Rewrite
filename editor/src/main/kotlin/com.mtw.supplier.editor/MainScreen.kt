@@ -173,6 +173,7 @@ class GameScreen: View() {
         val EXPLORED_COLOR = Color.DARKGRAY
         val VISIBLE_COLOR = Color.LIGHTGRAY
         val PROJECTILE_COLOR = Color.ORANGERED
+        val PROJECTILE_PATH_COLOR = Color.ORCHID
         val ENEMY_COLOR = Color.DARKRED
         val PLAYER_COLOR = Color.GREEN
 
@@ -207,25 +208,31 @@ class GameScreen: View() {
             val nonPathAIEntities = mapEntities.filter { it.hasComponent(AIComponent::class) && !it.hasComponent(PathAIComponent::class) }
             val pathEntities = mapEntities.filter { it.hasComponent(PathAIComponent::class) }
 
-            nonPathAIEntities.map {
-                val entityPos = it.getComponent(EncounterLocationComponent::class).position
-                circle {
-                    centerX = mapXToScreenXCenter(entityPos.x)
-                    centerY = mapYToScreenYCenter(entityPos.y)
-                    radius = tileSize / 2 - 1
-                    fill = ENEMY_COLOR
+            pathEntities.map {
+                val path = it.getComponent(PathAIComponent::class).path
+                val projectileSpeed = it.getComponent(SpeedComponent::class).speed
+                val projectileTicks = it.getComponent(ActionTimeComponent::class)!!.ticksUntilTurn
+
+                val playerSpeed = encounterState.playerEntity().getComponent(SpeedComponent::class).speed
+                val playerTicks = encounterState.playerEntity().getComponent(ActionTimeComponent::class)!!.ticksUntilTurn
+                if (projectileTicks <= playerTicks) {
+                    val turns = ((playerTicks - projectileTicks) + playerSpeed) / projectileSpeed
+                    val stops = path.project(turns)
+                    if (stops.size > 1) {
+                        for (stop in stops.subList(1, stops.size)) {
+                            rectangle {
+                                this.x = stop.x * tileSize
+                                this.y = -(stop.y * tileSize + tileSize)
+                                width = tileSize
+                                height = tileSize
+                                stroke = Color.WHITE
+                                fill = PROJECTILE_PATH_COLOR
+                            }
+                        }
+                    }
                 }
             }
-
             pathEntities.map {
-                val entityPos = it.getComponent(EncounterLocationComponent::class).position
-                circle {
-                    centerX = mapXToScreenXCenter(entityPos.x)
-                    centerY = mapYToScreenYCenter(entityPos.y)
-                    radius = tileSize / 6
-                    fill = PROJECTILE_COLOR
-                }
-
                 val path = it.getComponent(PathAIComponent::class).path
                 val projectileSpeed = it.getComponent(SpeedComponent::class).speed
                 val projectileTicks = it.getComponent(ActionTimeComponent::class)!!.ticksUntilTurn
@@ -236,11 +243,32 @@ class GameScreen: View() {
                     val turns = ((playerTicks - projectileTicks) + playerSpeed) / projectileSpeed
                     val stops = path.project(turns)
                     if (stops.isNotEmpty()) {
-                        line(mapXToScreenXCenter(stops.first().x),
-                            mapYToScreenYCenter(stops.first().y),
-                            mapXToScreenXCenter(stops.last().x),
-                            mapYToScreenYCenter(stops.last().y))
+                        for (stop in stops) {
+                            line(mapXToScreenXCenter(stops.first().x),
+                                mapYToScreenYCenter(stops.first().y),
+                                mapXToScreenXCenter(stops.last().x),
+                                mapYToScreenYCenter(stops.last().y))
+                        }
                     }
+                }
+            }
+            pathEntities.map {
+                val entityPos = it.getComponent(EncounterLocationComponent::class).position
+                circle {
+                    centerX = mapXToScreenXCenter(entityPos.x)
+                    centerY = mapYToScreenYCenter(entityPos.y)
+                    radius = tileSize / 6
+                    fill = PROJECTILE_COLOR
+                }
+            }
+
+            nonPathAIEntities.map {
+                val entityPos = it.getComponent(EncounterLocationComponent::class).position
+                circle {
+                    centerX = mapXToScreenXCenter(entityPos.x)
+                    centerY = mapYToScreenYCenter(entityPos.y)
+                    radius = tileSize / 2 - 1
+                    fill = ENEMY_COLOR
                 }
             }
 
