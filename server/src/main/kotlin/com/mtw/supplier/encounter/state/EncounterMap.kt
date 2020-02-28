@@ -75,6 +75,7 @@ internal class EncounterMap(
     }
 
     internal fun positionBlocked(pos: XYCoordinates): Boolean {
+        if (!isInBounds(pos.x, pos.y)) { return true }
         return nodes[pos.x][pos.y].blocksMovement
     }
 
@@ -103,6 +104,7 @@ internal class EncounterMap(
     }
 
     internal fun getEntitiesAtPosition(pos: XYCoordinates): List<Entity> {
+        if (!isInBounds(pos.x, pos.y)) { return emptyList() }
         return this.nodes[pos.x][pos.y].entities
     }
 

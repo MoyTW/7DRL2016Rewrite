@@ -2,7 +2,10 @@ package com.mtw.supplier.editor
 
 import com.mtw.supplier.Direction
 import com.mtw.supplier.Serializers
+import com.mtw.supplier.ecs.components.ActionTimeComponent
+import com.mtw.supplier.ecs.components.EncounterLocationComponent
 import com.mtw.supplier.ecs.components.PlayerComponent
+import com.mtw.supplier.ecs.components.SpeedComponent
 import com.mtw.supplier.ecs.components.ai.AIComponent
 import com.mtw.supplier.ecs.components.ai.PathAIComponent
 import com.mtw.supplier.encounter.state.EncounterState
@@ -153,12 +156,25 @@ class GameScreen: View() {
         }
     }
 
-    private fun squares(encounterState: EncounterState?): Group {
+    private fun mapXToScreenXCenter(x: Int): Double {
+        return (x * TILE_SIZE).toDouble() + (TILE_SIZE.toDouble() / 2f)
+    }
+
+    private fun mapYToScreenYCenter(y: Int): Double {
+        return -(y * TILE_SIZE.toDouble() + (TILE_SIZE.toDouble() / 2f))
+    }
+
+    companion object {
+        val TILE_SIZE = 20
+    }
+
+    private fun mapShapes(encounterState: EncounterState?): Group {
         val UNEXPLORED_COLOR = Color.BLACK
         val EXPLORED_COLOR = Color.DARKGRAY
         val VISIBLE_COLOR = Color.LIGHTGRAY
         val PROJECTILE_COLOR = Color.ORANGERED
         val ENEMY_COLOR = Color.DARKRED
+        val PLAYER_COLOR = Color.GREEN
 
         if (encounterState == null) {
             return group()
@@ -175,7 +191,7 @@ class GameScreen: View() {
                     val tile = tiles.getTileView(x, y)
                     rectangle {
                         this.x = x * tileSize
-                        this.y = -y * tileSize
+                        this.y = -y * tileSize - tileSize
                         width = tileSize
                         height = tileSize
                         stroke = Color.WHITE
@@ -185,42 +201,61 @@ class GameScreen: View() {
                             else -> { VISIBLE_COLOR }
                         }
                     }
-                    tile?.entities?.map {
-                        if (it.hasComponent(PathAIComponent::class)) {
-                            circle {
-                                centerX = x * tileSize - (tileSize / 2)
-                                centerY = -(y * tileSize - (tileSize / 2))
-                                radius = tileSize / 4
-                                fill = PROJECTILE_COLOR
-                            }
-                        } else if (it.hasComponent(AIComponent::class)) {
-                            rectangle {
-                                this.x = x * tileSize
-                                this.y = -y * tileSize
-                                width = tileSize * .75
-                                height = tileSize * .75
-                                rotate = 45.0
-                                fill = ENEMY_COLOR
-                            }
-                        } else if (it.hasComponent(PlayerComponent::class)) {
-                            rectangle {
-                                this.x = x * tileSize
-                                this.y = -y * tileSize
-                                width = tileSize * .75
-                                height = tileSize * .75
-                                rotate = 45.0
-                                fill = Color.GREEN
-                            }
-                        } else { }
-                    }
-
                 }
+            }
+            val mapEntities = encounterState.entities().filter { it.hasComponent(EncounterLocationComponent::class) }
+            val nonPathAIEntities = mapEntities.filter { it.hasComponent(AIComponent::class) && !it.hasComponent(PathAIComponent::class) }
+            val pathEntities = mapEntities.filter { it.hasComponent(PathAIComponent::class) }
+
+            nonPathAIEntities.map {
+                val entityPos = it.getComponent(EncounterLocationComponent::class).position
+                circle {
+                    centerX = mapXToScreenXCenter(entityPos.x)
+                    centerY = mapYToScreenYCenter(entityPos.y)
+                    radius = tileSize / 2 - 1
+                    fill = ENEMY_COLOR
+                }
+            }
+
+            pathEntities.map {
+                val entityPos = it.getComponent(EncounterLocationComponent::class).position
+                circle {
+                    centerX = mapXToScreenXCenter(entityPos.x)
+                    centerY = mapYToScreenYCenter(entityPos.y)
+                    radius = tileSize / 6
+                    fill = PROJECTILE_COLOR
+                }
+
+                val path = it.getComponent(PathAIComponent::class).path
+                val projectileSpeed = it.getComponent(SpeedComponent::class).speed
+                val projectileTicks = it.getComponent(ActionTimeComponent::class)!!.ticksUntilTurn
+
+                val playerSpeed = encounterState.playerEntity().getComponent(SpeedComponent::class).speed
+                val playerTicks = encounterState.playerEntity().getComponent(ActionTimeComponent::class)!!.ticksUntilTurn
+                if (projectileTicks <= playerTicks) {
+                    val turns = ((playerTicks - projectileTicks) + playerSpeed) / projectileSpeed
+                    val stops = path.project(turns)
+                    if (stops.isNotEmpty()) {
+                        line(mapXToScreenXCenter(stops.first().x),
+                            mapYToScreenYCenter(stops.first().y),
+                            mapXToScreenXCenter(stops.last().x),
+                            mapYToScreenYCenter(stops.last().y))
+                    }
+                }
+            }
+
+            val playerPos = encounterState.playerEntity().getComponent(EncounterLocationComponent::class).position
+            circle {
+                centerX = mapXToScreenXCenter(playerPos.x)
+                centerY = mapYToScreenYCenter(playerPos.y)
+                radius = tileSize / 2 - 1
+                fill = PLAYER_COLOR
             }
         }
     }
 
     private fun encounterStateRender() {
-        regionLinesStackpane.replaceChildren(squares(this.encounterState))
+        regionLinesStackpane.replaceChildren(mapShapes(this.encounterState))
         val messages = encounterState?.messageLog?.getMessages()?.reversed()
         if (messages != null) {
             logListView.items.clear()

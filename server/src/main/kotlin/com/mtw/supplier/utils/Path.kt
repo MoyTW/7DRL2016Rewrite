@@ -2,6 +2,7 @@ package com.mtw.supplier.utils
 
 import kotlinx.serialization.Serializable
 import kotlin.math.abs
+import kotlin.math.min
 
 @Serializable
 class Path(val positions: List<XYCoordinates>) {
@@ -16,9 +17,8 @@ class Path(val positions: List<XYCoordinates>) {
         return currentPosition()
     }
 
-    fun project(turns: Int) {
-        // TODO: Confirm this lol
-        positions.subList(_currentStep, _currentStep + turns)
+    fun project(turns: Int): List<XYCoordinates> {
+        return positions.subList(_currentStep, min(positions.size - 1,_currentStep + turns + 1))
     }
 
     fun atEnd(): Boolean {
