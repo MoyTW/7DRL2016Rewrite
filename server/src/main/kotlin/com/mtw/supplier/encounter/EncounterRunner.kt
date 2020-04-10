@@ -80,6 +80,17 @@ object EncounterRunner {
             isPlayerReady = runNextActiveTick(encounterState)
         }
         encounterState.calculatePlayerFoVAndMarkExploration()
+        encounterState.entities().filter { it.hasComponent(PathAIComponent::class) }.map {
+            if (it.getComponent(PathAIComponent::class).path.atEnd()
+                //|| it.getComponent(ActionTimeComponent::class).isReady()
+            ) {
+                val nextActions = it.getComponent(AIComponent::class).decideNextActions(encounterState)
+                logger.debug("Actions: $nextActions")
+                Rulebook.resolveActions(nextActions, encounterState)
+                val speedComponent = it.getComponent(SpeedComponent::class)
+                it.getComponent(ActionTimeComponent::class).endTurn(speedComponent)
+            }
+        }
     }
 
     fun runNextActiveTick(encounterState: EncounterState): Boolean {
