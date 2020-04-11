@@ -46,11 +46,12 @@ dependencies {
     developmentOnly("org.springframework.boot:spring-boot-devtools")
     implementation("org.jetbrains.kotlin:kotlin-stdlib:1.3.50")
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-runtime:0.13.0") // JVM dependency
-    implementation("com.github.Hexworks.mixite:mixite.core-jvm:2018.2.0-RELEASE")
     implementation("no.tornado:tornadofx:1.7.17") {
         exclude("org.jetbrains.kotlin")
     }
     implementation("io.github.rybalkinsd:kohttp:0.11.1")
+    implementation("org.hexworks.zircon:zircon.core-jvm:2020.1.1-PREVIEW")
+    implementation("org.hexworks.zircon:zircon.jvm.swing:2020.1.1-PREVIEW")
 }
 
 tasks.withType<KotlinCompile> {
