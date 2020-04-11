@@ -2,6 +2,7 @@ package com.mtw.supplier.editor
 
 import com.mtw.supplier.Direction
 import com.mtw.supplier.Serializers
+import com.mtw.supplier.ecs.Entity
 import com.mtw.supplier.ecs.components.EncounterLocationComponent
 import com.mtw.supplier.ecs.components.PlayerComponent
 import com.mtw.supplier.encounter.state.EncounterState
@@ -65,7 +66,7 @@ object EditorApp {
         // Add input handler
         tileGrid.processKeyboardEvents(KeyboardEventType.KEY_PRESSED) { keyboardEvent: KeyboardEvent, uiEventPhase: UIEventPhase ->
             handleKeyPress(keyboardEvent, networkClient)
-            //primaryScreen.renderGameState(gameState.encounterState)
+            renderGameState(mapFoWTileGraphics, mapEntityTileGraphics, networkClient.refreshEncounterState())
             UIEventResponse.pass()
         }
 
@@ -93,7 +94,7 @@ object EditorApp {
         val cameraY = playerPos.y
 
         renderFoWTiles(mapFoWTileGraphics, encounterState, cameraX, cameraY)
-        // renderDisplayEntities(mapEntityTileGraphics, encounterState)
+        renderDisplayEntities(mapEntityTileGraphics, encounterState, cameraX, cameraY)
     }
 
     // TODO: Remove CameraX, CameraY
@@ -134,31 +135,30 @@ object EditorApp {
         return XYCoordinates(pos.x - cameraX + MAP_CENTER.x, pos.y - cameraY + MAP_CENTER.y)
     }
 
-    /*
-    private fun renderDisplayEntities(tileGraphics: TileGraphics, encounterState: EncounterState) {
+    private fun renderDisplayEntities(tileGraphics: TileGraphics, encounterState: EncounterState, cameraX: Int, cameraY: Int) {
         val fowCache = encounterState.fovCache!!
-        val targetedEntity = encounterState.playerEntity().getComponent(PlayerComponent::class).targeted
         encounterState.entities()
-            .filter { it.hasComponent(RoomPositionComponent::class) && it.hasComponent(DisplayComponent::class) }
+            .filter { it.hasComponent(EncounterLocationComponent::class) }
             .map {
-                val entityPosComponent = it.getComponent(RoomPositionComponent::class)
-                val entityPos = entityPosComponent.asAbsolutePosition(encounterState)
-                val displayComponent = it.getComponent(DisplayComponent::class)
-                if (entityPos != null &&
-                    encounterState.getVisibleEntityAtPosition(entityPos) == it &&
-                    (fowCache.isInFoV(entityPos) ||
-                        (displayComponent.seeInFoW && encounterState.wasSeen(entityPosComponent.roomPosition)))) {
-                    if (targetedEntity == it) {
-                        // lol this is pretty slapdash, oh well
-                        val builder = displayComponent.tileBuilder().withModifiers(Modifiers.blink())
-                        draw(tileGraphics, builder.build(), entityPos)
-                    } else {
-                        draw(tileGraphics, displayComponent.toTile(), entityPos)
-                    }
+                val entityPos = it.getComponent(EncounterLocationComponent::class).position
+                // TODO: DisplayComponent - priority, visible in FoW property
+                if (fowCache.isInFoV(entityPos)) {
+                    draw(tileGraphics, toTile(it), entityPos, cameraX, cameraY)
                 }
             }
     }
-    */
+
+    private fun toTile(entity: Entity): Tile {
+        return if (entity.hasComponent(PlayerComponent::class)) {
+            Tile.newBuilder()
+                .withCharacter('@')
+                .build()
+        } else {
+            Tile.newBuilder()
+                .withCharacter('?')
+                .build()
+        }
+    }
 
     private fun handleKeyPress(event: KeyboardEvent, client: NetworkClient): EncounterState? {
         return when (event.code) {
