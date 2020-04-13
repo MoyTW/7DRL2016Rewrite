@@ -142,7 +142,8 @@ object EditorApp {
     private fun renderDisplayEntities(tileGraphics: TileGraphics, encounterState: EncounterState, cameraX: Int, cameraY: Int) {
         val fowCache = encounterState.fovCache!!
         encounterState.entities()
-            .filter { it.hasComponent(EncounterLocationComponent::class) }
+            .filter { it.hasComponent(EncounterLocationComponent::class) && it.hasComponent(DisplayComponent::class) }
+            .sortedByDescending { it.getComponent(DisplayComponent::class).displayType.priority }
             .map {
                 val entityPos = it.getComponent(EncounterLocationComponent::class).position
                 toTile(entityPos, it, fowCache)?.let { tile -> draw(tileGraphics, tile, entityPos, cameraX, cameraY) }
@@ -150,31 +151,26 @@ object EditorApp {
     }
 
     private fun toTile(entityPos: XYCoordinates, entity: Entity, foVCache: FoVCache): Tile? {
-        if (!entity.hasComponent(DisplayComponent::class)) {
-            // TODO: Log this as an error
+        val displayComponent = entity.getComponent(DisplayComponent::class)
+        if (!displayComponent.seeInFoW && !foVCache.isInFoV(entityPos)) {
             return null
         } else {
-            val displayComponent = entity.getComponent(DisplayComponent::class)
-            if (!displayComponent.seeInFoW && !foVCache.isInFoV(entityPos)) {
-                return null
-            } else {
-                return when (displayComponent.displayType) {
-                    DisplayType.PLAYER -> Tile.newBuilder()
-                        .withCharacter('@')
-                        .withForegroundColor(TileColor.create(0, 255, 0))
-                        .withBackgroundColor(TileColor.transparent())
-                        .build()
-                    DisplayType.ENEMY_SCOUT -> Tile.newBuilder()
-                            .withCharacter('s')
-                            .withForegroundColor(TileColor.create(255, 0, 0))
-                            .withBackgroundColor(TileColor.transparent())
-                            .build()
-                    DisplayType.PROJECTILE_SMALL_SHOTGUN -> Tile.newBuilder()
-                        .withCharacter('.')
-                        .withForegroundColor(TileColor.create(255, 70, 0))
-                        .withBackgroundColor(TileColor.transparent())
-                        .build()
-                }
+            return when (displayComponent.displayType) {
+                DisplayType.PLAYER -> Tile.newBuilder()
+                    .withCharacter('@')
+                    .withForegroundColor(TileColor.create(0, 255, 0))
+                    .withBackgroundColor(TileColor.transparent())
+                    .build()
+                DisplayType.ENEMY_SCOUT -> Tile.newBuilder()
+                    .withCharacter('s')
+                    .withForegroundColor(TileColor.create(255, 0, 0))
+                    .withBackgroundColor(TileColor.transparent())
+                    .build()
+                DisplayType.PROJECTILE_SMALL_SHOTGUN -> Tile.newBuilder()
+                    .withCharacter('.')
+                    .withForegroundColor(TileColor.create(255, 70, 0))
+                    .withBackgroundColor(TileColor.transparent())
+                    .build()
             }
         }
     }

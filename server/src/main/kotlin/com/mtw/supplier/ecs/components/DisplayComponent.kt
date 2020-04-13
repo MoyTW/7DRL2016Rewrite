@@ -3,10 +3,16 @@ package com.mtw.supplier.ecs.components
 import com.mtw.supplier.ecs.Component
 import kotlinx.serialization.Serializable
 
-enum class DisplayType {
-    PLAYER,
-    ENEMY_SCOUT,
-    PROJECTILE_SMALL_SHOTGUN
+/**
+ * Priority rules:
+ * 0 -> Blocking entity (Actor, Satellite)
+ * 1 -> Projectile entity
+ * 2 -> Item entity
+ */
+enum class DisplayType(val priority: Int) {
+    PLAYER(0),
+    ENEMY_SCOUT(0),
+    PROJECTILE_SMALL_SHOTGUN(1)
 }
 
 @Serializable
