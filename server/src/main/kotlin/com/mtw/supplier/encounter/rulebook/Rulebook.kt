@@ -92,6 +92,8 @@ object Rulebook {
                 .addComponent(CollisionComponent.defaultProjectile())
                 .addComponent(ActionTimeComponent(action.speed))
                 .addComponent(SpeedComponent(action.speed))
+                // TODO: Differentiate display on projectile type maybe?
+                .addComponent(DisplayComponent(DisplayType.PROJECTILE_SMALL_SHOTGUN, false))
             encounterState.placeEntity(projectile, path.currentPosition(), ignoreCollision = true)
 
             encounterState.messageLog.logAction(action, "SUCCESS",

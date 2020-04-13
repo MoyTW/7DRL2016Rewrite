@@ -89,6 +89,7 @@ class RootController {
 			.addComponent(CollisionComponent.defaultFighter())
 			.addComponent(ActionTimeComponent(75))
 			.addComponent(SpeedComponent(75))
+			.addComponent(DisplayComponent(DisplayType.ENEMY_SCOUT, false))
 		val player = Entity(state.getNextEntityId(), "player")
 			.addComponent(PlayerComponent())
 			.addComponent(HpComponent(50, 50))
@@ -97,6 +98,7 @@ class RootController {
 			.addComponent(CollisionComponent.defaultFighter())
 			.addComponent(ActionTimeComponent(100))
 			.addComponent(SpeedComponent(100))
+			.addComponent(DisplayComponent(DisplayType.PLAYER, false))
 
 		state.placeEntity(scout, XYCoordinates(10, 10))
 			 .placeEntity(player, XYCoordinates(25, 25))

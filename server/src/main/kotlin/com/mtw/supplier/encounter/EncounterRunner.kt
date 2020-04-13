@@ -80,6 +80,7 @@ object EncounterRunner {
             isPlayerReady = runNextActiveTick(encounterState)
         }
         encounterState.calculatePlayerFoVAndMarkExploration()
+        // TODO: Is this related to that bug with turns I just saw?
         encounterState.entities().filter { it.hasComponent(PathAIComponent::class) }.map {
             if (it.getComponent(PathAIComponent::class).path.atEnd()
                 //|| it.getComponent(ActionTimeComponent::class).isReady()

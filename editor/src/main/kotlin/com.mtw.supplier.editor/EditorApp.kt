@@ -3,9 +3,12 @@ package com.mtw.supplier.editor
 import com.mtw.supplier.Direction
 import com.mtw.supplier.Serializers
 import com.mtw.supplier.ecs.Entity
+import com.mtw.supplier.ecs.components.DisplayComponent
+import com.mtw.supplier.ecs.components.DisplayType
 import com.mtw.supplier.ecs.components.EncounterLocationComponent
 import com.mtw.supplier.ecs.components.PlayerComponent
 import com.mtw.supplier.encounter.state.EncounterState
+import com.mtw.supplier.encounter.state.FoVCache
 import com.mtw.supplier.utils.XYCoordinates
 import io.github.rybalkinsd.kohttp.dsl.httpGet
 import io.github.rybalkinsd.kohttp.dsl.httpPost
@@ -20,6 +23,7 @@ import org.hexworks.zircon.api.SwingApplications
 import org.hexworks.zircon.api.application.AppConfig
 import org.hexworks.zircon.api.builder.graphics.LayerBuilder
 import org.hexworks.zircon.api.color.ANSITileColor
+import org.hexworks.zircon.api.color.TileColor
 import org.hexworks.zircon.api.data.Position
 import org.hexworks.zircon.api.data.Size
 import org.hexworks.zircon.api.data.Tile
@@ -141,22 +145,37 @@ object EditorApp {
             .filter { it.hasComponent(EncounterLocationComponent::class) }
             .map {
                 val entityPos = it.getComponent(EncounterLocationComponent::class).position
-                // TODO: DisplayComponent - priority, visible in FoW property
-                if (fowCache.isInFoV(entityPos)) {
-                    draw(tileGraphics, toTile(it), entityPos, cameraX, cameraY)
-                }
+                toTile(entityPos, it, fowCache)?.let { tile -> draw(tileGraphics, tile, entityPos, cameraX, cameraY) }
             }
     }
 
-    private fun toTile(entity: Entity): Tile {
-        return if (entity.hasComponent(PlayerComponent::class)) {
-            Tile.newBuilder()
-                .withCharacter('@')
-                .build()
+    private fun toTile(entityPos: XYCoordinates, entity: Entity, foVCache: FoVCache): Tile? {
+        if (!entity.hasComponent(DisplayComponent::class)) {
+            // TODO: Log this as an error
+            return null
         } else {
-            Tile.newBuilder()
-                .withCharacter('?')
-                .build()
+            val displayComponent = entity.getComponent(DisplayComponent::class)
+            if (!displayComponent.seeInFoW && !foVCache.isInFoV(entityPos)) {
+                return null
+            } else {
+                return when (displayComponent.displayType) {
+                    DisplayType.PLAYER -> Tile.newBuilder()
+                        .withCharacter('@')
+                        .withForegroundColor(TileColor.create(0, 255, 0))
+                        .withBackgroundColor(TileColor.transparent())
+                        .build()
+                    DisplayType.ENEMY_SCOUT -> Tile.newBuilder()
+                            .withCharacter('s')
+                            .withForegroundColor(TileColor.create(255, 0, 0))
+                            .withBackgroundColor(TileColor.transparent())
+                            .build()
+                    DisplayType.PROJECTILE_SMALL_SHOTGUN -> Tile.newBuilder()
+                        .withCharacter('.')
+                        .withForegroundColor(TileColor.create(255, 70, 0))
+                        .withBackgroundColor(TileColor.transparent())
+                        .build()
+                }
+            }
         }
     }
 
