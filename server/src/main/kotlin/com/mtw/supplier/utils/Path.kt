@@ -67,7 +67,8 @@ class LinePathBuilder(val targetPos: XYCoordinates, val spread: Int = 0): PathBu
         var cY: Int = start.y
         var steps: Int = 0
 
-        while (!(cX == end.x && cY == end.y) && steps < 100) {
+        // TODO: An appropriate number of steps which aren't just "A Lot"
+        while (steps < 100) {
             if (isVertical) {
                 cY += yErr
                 acc.add(XYCoordinates(cX, cY))

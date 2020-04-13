@@ -60,6 +60,10 @@ object EditorApp {
             .withSize(Size.create(MAP_WIDTH, MAP_HEIGHT))
             .build()
         screen.addLayer(LayerBuilder.newBuilder().withTileGraphics(mapFoWTileGraphics).build())
+        val mapProjectilePathTileGraphics: TileGraphics = DrawSurfaces.tileGraphicsBuilder()
+            .withSize(Size.create(MAP_WIDTH, MAP_HEIGHT))
+            .build()
+        screen.addLayer(LayerBuilder.newBuilder().withTileGraphics(mapProjectilePathTileGraphics).build())
         val mapEntityTileGraphics: TileGraphics = DrawSurfaces.tileGraphicsBuilder()
             .withSize(Size.create(MAP_WIDTH, MAP_HEIGHT))
             .build()
@@ -68,14 +72,15 @@ object EditorApp {
         // Add input handler
         tileGrid.processKeyboardEvents(KeyboardEventType.KEY_PRESSED) { keyboardEvent: KeyboardEvent, uiEventPhase: UIEventPhase ->
             handleKeyPress(keyboardEvent, networkClient)
-            renderGameState(mapFoWTileGraphics, mapEntityTileGraphics, networkClient.refreshEncounterState())
+            renderGameState(mapFoWTileGraphics, mapProjectilePathTileGraphics, mapEntityTileGraphics, networkClient.refreshEncounterState())
             UIEventResponse.pass()
         }
 
-        renderGameState(mapFoWTileGraphics, mapEntityTileGraphics, networkClient.refreshEncounterState())
+        renderGameState(mapFoWTileGraphics, mapProjectilePathTileGraphics, mapEntityTileGraphics, networkClient.refreshEncounterState())
     }
 
     private fun renderGameState(mapFoWTileGraphics: TileGraphics,
+                                mapProjectilePathTileGraphics: TileGraphics,
                                 mapEntityTileGraphics: TileGraphics,
                                 encounterState: EncounterState?) {
         // TODO: log this
@@ -90,13 +95,14 @@ object EditorApp {
 
         // Draw the map
         mapFoWTileGraphics.clear()
+        mapProjectilePathTileGraphics.clear()
         mapEntityTileGraphics.clear()
         val playerPos = encounterState.playerEntity().getComponent(EncounterLocationComponent::class).position
         val cameraX = playerPos.x
         val cameraY = playerPos.y
 
         renderFoWTiles(mapFoWTileGraphics, encounterState, cameraX, cameraY)
-        renderProjectilePaths(mapEntityTileGraphics, encounterState, cameraX, cameraY)
+        renderProjectilePaths(mapProjectilePathTileGraphics, encounterState, cameraX, cameraY)
         renderDisplayEntities(mapEntityTileGraphics, encounterState, cameraX, cameraY)
     }
 
