@@ -3,10 +3,8 @@ package com.mtw.supplier.editor
 import com.mtw.supplier.Direction
 import com.mtw.supplier.Serializers
 import com.mtw.supplier.ecs.Entity
-import com.mtw.supplier.ecs.components.DisplayComponent
-import com.mtw.supplier.ecs.components.DisplayType
-import com.mtw.supplier.ecs.components.EncounterLocationComponent
-import com.mtw.supplier.ecs.components.PlayerComponent
+import com.mtw.supplier.ecs.components.*
+import com.mtw.supplier.ecs.components.ai.PathAIComponent
 import com.mtw.supplier.encounter.state.EncounterState
 import com.mtw.supplier.encounter.state.FoVCache
 import com.mtw.supplier.utils.XYCoordinates
@@ -98,6 +96,7 @@ object EditorApp {
         val cameraY = playerPos.y
 
         renderFoWTiles(mapFoWTileGraphics, encounterState, cameraX, cameraY)
+        renderProjectilePaths(mapEntityTileGraphics, encounterState, cameraX, cameraY)
         renderDisplayEntities(mapEntityTileGraphics, encounterState, cameraX, cameraY)
     }
 
@@ -137,6 +136,42 @@ object EditorApp {
 
     private fun toCameraCoordinates(pos: XYCoordinates, cameraX: Int, cameraY: Int): XYCoordinates {
         return XYCoordinates(pos.x - cameraX + MAP_CENTER.x, pos.y - cameraY + MAP_CENTER.y)
+    }
+
+    private fun renderProjectilePaths(tileGraphics: TileGraphics, encounterState: EncounterState, cameraX: Int, cameraY: Int) {
+        val fovCache = encounterState.fovCache!!
+        val markedPositions = mutableSetOf<XYCoordinates>()
+
+        encounterState.entities()
+            .filter { it.hasComponent(EncounterLocationComponent::class) && it.hasComponent(PathAIComponent::class) }
+            .map {
+                val path = it.getComponent(PathAIComponent::class).path
+                val projectileSpeed = it.getComponent(SpeedComponent::class).speed
+                val projectileTicks = it.getComponent(ActionTimeComponent::class).ticksUntilTurn
+
+                val playerSpeed = encounterState.playerEntity().getComponent(SpeedComponent::class).speed
+                val playerTicks = encounterState.playerEntity().getComponent(ActionTimeComponent::class).ticksUntilTurn
+                if (projectileTicks <= playerTicks) {
+                    val turns = ((playerTicks - projectileTicks) + playerSpeed) / projectileSpeed
+                    val stops = path.project(turns)
+                    if (stops.size > 1) {
+                        for (stop in stops.subList(1, stops.size)) {
+                            if (fovCache.isInFoV(stop)) {
+                                markedPositions.add(stop)
+                            }
+                        }
+                    }
+                }
+            }
+
+        markedPositions.forEach {
+            // TODO: Consolidate all the Tile.newBuilder()
+            val pathTile = Tile.newBuilder()
+                .withForegroundColor(TileColor.transparent())
+                .withBackgroundColor(TileColor.create(217, 112, 213))
+                .build()
+            draw(tileGraphics, pathTile, it, cameraX, cameraY)
+        }
     }
 
     private fun renderDisplayEntities(tileGraphics: TileGraphics, encounterState: EncounterState, cameraX: Int, cameraY: Int) {
