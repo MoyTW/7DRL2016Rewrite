@@ -31,8 +31,8 @@ object Serializers {
                 DisplayComponent::class with DisplayComponent.serializer()
                 EncounterLocationComponent::class with EncounterLocationComponent.serializer()
                 FactionComponent::class with FactionComponent.serializer()
-                HpComponent::class with HpComponent.serializer()
-                FighterComponent::class with FighterComponent.serializer()
+                DefenderComponent::class with DefenderComponent.serializer()
+                AttackerComponent::class with AttackerComponent.serializer()
                 PlayerComponent::class with PlayerComponent.serializer()
                 SpeedComponent::class with SpeedComponent.serializer()
             }

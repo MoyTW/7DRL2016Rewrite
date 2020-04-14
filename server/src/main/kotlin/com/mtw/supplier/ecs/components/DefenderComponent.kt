@@ -4,7 +4,8 @@ import com.mtw.supplier.ecs.Component
 import kotlinx.serialization.Serializable
 
 @Serializable
-class HpComponent(
+class DefenderComponent(
+    var defense: Int,
     var maxHp: Int,
     var currentHp: Int
 ): Component() {

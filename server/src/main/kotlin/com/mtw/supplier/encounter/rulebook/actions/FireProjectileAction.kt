@@ -14,7 +14,7 @@ enum class ProjectileType(val displayName: String) {
 
 class FireProjectileAction(
     actor: Entity,
-    val damage: Int,
+    val power: Int,
     val pathBuilder: PathBuilder,
     val speed: Int,
     val projectileType: ProjectileType,

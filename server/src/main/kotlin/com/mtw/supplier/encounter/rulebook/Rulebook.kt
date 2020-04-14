@@ -7,9 +7,6 @@ import com.mtw.supplier.ecs.components.ai.PathAIComponent
 import com.mtw.supplier.encounter.rulebook.actions.*
 import com.mtw.supplier.encounter.state.EncounterState
 import com.mtw.supplier.encounter.state.EncounterMessageLog
-import java.util.*
-import kotlin.math.ceil
-import kotlin.math.roundToInt
 
 object Rulebook {
 
@@ -28,52 +25,29 @@ object Rulebook {
         }
     }
 
+    /**
+     * Resolves attack against defense with a straight damage = power - defense formula.
+     */
     private fun resolveAttackAction(action: AttackAction, encounterState: EncounterState) {
         val attacker = action.actor
-        val attackerPos = attacker.getComponent(EncounterLocationComponent::class).position
-
         val defender = action.target
-        val defenderPos = defender.getComponent(EncounterLocationComponent::class).position
 
-        // TODO: Range & visibility & such
-        if (!encounterState.arePositionsAdjacent(attackerPos, defenderPos)) {
+        if (!encounterState.arePositionsAdjacent(
+                attacker.getComponent(EncounterLocationComponent::class).position,
+                defender.getComponent(EncounterLocationComponent::class).position)) {
             encounterState.messageLog.logAction(action, "INVALID", "[${action.actor.name}] cannot reach [${action.target.name}]")
         } else {
-            val attackerFighter = attacker.getComponent(FighterComponent::class)
-            val defenderFighter = defender.getComponent(FighterComponent::class)
-
-            // TODO: Properly controlled randomness
-            val r = Random(4)
-            val d100Roll = r.nextInt(100) + 1
-
-            // TODO: Shamelessly stealing POE because why not but maybe actually consider mechanics
-            val modifiedAttackRoll = d100Roll + attackerFighter.toHit - defenderFighter.toDodge
-            when {
-                modifiedAttackRoll < 30 -> {
-                    encounterState.messageLog.logAction(action, "MISS", "(raw=$d100Roll,final=$modifiedAttackRoll) [${action.actor.name}] missed [${action.target.name}]")
-                }
-                modifiedAttackRoll in 31..50 -> {
-                    val damage = ceil(attackerFighter.hitDamage * .5).roundToInt()
-                    encounterState.messageLog.logAction(action, "GRAZE", "(raw=$d100Roll,final=$modifiedAttackRoll) [${action.actor.name}] grazed [${action.target.name}] for $damage damage!")
-                    applyDamage(damage, defender, encounterState.messageLog)
-                }
-                modifiedAttackRoll in 51..100 -> {
-                    val damage = attackerFighter.hitDamage
-                    encounterState.messageLog.logAction(action, "HIT", "(raw=$d100Roll,final=$modifiedAttackRoll) [${action.actor.name}] hit [${action.target.name}] for $damage damage!")
-                    applyDamage(damage, defender, encounterState.messageLog)
-                }
-                modifiedAttackRoll > 100 -> {
-                    val damage = ceil(attackerFighter.hitDamage * 1.25).roundToInt()
-                    encounterState.messageLog.logAction(action, "CRIT", "(raw=$d100Roll,final=$modifiedAttackRoll) [${action.actor.name}] critically hit [${action.target.name}] for $damage damage!")
-                    applyDamage(damage, defender, encounterState.messageLog)
-                }
-            }
+            val damage = attacker.getComponent(AttackerComponent::class).power -
+                defender.getComponent(DefenderComponent::class).defense
+            applyDamage(damage, defender, encounterState.messageLog)
         }
     }
 
-    // TODO: Better rules
+    /**
+     * Applies damage directly to HP, bypassing any other factors.
+     */
     private fun applyDamage(damage: Int, entity: Entity, messageLog: EncounterMessageLog) {
-        val hpComponent = entity.getComponent(HpComponent::class)
+        val hpComponent = entity.getComponent(DefenderComponent::class)
         hpComponent.removeHp(damage)
         if (hpComponent.currentHp < 0) {
             // TODO: "No AI == dead" is a sketchy definition of dead!
@@ -88,7 +62,7 @@ object Rulebook {
             val path = action.pathBuilder.build(shooterPos)
             val projectile = Entity(encounterState.getNextEntityId(), action.projectileType.displayName)
                 .addComponent(PathAIComponent(path))
-                .addComponent(FighterComponent(action.damage, 0, 0))
+                .addComponent(AttackerComponent(action.power))
                 .addComponent(CollisionComponent.defaultProjectile())
                 .addComponent(ActionTimeComponent(action.speed))
                 .addComponent(SpeedComponent(action.speed))
