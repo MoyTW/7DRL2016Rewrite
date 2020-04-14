@@ -39,20 +39,19 @@ object Rulebook {
         } else {
             val damage = attacker.getComponent(AttackerComponent::class).power -
                 defender.getComponent(DefenderComponent::class).defense
-            applyDamage(damage, defender, encounterState.messageLog)
+            applyDamage(damage, defender, encounterState)
         }
     }
 
     /**
      * Applies damage directly to HP, bypassing any other factors.
      */
-    private fun applyDamage(damage: Int, entity: Entity, messageLog: EncounterMessageLog) {
+    private fun applyDamage(damage: Int, entity: Entity, encounterState: EncounterState) {
         val hpComponent = entity.getComponent(DefenderComponent::class)
         hpComponent.removeHp(damage)
         if (hpComponent.currentHp < 0) {
-            // TODO: "No AI == dead" is a sketchy definition of dead!
-            entity.removeComponent(AIComponent::class)
-            messageLog.logEvent("DEATH", "[${entity.name}] is dead!")
+            encounterState.removeEntity(entity)
+            encounterState.messageLog.logEvent("DEATH", "[${entity.name}] is dead!")
         }
     }
 
