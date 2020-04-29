@@ -1,4 +1,4 @@
-package com.mtw.supplier.editor
+package com.mtw.supplier.client
 
 import com.mtw.supplier.Direction
 import com.mtw.supplier.Serializers
@@ -28,7 +28,7 @@ import org.hexworks.zircon.api.extensions.toScreen
 import org.hexworks.zircon.api.graphics.TileGraphics
 import org.hexworks.zircon.api.uievent.*
 
-object EditorApp {
+object ClientApp {
     //val gameState = GameState()
     val GAME_WIDTH: Int = 60
     val GAME_HEIGHT: Int = 40
