@@ -104,6 +104,7 @@ class RootController {
 	}
 }
 
-fun main(args: Array<String>) {
-	runApplication<SupplierApplication>(*args)
-}
+// Having a main in here was causing editor to die horribly! Okay then.
+//fun main(args: Array<String>) {
+//	runApplication<SupplierApplication>(*args)
+//}
