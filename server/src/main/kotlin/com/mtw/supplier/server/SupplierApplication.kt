@@ -1,5 +1,6 @@
-package com.mtw.supplier
+package com.mtw.supplier.server
 
+import com.mtw.supplier.Serializers
 import com.mtw.supplier.ecs.Entity
 import com.mtw.supplier.ecs.components.*
 import com.mtw.supplier.ecs.components.ai.EnemyScoutAIComponent
@@ -104,7 +105,6 @@ class RootController {
 	}
 }
 
-// Having a main in here was causing editor to die horribly! Okay then.
-//fun main(args: Array<String>) {
-//	runApplication<SupplierApplication>(*args)
-//}
+fun main(args: Array<String>) {
+	runApplication<SupplierApplication>(*args)
+}

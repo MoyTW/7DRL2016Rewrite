@@ -1,6 +1,5 @@
 package com.mtw.supplier.client
 
-import com.mtw.supplier.Direction
 import com.mtw.supplier.Serializers
 import com.mtw.supplier.ecs.Entity
 import com.mtw.supplier.ecs.components.*
@@ -27,6 +26,17 @@ import org.hexworks.zircon.api.data.Tile
 import org.hexworks.zircon.api.extensions.toScreen
 import org.hexworks.zircon.api.graphics.TileGraphics
 import org.hexworks.zircon.api.uievent.*
+
+enum class Direction(val dx: Int, val dy: Int) {
+    N(0, 1),
+    NE(1, 1),
+    E(1, 0),
+    SE(1, -1),
+    S(0, -1),
+    SW(-1, -1),
+    W(-1, 0),
+    NW(-1, 1)
+}
 
 object ClientApp {
     //val gameState = GameState()
