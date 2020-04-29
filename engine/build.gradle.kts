@@ -20,15 +20,10 @@ repositories {
 }
 
 dependencies {
-	implementation("org.springframework.boot:spring-boot-starter-data-jpa:2.1.8.RELEASE")
-	implementation("org.springframework.boot:spring-boot-starter-web:2.1.8.RELEASE")
-	implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.10.2")
+	implementation("org.slf4j:slf4j-api:1.7.30")
 	implementation("org.jetbrains.kotlin:kotlin-reflect:1.3.50")
-	developmentOnly("org.springframework.boot:spring-boot-devtools:2.1.8.RELEASE")
-	testImplementation("org.springframework.boot:spring-boot-starter-test:2.1.8.RELEASE")
 	implementation("org.jetbrains.kotlin:kotlin-stdlib:1.3.50")
 	implementation("org.jetbrains.kotlinx:kotlinx-serialization-runtime:0.13.0") // JVM dependency
-	implementation("com.github.Hexworks.mixite:mixite.core-jvm:2018.2.0-RELEASE")
 }
 
 tasks.withType<KotlinCompile> {
