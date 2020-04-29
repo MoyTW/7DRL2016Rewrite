@@ -3,7 +3,7 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 plugins {
 	kotlin("jvm")
 	id("org.jetbrains.kotlin.plugin.serialization")
-	id("org.springframework.boot") version "2.1.8.RELEASE"
+	//id("org.springframework.boot") version "2.1.8.RELEASE"
 	id("io.spring.dependency-management") version "1.0.8.RELEASE"
 	kotlin("plugin.spring") version "1.3.50"
 	kotlin("plugin.jpa") version "1.3.50"
