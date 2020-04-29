@@ -13,7 +13,7 @@ repositories {
 }
 
 dependencies {
-    compile(project(":server"))
+    compile(project(":engine"))
     implementation("org.jetbrains.kotlin:kotlin-reflect:1.3.50")
     implementation("org.jetbrains.kotlin:kotlin-stdlib:1.3.50")
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-runtime:0.13.0") // JVM dependency

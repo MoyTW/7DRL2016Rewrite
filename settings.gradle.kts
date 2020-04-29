@@ -1,3 +1,3 @@
 rootProject.name = "supplier"
-include("server")
+include("engine")
 include("client")
