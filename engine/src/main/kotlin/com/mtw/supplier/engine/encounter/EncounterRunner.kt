@@ -77,8 +77,15 @@ object EncounterRunner {
             isPlayerReady = runNextActiveTick(encounterState)
         }
         encounterState.calculatePlayerFoVAndMarkExploration()
-        // TODO: Is this related to that bug with turns I just saw?
-        encounterState.entities().filter { it.hasComponent(PathAIComponent::class) }.map {
+        // TODO: Figure out why I wrote the below code - it shouldn't be necessary.
+        /**
+         * It's looking for path AI components and trying to force them to expire, essentially - so it's cleaning up
+         * path components before the player is allowed to make another move. I *think* the principle it's going for is
+         * "path entities resolve before other entities always" but runNextActiveTick doesn't hold that to be true, they
+         * operate in speed/creation order. So if I want to have "actor phase" and "projectile phase" I should split it
+         * there as well.
+         */
+        /*encounterState.entities().filter { it.hasComponent(PathAIComponent::class) }.map {
             if (it.getComponent(PathAIComponent::class).path.atEnd()
                 //|| it.getComponent(ActionTimeComponent::class).isReady()
             ) {
@@ -88,7 +95,7 @@ object EncounterRunner {
                 val speedComponent = it.getComponent(SpeedComponent::class)
                 it.getComponent(ActionTimeComponent::class).endTurn(speedComponent)
             }
-        }
+        }*/
     }
 
     private fun runNextActiveTick(encounterState: EncounterState): Boolean {
