@@ -1,12 +1,12 @@
 package com.mtw.supplier.client
 
-import com.mtw.supplier.Serializers
-import com.mtw.supplier.ecs.Entity
-import com.mtw.supplier.ecs.components.*
-import com.mtw.supplier.ecs.components.ai.PathAIComponent
-import com.mtw.supplier.encounter.state.EncounterState
-import com.mtw.supplier.encounter.state.FoVCache
-import com.mtw.supplier.utils.XYCoordinates
+import com.mtw.supplier.engine.Serializers
+import com.mtw.supplier.engine.ecs.Entity
+import com.mtw.supplier.engine.ecs.components.*
+import com.mtw.supplier.engine.ecs.components.ai.PathAIComponent
+import com.mtw.supplier.engine.encounter.state.EncounterState
+import com.mtw.supplier.engine.encounter.state.FoVCache
+import com.mtw.supplier.engine.utils.XYCoordinates
 import io.github.rybalkinsd.kohttp.dsl.httpGet
 import io.github.rybalkinsd.kohttp.dsl.httpPost
 import io.github.rybalkinsd.kohttp.ext.asString
