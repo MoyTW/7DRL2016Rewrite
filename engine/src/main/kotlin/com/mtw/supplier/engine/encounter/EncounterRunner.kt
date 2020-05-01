@@ -91,7 +91,7 @@ object EncounterRunner {
         }
     }
 
-    fun runNextActiveTick(encounterState: EncounterState): Boolean {
+    private fun runNextActiveTick(encounterState: EncounterState): Boolean {
         if (encounterState.completed) { return false }
 
         // Run the clock until the next entity is ready
@@ -136,19 +136,4 @@ object EncounterRunner {
         logger.info("========== END OF TURN ${encounterState.currentTime} ==========")
         return false
     }
-
-    fun runEncounter(encounterState: EncounterState, timeLimit: Int = 1000) {
-        when {
-            encounterState.completed -> throw CannotRunCompletedEncounterException()
-            encounterState.currentTime >= timeLimit -> throw CannotRunTimeLimitedException()
-            else -> {
-                while (!encounterState.completed && encounterState.currentTime < timeLimit) {
-                    this.runNextActiveTick(encounterState)
-                }
-            }
-        }
-    }
-
-    class CannotRunCompletedEncounterException : Exception("Cannot run next turn on a completed encounter!")
-    class CannotRunTimeLimitedException : Exception("Cannot run next turn on an encounter past the time limit!")
 }
