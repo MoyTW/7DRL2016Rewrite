@@ -36,21 +36,18 @@ data class ActionMoveRequest(val direction: Direction)
 
 @RestController
 class RootController {
-	private final val gameModule = Serializers.componentSerializersModuleBuilder()
-	private val json = Json(JsonConfiguration.Stable.copy(prettyPrint = true), context = gameModule)
-
 	private var gameState: EncounterState = generateNewGameState()
 
 	@PostMapping("/game/reset")
 	fun gameReset(): String {
 		gameState = generateNewGameState()
 		EncounterRunner.runUntilPlayerReady(gameState)
-		return json.stringify(EncounterState.serializer(), gameState)
+		return Serializers.stringify(gameState)
 	}
 
 	@GetMapping("/game/state")
 	fun gameState(): String {
-		return json.stringify(EncounterState.serializer(), gameState)
+		return Serializers.stringify(gameState)
 	}
 
 	@PostMapping("/game/player/action/move")
@@ -63,7 +60,7 @@ class RootController {
 		EncounterRunner.runPlayerTurn(gameState, action)
 		EncounterRunner.runUntilPlayerReady(gameState)
 
-		return json.stringify(EncounterState.serializer(), gameState)
+		return Serializers.stringify(gameState)
 	}
 
 	@PostMapping("/game/player/action/wait")
@@ -72,7 +69,7 @@ class RootController {
 		EncounterRunner.runPlayerTurn(gameState, action)
 		EncounterRunner.runUntilPlayerReady(gameState)
 
-		return json.stringify(EncounterState.serializer(), gameState)
+		return Serializers.stringify(gameState)
 	}
 
 	// TODO: Proppa level gen & not literally in controller lol

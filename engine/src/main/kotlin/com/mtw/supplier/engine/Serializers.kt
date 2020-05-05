@@ -8,11 +8,17 @@ import com.mtw.supplier.engine.ecs.components.ai.PathAIComponent
 import com.mtw.supplier.engine.ecs.components.item.CarryableComponent
 import com.mtw.supplier.engine.ecs.components.item.InventoryComponent
 import com.mtw.supplier.engine.ecs.components.item.UsableComponent
+import com.mtw.supplier.engine.encounter.state.EncounterState
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonConfiguration
 import kotlinx.serialization.modules.SerialModule
 import kotlinx.serialization.modules.SerializersModule
 
 object Serializers {
-    fun componentSerializersModuleBuilder(): SerialModule {
+    private val json = Json(JsonConfiguration.Stable.copy(prettyPrint = true),
+        context = componentSerializersModuleBuilder())
+
+    private fun componentSerializersModuleBuilder(): SerialModule {
         return SerializersModule {
             polymorphic(Component::class) {
                 // ai
@@ -37,5 +43,13 @@ object Serializers {
                 SpeedComponent::class with SpeedComponent.serializer()
             }
         }
+    }
+
+    fun stringify(encounterState: EncounterState): String {
+        return json.stringify(EncounterState.serializer(), encounterState)
+    }
+
+    fun parse(body: String): EncounterState {
+        return json.parse(EncounterState.serializer(), body)
     }
 }

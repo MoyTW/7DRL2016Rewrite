@@ -251,9 +251,7 @@ object ClientApp {
 }
 
 class NetworkClient(
-    private val SERVER_PORT: Int = 8080,
-    private val json: Json = Json(JsonConfiguration.Stable.copy(prettyPrint = true),
-        context = Serializers.componentSerializersModuleBuilder())
+    private val SERVER_PORT: Int = 8080
 ) {
     fun postWaitAction(): EncounterState? {
         val response: Response = httpPost {
@@ -264,7 +262,7 @@ class NetworkClient(
         response.use {
             val body = response.asString()
             return if (body != null) {
-                json.parse(EncounterState.serializer(), body)
+                Serializers.parse(body)
             } else {
                 null
             }
@@ -285,7 +283,7 @@ class NetworkClient(
         response.use {
             val body = response.asString()
             return if (body != null) {
-                json.parse(EncounterState.serializer(), body)
+                Serializers.parse(body)
             } else {
                 null
             }
@@ -301,7 +299,7 @@ class NetworkClient(
         response.use {
             val body = response.asString()
             return if (body != null) {
-                json.parse(EncounterState.serializer(), body)
+                Serializers.parse(body)
             } else {
                 null
             }
@@ -317,7 +315,7 @@ class NetworkClient(
         response.use {
             val body = response.asString()
             return if (body != null) {
-                json.parse(EncounterState.serializer(), body)
+                Serializers.parse(body)
             } else {
                 null
             }
