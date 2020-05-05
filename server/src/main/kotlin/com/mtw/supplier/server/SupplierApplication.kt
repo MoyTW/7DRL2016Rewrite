@@ -75,10 +75,7 @@ class RootController {
 		return Serializers.stringify(gameState)
 	}
 
-	// TODO: Proppa level gen & not literally in controller lol
-	private final fun generateNewGameState(history: EncounterStateHistory): EncounterState {
-		val state = EncounterState(40, 40)
-
+	private fun makeAndPlaceScout(state: EncounterState, x: Int, y: Int) {
 		val activatedAi = EnemyScoutAIComponent()
 		activatedAi.isActive = true
 		val scout = Entity(state.getNextEntityId(), "Scout")
@@ -89,6 +86,13 @@ class RootController {
 			.addComponent(ActionTimeComponent(75))
 			.addComponent(SpeedComponent(75))
 			.addComponent(DisplayComponent(DisplayType.ENEMY_SCOUT, false))
+		state.placeEntity(scout, XYCoordinates(x, y))
+	}
+
+	// TODO: Proppa level gen & not literally in controller lol
+	private final fun generateNewGameState(history: EncounterStateHistory): EncounterState {
+		val state = EncounterState(40, 40)
+
 		val player = Entity(state.getNextEntityId(), "player")
 			.addComponent(PlayerComponent())
 			.addComponent(DefenderComponent(0, 50, 50))
@@ -97,9 +101,18 @@ class RootController {
 			.addComponent(ActionTimeComponent(100))
 			.addComponent(SpeedComponent(100))
 			.addComponent(DisplayComponent(DisplayType.PLAYER, false))
+		state.placeEntity(player, XYCoordinates(25, 25))
 
-		state.placeEntity(scout, XYCoordinates(10, 10))
-			 .placeEntity(player, XYCoordinates(25, 25))
+		makeAndPlaceScout(state, 10, 20)
+		makeAndPlaceScout(state, 10, 18)
+		makeAndPlaceScout(state, 10, 16)
+		makeAndPlaceScout(state, 10, 14)
+		makeAndPlaceScout(state, 10, 12)
+		makeAndPlaceScout(state, 10, 10)
+		makeAndPlaceScout(state, 10, 8)
+		makeAndPlaceScout(state, 10, 6)
+		makeAndPlaceScout(state, 10, 4)
+		makeAndPlaceScout(state, 10, 2)
 
 		history.recordState(state)
 		EncounterRunner.runUntilPlayerReady(state, history)
