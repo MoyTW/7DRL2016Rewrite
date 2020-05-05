@@ -1,5 +1,6 @@
 package com.mtw.supplier.engine.encounter
 
+import com.mtw.supplier.engine.Serializers
 import com.mtw.supplier.engine.ecs.Entity
 import com.mtw.supplier.engine.ecs.components.*
 import com.mtw.supplier.engine.ecs.components.ai.AIComponent
@@ -8,7 +9,36 @@ import com.mtw.supplier.engine.encounter.rulebook.Action
 import com.mtw.supplier.engine.encounter.state.EncounterState
 import com.mtw.supplier.engine.encounter.rulebook.Rulebook
 import com.mtw.supplier.engine.utils.LinePathBuilder
+import kotlinx.serialization.Serializable
+import name.fraser.neil.plaintext.diff_match_patch
 import org.slf4j.LoggerFactory
+
+@Serializable
+class EncounterStateHistory {
+
+    var startSerialized: String? = null
+    private var lastSerialized: String? = null
+    val patches: MutableList<String> = mutableListOf()
+
+    fun recordState(encounterState: EncounterState) {
+        if (startSerialized == null) {
+            startSerialized = Serializers.stringify(encounterState)
+            lastSerialized = startSerialized
+        } else {
+            val newSerialized = Serializers.stringify(encounterState)
+
+            @Suppress("UNCHECKED_CAST")
+            val textPatch = dmp.patch_toText(dmp.patch_make(lastSerialized, newSerialized))
+
+            patches.add(textPatch)
+            lastSerialized = newSerialized
+        }
+    }
+
+    companion object {
+        val dmp: diff_match_patch = diff_match_patch()
+    }
+}
 
 object EncounterRunner {
     private val logger = LoggerFactory.getLogger(EncounterRunner::class.java)
@@ -54,7 +84,7 @@ object EncounterRunner {
         }
     }
 
-    fun runPlayerTurn(encounterState: EncounterState, playerAction: Action) {
+    fun runPlayerTurn(encounterState: EncounterState, playerAction: Action, history: EncounterStateHistory) {
         if (encounterState.completed) { return }
 
         // Move the player
@@ -67,14 +97,16 @@ object EncounterRunner {
 
         // Shoot the player's laser
         fireLaser(encounterState, playerAction.actor)
+
+        history.recordState(encounterState)
     }
 
-    fun runUntilPlayerReady(encounterState: EncounterState) {
+    fun runUntilPlayerReady(encounterState: EncounterState, history: EncounterStateHistory) {
         if (encounterState.completed) { return }
 
-        var isPlayerReady = runNextActiveTick(encounterState)
+        var isPlayerReady = runNextActiveTick(encounterState, history)
         while (!isPlayerReady && !encounterState.completed) {
-            isPlayerReady = runNextActiveTick(encounterState)
+            isPlayerReady = runNextActiveTick(encounterState, history)
         }
         encounterState.calculatePlayerFoVAndMarkExploration()
         // TODO: Figure out why I wrote the below code - it shouldn't be necessary.
@@ -98,7 +130,7 @@ object EncounterRunner {
         }*/
     }
 
-    private fun runNextActiveTick(encounterState: EncounterState): Boolean {
+    private fun runNextActiveTick(encounterState: EncounterState, history: EncounterStateHistory): Boolean {
         if (encounterState.completed) { return false }
 
         // Run the clock until the next entity is ready
@@ -113,19 +145,29 @@ object EncounterRunner {
 
         logger.info("========== START OF TURN ${encounterState.currentTime} ==========")
         // TODO: Caching of various iterables, if crawling nodes is slow?
+        // Run all entities in the current tick, stopping if you find the player
         while (readyEntities.isNotEmpty() && !readyEntities.first().hasComponent(PlayerComponent::class)) {
             val entity = readyEntities.first()
             readyEntities.removeAt(0)
-            if (entity.hasComponent(AIComponent::class)) {
-                val nextActions = entity.getComponent(AIComponent::class).decideNextActions(encounterState)
-                logger.debug("Actions: $nextActions")
-                Rulebook.resolveActions(nextActions, encounterState)
-                val speedComponent = entity.getComponent(SpeedComponent::class)
-                entity.getComponent(ActionTimeComponent::class).endTurn(speedComponent)
-            }
+            runEntityTurn(entity, encounterState)
+            history.recordState(encounterState)
+            checkEndState(encounterState)
         }
+        logger.info("========== END OF TURN ${encounterState.currentTime} ==========")
+        return false
+    }
 
-        // lol
+    private fun runEntityTurn(entity: Entity, encounterState: EncounterState) {
+        if (entity.hasComponent(AIComponent::class)) {
+            val nextActions = entity.getComponent(AIComponent::class).decideNextActions(encounterState)
+            logger.debug("Actions: $nextActions")
+            Rulebook.resolveActions(nextActions, encounterState)
+            val speedComponent = entity.getComponent(SpeedComponent::class)
+            entity.getComponent(ActionTimeComponent::class).endTurn(speedComponent)
+        }
+    }
+
+    private fun checkEndState(encounterState: EncounterState) {
         val remainingAIEntities = encounterState.entities().filter {
             it.hasComponent(AIComponent::class) && it.hasComponent(FactionComponent::class)
         }
@@ -139,8 +181,5 @@ object EncounterRunner {
             logger.info("!!!!!!!!!! ENCOUNTER HAS NO REMAINING HOSTILES, SHOULD END! !!!!!!!!!!")
             encounterState.completeEncounter()
         }
-
-        logger.info("========== END OF TURN ${encounterState.currentTime} ==========")
-        return false
     }
 }

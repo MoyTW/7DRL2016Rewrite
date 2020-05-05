@@ -5,6 +5,7 @@ import com.mtw.supplier.engine.ecs.Entity
 import com.mtw.supplier.engine.ecs.components.*
 import com.mtw.supplier.engine.ecs.components.ai.EnemyScoutAIComponent
 import com.mtw.supplier.engine.encounter.EncounterRunner
+import com.mtw.supplier.engine.encounter.EncounterStateHistory
 import com.mtw.supplier.engine.encounter.rulebook.actions.MoveAction
 import com.mtw.supplier.engine.encounter.rulebook.actions.WaitAction
 import com.mtw.supplier.engine.utils.XYCoordinates
@@ -36,12 +37,12 @@ data class ActionMoveRequest(val direction: Direction)
 
 @RestController
 class RootController {
-	private var gameState: EncounterState = generateNewGameState()
+	private var gameState: EncounterState = generateNewGameState(EncounterStateHistory())
 
 	@PostMapping("/game/reset")
 	fun gameReset(): String {
-		gameState = generateNewGameState()
-		EncounterRunner.runUntilPlayerReady(gameState)
+		val history = EncounterStateHistory()
+		gameState = generateNewGameState(history)
 		return Serializers.stringify(gameState)
 	}
 
@@ -57,8 +58,9 @@ class RootController {
 			x = oldPlayerPos.x + request.direction.dx, y = oldPlayerPos.y + request.direction.dy)
 
 		val action = MoveAction(gameState.playerEntity(), newPlayerPos)
-		EncounterRunner.runPlayerTurn(gameState, action)
-		EncounterRunner.runUntilPlayerReady(gameState)
+		val history = EncounterStateHistory()
+		EncounterRunner.runPlayerTurn(gameState, action, history)
+		EncounterRunner.runUntilPlayerReady(gameState, history)
 
 		return Serializers.stringify(gameState)
 	}
@@ -66,14 +68,15 @@ class RootController {
 	@PostMapping("/game/player/action/wait")
 	fun gamePlayerActionWait(): String {
 		val action = WaitAction(gameState.playerEntity())
-		EncounterRunner.runPlayerTurn(gameState, action)
-		EncounterRunner.runUntilPlayerReady(gameState)
+		val history = EncounterStateHistory()
+		EncounterRunner.runPlayerTurn(gameState, action, history)
+		EncounterRunner.runUntilPlayerReady(gameState, history)
 
 		return Serializers.stringify(gameState)
 	}
 
 	// TODO: Proppa level gen & not literally in controller lol
-	private final fun generateNewGameState(): EncounterState {
+	private final fun generateNewGameState(history: EncounterStateHistory): EncounterState {
 		val state = EncounterState(40, 40)
 
 		val activatedAi = EnemyScoutAIComponent()
@@ -97,7 +100,10 @@ class RootController {
 
 		state.placeEntity(scout, XYCoordinates(10, 10))
 			 .placeEntity(player, XYCoordinates(25, 25))
-		EncounterRunner.runUntilPlayerReady(state)
+
+		history.recordState(state)
+		EncounterRunner.runUntilPlayerReady(state, history)
+
 		return state
 	}
 }
