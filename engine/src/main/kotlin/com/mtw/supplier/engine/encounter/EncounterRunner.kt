@@ -25,13 +25,16 @@ class EncounterStateHistory {
             startSerialized = Serializers.stringify(encounterState)
             lastSerialized = startSerialized
         } else {
-            val newSerialized = Serializers.stringify(encounterState)
+            val timestamp = kotlin.system.measureTimeMillis {
+                val newSerialized = Serializers.stringify(encounterState)
 
-            @Suppress("UNCHECKED_CAST")
-            val textPatch = dmp.patch_toText(dmp.patch_make(lastSerialized, newSerialized))
+                @Suppress("UNCHECKED_CAST")
+                val textPatch = dmp.patch_toText(dmp.patch_make(lastSerialized, newSerialized))
 
-            patches.add(textPatch)
-            lastSerialized = newSerialized
+                patches.add(textPatch)
+                lastSerialized = newSerialized
+            }
+            System.out.println("TIME TAKEN MS: " + timestamp)
         }
     }
 

@@ -4,6 +4,7 @@ import com.mtw.supplier.engine.ecs.Entity
 import com.mtw.supplier.engine.ecs.components.CollisionComponent
 import com.mtw.supplier.engine.ecs.components.EncounterLocationComponent
 import com.mtw.supplier.engine.utils.XYCoordinates
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 
@@ -23,10 +24,10 @@ interface EncounterTileMapView {
 @Serializable
 private class EncounterNode(
     // Whether or not the node itself is passable
-    private var _explored: Boolean = false,
-    var terrainBlocksMovement: Boolean = false,
-    var terrainBlocksVision: Boolean = false,
-    override val entities: MutableList<Entity> = mutableListOf()
+    @SerialName("_e") private var _explored: Boolean = false,
+    @SerialName("tbm") var terrainBlocksMovement: Boolean = false,
+    @SerialName("tbv") var terrainBlocksVision: Boolean = false,
+    @SerialName("es") override val entities: MutableList<Entity> = mutableListOf()
 ): EncounterTileView {
 
     override val blocksMovement: Boolean
