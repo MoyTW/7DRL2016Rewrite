@@ -46,7 +46,8 @@ object Serializers {
     }
 
     fun stringify(encounterState: EncounterState): String {
-        return json.stringify(EncounterState.serializer(), encounterState)
+        val stringified = json.stringify(EncounterState.serializer(), encounterState)
+        return stringified.replace(",", ",\n")
     }
 
     fun parse(body: String): EncounterState {
