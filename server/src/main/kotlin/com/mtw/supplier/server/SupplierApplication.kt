@@ -10,14 +10,14 @@ import com.mtw.supplier.engine.encounter.rulebook.actions.WaitAction
 import com.mtw.supplier.engine.utils.XYCoordinates
 import com.mtw.supplier.engine.encounter.state.EncounterState
 import com.mtw.supplier.engine.utils.Constants
-import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.JsonConfiguration
+import org.slf4j.LoggerFactory
 import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.boot.runApplication
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RestController
+import kotlin.system.measureTimeMillis
 
 @SpringBootApplication
 class SupplierApplication
@@ -37,7 +37,9 @@ data class ActionMoveRequest(val direction: Direction)
 
 @RestController
 class RootController {
+	private val logger = LoggerFactory.getLogger(RootController::class.java)
 	private var gameState: EncounterState = generateNewGameState()
+	private val hackMetrics: MutableList<Pair<String, Long>> = mutableListOf()
 
 	@PostMapping("/game/reset")
 	fun gameReset(): String {
@@ -51,6 +53,11 @@ class RootController {
 		return Serializers.stringify(gameState)
 	}
 
+	@GetMapping("/metrics/hack")
+	fun hackMetrics(): MutableList<Pair<String, Long>> {
+		return hackMetrics
+	}
+
 	@PostMapping("/game/player/action/move")
 	fun gamePlayerActionMove(@RequestBody request: ActionMoveRequest): String {
 		val oldPlayerPos = gameState.playerEntity().getComponent(EncounterLocationComponent::class).position
@@ -58,8 +65,11 @@ class RootController {
 			x = oldPlayerPos.x + request.direction.dx, y = oldPlayerPos.y + request.direction.dy)
 
 		val action = MoveAction(gameState.playerEntity(), newPlayerPos)
-		EncounterRunner.runPlayerTurn(gameState, action)
-		EncounterRunner.runUntilPlayerReady(gameState)
+		val turnTime = measureTimeMillis {
+			EncounterRunner.runPlayerTurnAndUntilReady(gameState, action)
+		}
+		hackMetrics.add(Pair("/move", turnTime))
+		logger.info("Processed $turnTime ms")
 
 		return Serializers.stringify(gameState)
 	}
@@ -67,8 +77,11 @@ class RootController {
 	@PostMapping("/game/player/action/wait")
 	fun gamePlayerActionWait(): String {
 		val action = WaitAction(gameState.playerEntity())
-		EncounterRunner.runPlayerTurn(gameState, action)
-		EncounterRunner.runUntilPlayerReady(gameState)
+		val turnTime = measureTimeMillis {
+			EncounterRunner.runPlayerTurnAndUntilReady(gameState, action)
+		}
+		hackMetrics.add(Pair("/wait", turnTime))
+		logger.info("Processed $turnTime ms")
 
 		return Serializers.stringify(gameState)
 	}

@@ -54,7 +54,7 @@ object EncounterRunner {
         }
     }
 
-    fun runPlayerTurn(encounterState: EncounterState, playerAction: Action) {
+    fun runPlayerTurnAndUntilReady(encounterState: EncounterState, playerAction: Action) {
         if (encounterState.completed) { return }
 
         // Move the player
@@ -67,6 +67,8 @@ object EncounterRunner {
 
         // Shoot the player's laser
         fireLaser(encounterState, playerAction.actor)
+
+        EncounterRunner.runUntilPlayerReady(encounterState)
     }
 
     fun runUntilPlayerReady(encounterState: EncounterState) {
@@ -111,7 +113,7 @@ object EncounterRunner {
             return true
         }
 
-        logger.info("========== START OF TURN ${encounterState.currentTime} ==========")
+        //logger.info("========== START OF TURN ${encounterState.currentTime} ==========")
         // TODO: Caching of various iterables, if crawling nodes is slow?
         while (readyEntities.isNotEmpty() && !readyEntities.first().hasComponent(PlayerComponent::class)) {
             val entity = readyEntities.first()
@@ -140,7 +142,7 @@ object EncounterRunner {
             encounterState.completeEncounter()
         }
 
-        logger.info("========== END OF TURN ${encounterState.currentTime} ==========")
+        //logger.info("========== END OF TURN ${encounterState.currentTime} ==========")
         return false
     }
 }
