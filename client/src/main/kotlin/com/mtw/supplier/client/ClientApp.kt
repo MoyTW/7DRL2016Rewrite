@@ -133,9 +133,8 @@ object ClientApp {
             for (y in 0 until tiles.height) {
                 // TODO: Normalize using either x, y or XYCoords or ???
                 val pos = XYCoordinates(x, y)
-                val tile = tiles.getTileView(x, y)
                 val drawTile = when {
-                    !tile!!.explored -> { unexploredTile }
+                    !tiles.isExplored(x, y) -> { unexploredTile }
                     !fov!!.isInFoV(pos) -> { exploredTile }
                     else -> { visibleTile }
                 }

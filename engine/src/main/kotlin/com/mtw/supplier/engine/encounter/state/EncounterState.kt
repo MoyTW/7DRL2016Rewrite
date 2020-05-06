@@ -90,7 +90,7 @@ class EncounterState(
 
     // TODO: Possibly maintain internal list
     fun entities(): List<Entity> {
-        return this.encounterMap.entities()
+        return this.encounterMap.entitiesOrderedById()
     }
 
     fun playerEntity(): Entity {

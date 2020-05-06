@@ -8,16 +8,14 @@ import kotlinx.serialization.Serializable
 
 
 interface EncounterTileView {
-    val blocksMovement: Boolean
     val explored: Boolean
-    val blocksVision: Boolean
-    val entities: List<Entity>
 }
 
 interface EncounterTileMapView {
     val width: Int
     val height: Int
-    fun getTileView(x: Int, y: Int): EncounterTileView?
+    fun isExplored(x: Int, y: Int): Boolean
+    fun blocksVision(x: Int, y: Int): Boolean
 }
 
 @Serializable
@@ -25,20 +23,11 @@ private class EncounterNode(
     // Whether or not the node itself is passable
     private var _explored: Boolean = false,
     var terrainBlocksMovement: Boolean = false,
-    var terrainBlocksVision: Boolean = false,
-    override val entities: MutableList<Entity> = mutableListOf()
+    var terrainBlocksVision: Boolean = false
 ): EncounterTileView {
-
-    override val blocksMovement: Boolean
-        get() = terrainBlocksMovement ||
-            entities.any{ it.getComponentOrNull(CollisionComponent::class)?.blocksMovement ?: false }
 
     override val explored: Boolean
         get() = _explored
-
-    override val blocksVision: Boolean
-        get() = terrainBlocksVision ||
-            entities.any{ it.getComponentOrNull(CollisionComponent::class)?.blocksVision ?: false }
 
     fun markExplored() {
         this._explored = true
@@ -51,14 +40,16 @@ internal class EncounterMap(
     override val height: Int
 ): EncounterTileMapView {
     private val nodes: Array<Array<EncounterNode>> = Array(width) { Array(height) { EncounterNode() } }
+    private val entitiesByPosition: MutableMap<XYCoordinates, MutableList<Entity>> = mutableMapOf()
 
-    override fun getTileView(x: Int, y: Int): EncounterTileView? {
-        // yeah, yeah, exceptions, control flow, you could do a width/height. TODO: cleanup maybe
-        return try {
-            nodes[x][y]
-        } catch (e: ArrayIndexOutOfBoundsException) {
-            null
-        }
+    override fun isExplored(x: Int, y: Int): Boolean {
+        return isInBounds(x, y) && nodes[x][y].explored
+    }
+
+    override fun blocksVision(x: Int, y: Int): Boolean {
+        if (!isInBounds(x, y)) { return true }
+        return nodes[x][y].terrainBlocksVision ||
+            getEntitiesAtPosition(XYCoordinates(x, y)).any{ it.getComponentOrNull(CollisionComponent::class)?.blocksVision ?: false }
     }
 
     internal fun isInBounds(x: Int, y: Int): Boolean {
@@ -76,7 +67,8 @@ internal class EncounterMap(
 
     internal fun positionBlocked(pos: XYCoordinates): Boolean {
         if (!isInBounds(pos.x, pos.y)) { return true }
-        return nodes[pos.x][pos.y].blocksMovement
+        return nodes[pos.x][pos.y].terrainBlocksMovement ||
+            getEntitiesAtPosition(pos).any{ it.getComponentOrNull(CollisionComponent::class)?.blocksMovement ?: false }
     }
 
     internal fun arePositionsAdjacent(pos1: XYCoordinates, pos2: XYCoordinates): Boolean {
@@ -90,7 +82,7 @@ internal class EncounterMap(
         val adjacentUnblockedPositions = mutableListOf<XYCoordinates>()
         for(x in (pos.x - 1..pos.x + 1)) {
             for (y in (pos.y - 1..pos.y + 1)) {
-                if (x != y && isInBounds(x, y) && !nodes[x][y].blocksMovement) {
+                if (x != y && isInBounds(x, y) && !positionBlocked(XYCoordinates(x, y))) {
                     adjacentUnblockedPositions.add(XYCoordinates(x, y))
                 }
             }
@@ -98,14 +90,13 @@ internal class EncounterMap(
         return adjacentUnblockedPositions
     }
 
-    // TODO: A more cogent sorting function than creation order?
-    internal fun entities(): List<Entity> {
-        return this.nodes.flatten().flatMap { it.entities }.sortedBy { it.id }
+    internal fun entitiesOrderedById(): List<Entity> {
+        return this.entitiesByPosition.values.flatten().sortedBy { it.id }
     }
 
     internal fun getEntitiesAtPosition(pos: XYCoordinates): List<Entity> {
         if (!isInBounds(pos.x, pos.y)) { return emptyList() }
-        return this.nodes[pos.x][pos.y].entities
+        return this.entitiesByPosition[pos] ?: emptyList()
     }
 
     /**
@@ -119,7 +110,11 @@ internal class EncounterMap(
             throw NodeHasInsufficientSpaceException("Node $targetPosition is full, cannot place ${entity.name}")
         }
 
-        this.nodes[targetPosition.x][targetPosition.y].entities.add(entity)
+        if(this.entitiesByPosition.containsKey(targetPosition)) {
+            this.entitiesByPosition[targetPosition]!!.add(entity)
+        } else {
+            this.entitiesByPosition[targetPosition] = mutableListOf(entity)
+        }
         entity.addComponent(EncounterLocationComponent(targetPosition))
     }
     class EntityAlreadyHasLocation(message: String): Exception(message)
@@ -132,7 +127,7 @@ internal class EncounterMap(
 
         val locationComponent = entity.getComponent(EncounterLocationComponent::class)
         val (x, y) = locationComponent.position
-        this.nodes[x][y].entities.remove(entity)
+        this.entitiesByPosition[locationComponent.position]!!.remove(entity)
         entity.removeComponent(locationComponent)
     }
     class EntityHasNoLocation(message: String): Exception(message)

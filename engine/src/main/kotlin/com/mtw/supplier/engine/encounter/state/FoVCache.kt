@@ -19,7 +19,7 @@ class FoVCache internal constructor(val visiblePositions: Set<XYCoordinates>) {
     companion object {
         fun computeFoV(tileMapView: EncounterTileMapView, center: XYCoordinates, radius: Int): FoVCache {
             val visibleCells = RPASCal.calcVisibleCellsFrom(center, radius) {
-                tileMapView.getTileView(it.x, it.y)?.blocksVision == false
+                !tileMapView.blocksVision(it.x, it.y)
             }.filter {
                 0 <= it.x && it.x < tileMapView.width && 0 <= it.y && it.y < tileMapView.height
             }.toSet()
