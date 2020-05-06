@@ -5,6 +5,7 @@ import com.mtw.supplier.engine.ecs.components.CollisionComponent
 import com.mtw.supplier.engine.ecs.components.EncounterLocationComponent
 import com.mtw.supplier.engine.ecs.components.PlayerComponent
 import com.mtw.supplier.engine.encounter.rulebook.Action
+import com.mtw.supplier.engine.utils.Constants
 import com.mtw.supplier.engine.utils.XYCoordinates
 import kotlinx.serialization.Serializable
 
@@ -55,8 +56,8 @@ class EncounterState(
     fun calculatePlayerFoVAndMarkExploration() {
         this.fovCache = FoVCache.computeFoV(this.encounterMap,
             this.playerEntity().getComponent(EncounterLocationComponent::class).position,
-            5
-        ) // TOOD: Vision radius
+            Constants.VISION_RADIUS
+        )
         for (pos in this.fovCache!!.visiblePositions) {
             encounterMap.markExplored(pos)
         }
