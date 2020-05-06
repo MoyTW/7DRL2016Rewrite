@@ -9,6 +9,7 @@ import com.mtw.supplier.engine.encounter.rulebook.actions.MoveAction
 import com.mtw.supplier.engine.encounter.rulebook.actions.WaitAction
 import com.mtw.supplier.engine.utils.XYCoordinates
 import com.mtw.supplier.engine.encounter.state.EncounterState
+import com.mtw.supplier.engine.utils.Constants
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonConfiguration
 import org.springframework.boot.autoconfigure.SpringBootApplication
@@ -74,7 +75,7 @@ class RootController {
 
 	// TODO: Proppa level gen & not literally in controller lol
 	private final fun generateNewGameState(): EncounterState {
-		val state = EncounterState(40, 40)
+		val state = EncounterState(Constants.MAP_WIDTH, Constants.MAP_HEIGHT)
 
 		val activatedAi = EnemyScoutAIComponent()
 		activatedAi.isActive = true

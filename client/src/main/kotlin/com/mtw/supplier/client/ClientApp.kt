@@ -40,10 +40,10 @@ enum class Direction(val dx: Int, val dy: Int) {
 
 object ClientApp {
     //val gameState = GameState()
-    val GAME_WIDTH: Int = 60
-    val GAME_HEIGHT: Int = 40
-    val MAP_WIDTH: Int = 60
-    val MAP_HEIGHT: Int = 40
+    val GAME_WIDTH: Int = 50
+    val GAME_HEIGHT: Int = 50
+    val MAP_WIDTH: Int = 50
+    val MAP_HEIGHT: Int = 50
     // TODO: Log
     // val LOG_WIDTH: Int = GAME_WIDTH
     // val LOG_HEIGHT: Int = GAME_HEIGHT - MAP_HEIGHT
