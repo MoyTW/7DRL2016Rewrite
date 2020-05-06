@@ -15,7 +15,7 @@ import kotlinx.serialization.modules.SerialModule
 import kotlinx.serialization.modules.SerializersModule
 
 object Serializers {
-    private val json = Json(JsonConfiguration.Stable.copy(prettyPrint = true),
+    private val json = Json(JsonConfiguration.Stable.copy(prettyPrint = false),
         context = componentSerializersModuleBuilder())
 
     private fun componentSerializersModuleBuilder(): SerialModule {
