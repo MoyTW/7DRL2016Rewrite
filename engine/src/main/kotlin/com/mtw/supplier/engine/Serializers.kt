@@ -13,8 +13,11 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonConfiguration
 import kotlinx.serialization.modules.SerialModule
 import kotlinx.serialization.modules.SerializersModule
+import org.slf4j.LoggerFactory
+import kotlin.system.measureTimeMillis
 
 object Serializers {
+    private val logger = LoggerFactory.getLogger(Serializers::class.java)
     private val json = Json(JsonConfiguration.Stable.copy(prettyPrint = false),
         context = componentSerializersModuleBuilder())
 
@@ -46,10 +49,20 @@ object Serializers {
     }
 
     fun stringify(encounterState: EncounterState): String {
-        return json.stringify(EncounterState.serializer(), encounterState)
+        var s: String? = null
+        val timeTaken = measureTimeMillis {
+            s = json.stringify(EncounterState.serializer(), encounterState)
+        }
+        logger.info("Stringify ms: $timeTaken")
+        return s!!
     }
 
     fun parse(body: String): EncounterState {
-        return json.parse(EncounterState.serializer(), body)
+        var p: EncounterState? = null
+        val timeTaken = measureTimeMillis {
+            p = json.parse(EncounterState.serializer(), body)
+        }
+        logger.info("Parse ms: $timeTaken")
+        return p!!
     }
 }

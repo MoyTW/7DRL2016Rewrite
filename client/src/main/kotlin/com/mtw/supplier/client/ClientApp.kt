@@ -26,6 +26,7 @@ import org.hexworks.zircon.api.data.Tile
 import org.hexworks.zircon.api.extensions.toScreen
 import org.hexworks.zircon.api.graphics.TileGraphics
 import org.hexworks.zircon.api.uievent.*
+import org.slf4j.LoggerFactory
 
 enum class Direction(val dx: Int, val dy: Int) {
     N(0, 1),
@@ -48,7 +49,7 @@ object ClientApp {
     // val LOG_WIDTH: Int = GAME_WIDTH
     // val LOG_HEIGHT: Int = GAME_HEIGHT - MAP_HEIGHT
     val MAP_CENTER = XYCoordinates(MAP_WIDTH / 2, MAP_HEIGHT / 2)
-
+    val logger = LoggerFactory.getLogger(this::class.java)
 
     @JvmStatic
     fun main(args: Array<String>) {
@@ -269,6 +270,8 @@ class NetworkClient(
     }
 
     fun postMoveAction(direction: Direction): EncounterState? {
+        ClientApp.logger.info("###############################################################")
+        val millis = System.currentTimeMillis()
         val response: Response = httpPost {
             host = "localhost"
             port = SERVER_PORT
@@ -282,7 +285,11 @@ class NetworkClient(
         response.use {
             val body = response.asString()
             return if (body != null) {
-                Serializers.parse(body)
+                ClientApp.logger.info("postMoveAction time taken before parse: ${System.currentTimeMillis() - millis}")
+                val parsed = Serializers.parse(body)
+                ClientApp.logger.info("postMoveAction total time taken: ${System.currentTimeMillis() - millis}")
+                ClientApp.logger.info("------------------------------------------------------------------")
+                parsed
             } else {
                 null
             }
