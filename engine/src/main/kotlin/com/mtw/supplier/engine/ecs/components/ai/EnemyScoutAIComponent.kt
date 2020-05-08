@@ -35,7 +35,7 @@ class EnemyScoutAIComponent(): AIComponent() {
         actions.add(FireProjectileAction(
             actor = parent,
             power = 1,
-            pathBuilder = LinePathBuilder(targetPos = playerPos, spread = 2),
+            pathBuilder = LinePathBuilder(targetPos = playerPos, seededRand = encounterState.seededRand, spread = 2),
             speed = 25,
             projectileType = ProjectileType.SHOTGUN_PELLET,
             numProjectiles = 2))

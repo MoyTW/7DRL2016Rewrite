@@ -6,6 +6,7 @@ import com.mtw.supplier.engine.ecs.components.EncounterLocationComponent
 import com.mtw.supplier.engine.ecs.components.PlayerComponent
 import com.mtw.supplier.engine.encounter.rulebook.Action
 import com.mtw.supplier.engine.utils.Constants
+import com.mtw.supplier.engine.utils.SeededRand
 import com.mtw.supplier.engine.utils.XYCoordinates
 import kotlinx.serialization.Serializable
 
@@ -38,6 +39,7 @@ class EncounterMessageLog {
 
 @Serializable
 class EncounterState(
+    val seededRand: SeededRand,
     private val width: Int,
     private val height: Int,
     private var _currentTime: Int = 0,

@@ -49,6 +49,9 @@ object Serializers {
     }
 
     fun stringify(encounterState: EncounterState): String {
+        // This is kind of a janky but deterministic way to force consistent randomness.
+        encounterState.seededRand.reseed()
+
         var s: String? = null
         val timeTaken = measureTimeMillis {
             s = json.stringify(EncounterState.serializer(), encounterState)

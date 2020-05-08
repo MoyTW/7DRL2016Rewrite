@@ -48,7 +48,8 @@ object EncounterRunner {
             val playerPos = player.getComponent(EncounterLocationComponent::class).position
 
             val target = hostileEntities[0]
-            val pathBuilder = LinePathBuilder(target.getComponent(EncounterLocationComponent::class).position)
+            val pathBuilder = LinePathBuilder(target.getComponent(EncounterLocationComponent::class).position,
+                encounterState.seededRand)
             // TODO: Do damage
             //Rulebook.resolveAction(FireProjectileAction(player, 0, pathBuilder, 0, ProjectileType.LASER), encounterState)
         }

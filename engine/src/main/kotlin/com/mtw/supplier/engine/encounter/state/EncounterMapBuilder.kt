@@ -1,5 +1,6 @@
 package com.mtw.supplier.engine.encounter.state
 
+import com.mtw.supplier.engine.utils.SeededRand
 import com.mtw.supplier.engine.utils.XYCoordinates
 
 class Zone(
@@ -27,7 +28,8 @@ class EncounterMapBuilder(
     val maxZoneGenAttempts: Int = 100,
     val maxZones: Int = 9,
     val zoneMinSize: Int = 20,
-    val zoneMaxSize: Int = 40
+    val zoneMaxSize: Int = 40,
+    val seededRand: SeededRand
 ) {
     fun placeObjects(zone: Zone) {
         TODO()
@@ -49,10 +51,10 @@ class EncounterMapBuilder(
         var zoneGenAttempts = 0
         while (zoneGenAttempts < maxZoneGenAttempts && zones.size < maxZones) {
             // Make the zone & place it
-            val zoneWidth = (zoneMinSize..zoneMaxSize).random()
-            val zoneHeight = (zoneMinSize..zoneMaxSize).random()
-            val bottomLeft = XYCoordinates((0 until mapWidth - zoneWidth).random(),
-                (0 until mapHeight - zoneHeight).random())
+            val zoneWidth = (zoneMinSize..zoneMaxSize).random(seededRand.getRandom())
+            val zoneHeight = (zoneMinSize..zoneMaxSize).random(seededRand.getRandom())
+            val bottomLeft = XYCoordinates((0 until mapWidth - zoneWidth).random(seededRand.getRandom()),
+                (0 until mapHeight - zoneHeight).random(seededRand.getRandom()))
             val newZone = Zone(bottomLeft, zoneWidth, zoneHeight, "Zone ${zones.size}")
 
             // Compare the zones
@@ -76,7 +78,7 @@ class EncounterMapBuilder(
         // TODO: Generate the diplomat if you're on the last level
 
         // Generate the stairs
-        val stairsZone = zones[(1 until zones.size).random()]
+        val stairsZone = zones[(1 until zones.size).random(seededRand.getRandom())]
         val stairsPos = stairsZone.randomUnblockedCoordinates()
         TODO() // Generate stairs
 

@@ -10,6 +10,7 @@ import com.mtw.supplier.engine.encounter.rulebook.actions.WaitAction
 import com.mtw.supplier.engine.utils.XYCoordinates
 import com.mtw.supplier.engine.encounter.state.EncounterState
 import com.mtw.supplier.engine.utils.Constants
+import com.mtw.supplier.engine.utils.SeededRand
 import org.slf4j.LoggerFactory
 import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.boot.runApplication
@@ -17,6 +18,7 @@ import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RestController
+import kotlin.random.Random
 import kotlin.system.measureTimeMillis
 
 @SpringBootApplication
@@ -102,7 +104,7 @@ class RootController {
 
 	// TODO: Proppa level gen & not literally in controller lol
 	private final fun generateNewGameState(): EncounterState {
-		val state = EncounterState(Constants.MAP_WIDTH, Constants.MAP_HEIGHT)
+		val state = EncounterState(SeededRand(Random.nextInt()), Constants.MAP_WIDTH, Constants.MAP_HEIGHT)
 
 		val player = Entity(state.getNextEntityId(), "player")
 			.addComponent(PlayerComponent())
