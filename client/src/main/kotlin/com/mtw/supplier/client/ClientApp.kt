@@ -1,28 +1,12 @@
 package com.mtw.supplier.client
 
-import com.mtw.supplier.engine.Serializers
-import com.mtw.supplier.engine.ecs.Entity
-import com.mtw.supplier.engine.ecs.components.*
-import com.mtw.supplier.engine.ecs.components.ai.PathAIComponent
 import com.mtw.supplier.engine.encounter.state.EncounterState
-import com.mtw.supplier.engine.encounter.state.FoVCache
-import com.mtw.supplier.engine.utils.XYCoordinates
-import io.github.rybalkinsd.kohttp.dsl.httpGet
-import io.github.rybalkinsd.kohttp.dsl.httpPost
-import io.github.rybalkinsd.kohttp.ext.asString
-import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.JsonConfiguration
-import okhttp3.Response
 import org.hexworks.zircon.api.CP437TilesetResources
 import org.hexworks.zircon.api.DrawSurfaces
 import org.hexworks.zircon.api.SwingApplications
 import org.hexworks.zircon.api.application.AppConfig
 import org.hexworks.zircon.api.builder.graphics.LayerBuilder
-import org.hexworks.zircon.api.color.ANSITileColor
-import org.hexworks.zircon.api.color.TileColor
-import org.hexworks.zircon.api.data.Position
 import org.hexworks.zircon.api.data.Size
-import org.hexworks.zircon.api.data.Tile
 import org.hexworks.zircon.api.extensions.toScreen
 import org.hexworks.zircon.api.graphics.TileGraphics
 import org.hexworks.zircon.api.uievent.*
@@ -39,24 +23,13 @@ enum class Direction(val dx: Int, val dy: Int) {
     NW(-1, 1)
 }
 
-object ClientApp {
-    //val gameState = GameState()
-    val GAME_WIDTH: Int = 50
-    val GAME_HEIGHT: Int = 50
-    val MAP_WIDTH: Int = 50
-    val MAP_HEIGHT: Int = 50
-    // TODO: Log
-    // val LOG_WIDTH: Int = GAME_WIDTH
-    // val LOG_HEIGHT: Int = GAME_HEIGHT - MAP_HEIGHT
-    val MAP_CENTER = XYCoordinates(MAP_WIDTH / 2, MAP_HEIGHT / 2)
-    val logger = LoggerFactory.getLogger(this::class.java)
-
+object Main {
     @JvmStatic
     fun main(args: Array<String>) {
         // Create Zircon app
         val tileGrid = SwingApplications.startTileGrid(
             AppConfig.newBuilder()
-                .withSize(GAME_WIDTH, GAME_HEIGHT)
+                .withSize(ClientAppConfig.CLIENT_WIDTH, ClientAppConfig.CLIENT_HEIGHT)
                 .withDefaultTileset(CP437TilesetResources.rexPaint16x16())
                 .build())
         val screen = tileGrid.toScreen()
@@ -67,165 +40,33 @@ object ClientApp {
 
         // Create FoW, Entity layers & attach to screen
         val mapFoWTileGraphics: TileGraphics = DrawSurfaces.tileGraphicsBuilder()
-            .withSize(Size.create(MAP_WIDTH, MAP_HEIGHT))
+            .withSize(Size.create(ClientAppConfig.MAP_WIDTH, ClientAppConfig.MAP_HEIGHT))
             .build()
         screen.addLayer(LayerBuilder.newBuilder().withTileGraphics(mapFoWTileGraphics).build())
         val mapProjectilePathTileGraphics: TileGraphics = DrawSurfaces.tileGraphicsBuilder()
-            .withSize(Size.create(MAP_WIDTH, MAP_HEIGHT))
+            .withSize(Size.create(ClientAppConfig.MAP_WIDTH, ClientAppConfig.MAP_HEIGHT))
             .build()
         screen.addLayer(LayerBuilder.newBuilder().withTileGraphics(mapProjectilePathTileGraphics).build())
         val mapEntityTileGraphics: TileGraphics = DrawSurfaces.tileGraphicsBuilder()
-            .withSize(Size.create(MAP_WIDTH, MAP_HEIGHT))
+            .withSize(Size.create(ClientAppConfig.MAP_WIDTH, ClientAppConfig.MAP_HEIGHT))
             .build()
         screen.addLayer(LayerBuilder.newBuilder().withTileGraphics(mapEntityTileGraphics).build())
 
         // Add input handler
         tileGrid.processKeyboardEvents(KeyboardEventType.KEY_PRESSED) { keyboardEvent: KeyboardEvent, uiEventPhase: UIEventPhase ->
-            val newEncounterState = handleKeyPress(keyboardEvent, networkClient)
-            renderGameState(mapFoWTileGraphics, mapProjectilePathTileGraphics, mapEntityTileGraphics, newEncounterState)
+            val newEncounterState = ClientApp.handleKeyPress(keyboardEvent, networkClient)
+            ClientDrawer.drawGameState(mapFoWTileGraphics, mapProjectilePathTileGraphics, mapEntityTileGraphics, newEncounterState)
             UIEventResponse.pass()
         }
 
-        renderGameState(mapFoWTileGraphics, mapProjectilePathTileGraphics, mapEntityTileGraphics, networkClient.refreshEncounterState())
+        ClientDrawer.drawGameState(mapFoWTileGraphics, mapProjectilePathTileGraphics, mapEntityTileGraphics, networkClient.refreshEncounterState())
     }
+}
 
-    private fun renderGameState(mapFoWTileGraphics: TileGraphics,
-                                mapProjectilePathTileGraphics: TileGraphics,
-                                mapEntityTileGraphics: TileGraphics,
-                                encounterState: EncounterState?) {
-        // TODO: log this
-        if (encounterState == null) {
-            return
-        }
+object ClientApp {
+    val logger = LoggerFactory.getLogger(this::class.java)
 
-        // TODO: Game over/reset screen
-        if (encounterState.completed) {
-            return
-        }
-
-        // Draw the map
-        mapFoWTileGraphics.clear()
-        mapProjectilePathTileGraphics.clear()
-        mapEntityTileGraphics.clear()
-        val playerPos = encounterState.playerEntity().getComponent(EncounterLocationComponent::class).position
-        val cameraX = playerPos.x
-        val cameraY = playerPos.y
-
-        renderFoWTiles(mapFoWTileGraphics, encounterState, cameraX, cameraY)
-        renderProjectilePaths(mapProjectilePathTileGraphics, encounterState, cameraX, cameraY)
-        renderDisplayEntities(mapEntityTileGraphics, encounterState, cameraX, cameraY)
-    }
-
-    // TODO: Remove CameraX, CameraY
-    private fun renderFoWTiles(tileGraphics: TileGraphics, encounterState: EncounterState, cameraX: Int, cameraY: Int) {
-        val tiles = encounterState.getEncounterTileMap()
-        val fov = encounterState.fovCache
-
-        val unexploredTile = Tile.newBuilder()
-            .withBackgroundColor(ANSITileColor.BLACK)
-            .build()
-        val exploredTile = Tile.newBuilder()
-            .withBackgroundColor(ANSITileColor.GRAY)
-            .build()
-        val visibleTile = Tile.newBuilder()
-            .withBackgroundColor(ANSITileColor.WHITE)
-            .build()
-        for (x in 0 until tiles.width) {
-            for (y in 0 until tiles.height) {
-                // TODO: Normalize using either x, y or XYCoords or ???
-                val pos = XYCoordinates(x, y)
-                val drawTile = when {
-                    !tiles.isExplored(x, y) -> { unexploredTile }
-                    !fov!!.isInFoV(pos) -> { exploredTile }
-                    else -> { visibleTile }
-                }
-                draw(tileGraphics, drawTile, pos, cameraX, cameraY)
-            }
-        }
-    }
-
-    private fun draw(tileGraphics: TileGraphics, tile: Tile, pos: XYCoordinates, cameraX: Int, cameraY: Int) {
-        val screenPos = toCameraCoordinates(pos, cameraX, cameraY)
-        tileGraphics.draw(tile, Position.create(screenPos.x, tileGraphics.height - screenPos.y - 1))
-    }
-
-    private fun toCameraCoordinates(pos: XYCoordinates, cameraX: Int, cameraY: Int): XYCoordinates {
-        return XYCoordinates(pos.x - cameraX + MAP_CENTER.x, pos.y - cameraY + MAP_CENTER.y)
-    }
-
-    private fun renderProjectilePaths(tileGraphics: TileGraphics, encounterState: EncounterState, cameraX: Int, cameraY: Int) {
-        val fovCache = encounterState.fovCache!!
-        val markedPositions = mutableSetOf<XYCoordinates>()
-
-        encounterState.entities()
-            .filter { it.hasComponent(EncounterLocationComponent::class) && it.hasComponent(PathAIComponent::class) }
-            .map {
-                val path = it.getComponent(PathAIComponent::class).path
-                val projectileSpeed = it.getComponent(SpeedComponent::class).speed
-                val projectileTicks = it.getComponent(ActionTimeComponent::class).ticksUntilTurn
-
-                val playerSpeed = encounterState.playerEntity().getComponent(SpeedComponent::class).speed
-                val playerTicks = encounterState.playerEntity().getComponent(ActionTimeComponent::class).ticksUntilTurn
-                if (projectileTicks <= playerTicks) {
-                    val turns = ((playerTicks - projectileTicks) + playerSpeed) / projectileSpeed
-                    val stops = path.project(turns)
-                    if (stops.size > 1) {
-                        for (stop in stops.subList(1, stops.size)) {
-                            if (fovCache.isInFoV(stop)) {
-                                markedPositions.add(stop)
-                            }
-                        }
-                    }
-                }
-            }
-
-        markedPositions.forEach {
-            // TODO: Consolidate all the Tile.newBuilder()
-            val pathTile = Tile.newBuilder()
-                .withForegroundColor(TileColor.transparent())
-                .withBackgroundColor(TileColor.create(217, 112, 213))
-                .build()
-            draw(tileGraphics, pathTile, it, cameraX, cameraY)
-        }
-    }
-
-    private fun renderDisplayEntities(tileGraphics: TileGraphics, encounterState: EncounterState, cameraX: Int, cameraY: Int) {
-        val fowCache = encounterState.fovCache!!
-        encounterState.entities()
-            .filter { it.hasComponent(EncounterLocationComponent::class) && it.hasComponent(DisplayComponent::class) }
-            .sortedByDescending { it.getComponent(DisplayComponent::class).displayType.priority }
-            .map {
-                val entityPos = it.getComponent(EncounterLocationComponent::class).position
-                toTile(entityPos, it, fowCache)?.let { tile -> draw(tileGraphics, tile, entityPos, cameraX, cameraY) }
-            }
-    }
-
-    private fun toTile(entityPos: XYCoordinates, entity: Entity, foVCache: FoVCache): Tile? {
-        val displayComponent = entity.getComponent(DisplayComponent::class)
-        if (!displayComponent.seeInFoW && !foVCache.isInFoV(entityPos)) {
-            return null
-        } else {
-            return when (displayComponent.displayType) {
-                DisplayType.PLAYER -> Tile.newBuilder()
-                    .withCharacter('@')
-                    .withForegroundColor(TileColor.create(0, 255, 0))
-                    .withBackgroundColor(TileColor.transparent())
-                    .build()
-                DisplayType.ENEMY_SCOUT -> Tile.newBuilder()
-                    .withCharacter('s')
-                    .withForegroundColor(TileColor.create(255, 0, 0))
-                    .withBackgroundColor(TileColor.transparent())
-                    .build()
-                DisplayType.PROJECTILE_SMALL_SHOTGUN -> Tile.newBuilder()
-                    .withCharacter('.')
-                    .withForegroundColor(TileColor.create(255, 70, 0))
-                    .withBackgroundColor(TileColor.transparent())
-                    .build()
-            }
-        }
-    }
-
-    private fun handleKeyPress(event: KeyboardEvent, client: NetworkClient): EncounterState? {
+    fun handleKeyPress(event: KeyboardEvent, client: NetworkClient): EncounterState? {
         return when (event.code) {
             KeyCode.NUMPAD_1 ->  client.postMoveAction(Direction.SW) 
             KeyCode.KEY_B ->  client.postMoveAction(Direction.SW) 
@@ -246,85 +87,6 @@ object ClientApp {
             KeyCode.NUMPAD_9 ->  client.postMoveAction(Direction.NE) 
             KeyCode.KEY_U ->  client.postMoveAction(Direction.NE) 
             else -> null
-        }
-    }
-}
-
-class NetworkClient(
-    private val SERVER_PORT: Int = 8080
-) {
-    fun postWaitAction(): EncounterState? {
-        val response: Response = httpPost {
-            host = "localhost"
-            port = SERVER_PORT
-            path = "/game/player/action/wait"
-        }
-        response.use {
-            val body = response.asString()
-            return if (body != null) {
-                Serializers.parse(body)
-            } else {
-                null
-            }
-        }
-    }
-
-    fun postMoveAction(direction: Direction): EncounterState? {
-        ClientApp.logger.info("###############################################################")
-        val millis = System.currentTimeMillis()
-        val response: Response = httpPost {
-            host = "localhost"
-            port = SERVER_PORT
-            path = "/game/player/action/move"
-            body {
-                json {
-                    "direction" to direction.name
-                }
-            }
-        }
-        response.use {
-            val body = response.asString()
-            return if (body != null) {
-                ClientApp.logger.info("postMoveAction time taken before parse: ${System.currentTimeMillis() - millis}")
-                val parsed = Serializers.parse(body)
-                ClientApp.logger.info("postMoveAction total time taken: ${System.currentTimeMillis() - millis}")
-                ClientApp.logger.info("------------------------------------------------------------------")
-                parsed
-            } else {
-                null
-            }
-        }
-    }
-
-    fun refreshEncounterState(): EncounterState? {
-        val response: Response = httpGet {
-            host = "localhost"
-            port = SERVER_PORT
-            path = "/game/state"
-        }
-        response.use {
-            val body = response.asString()
-            return if (body != null) {
-                Serializers.parse(body)
-            } else {
-                null
-            }
-        }
-    }
-
-    fun resetGame(): EncounterState? {
-        val response: Response = httpPost {
-            host = "localhost"
-            port = SERVER_PORT
-            path = "/game/reset"
-        }
-        response.use {
-            val body = response.asString()
-            return if (body != null) {
-                Serializers.parse(body)
-            } else {
-                null
-            }
         }
     }
 }
