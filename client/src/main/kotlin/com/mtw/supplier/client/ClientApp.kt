@@ -90,13 +90,13 @@ class ClientApp() {
     }
 
     private fun executeMoveAction(direction: Direction) {
-        val serverEncounterState = GlobalScope.async {
+        /*val serverEncounterState = GlobalScope.async {
             networkClient.postMoveAction(direction)
-        }
+        }*/
         optimisticallyProcessMoveAction(direction)
-        drawGameState()
+        // drawGameState()
         // I'm reasonably sure using runBlocking like this isn't idiomatic.
-        runBlocking {
+        /*runBlocking {
             val serverEncounterStateString = serverEncounterState.await()
             if (Serializers.stringify(encounterState!!) != serverEncounterStateString) {
                 logger.error("You've desync'd somehow! F.")
@@ -106,7 +106,7 @@ class ClientApp() {
                 drawGameState()
             }
 
-        }
+        }*/
     }
 
     private fun optimisticallyProcessMoveAction(direction: Direction) {
@@ -115,7 +115,9 @@ class ClientApp() {
 			x = oldPlayerPos.x + direction.dx, y = oldPlayerPos.y + direction.dy)
 
 		val action = MoveAction(encounterState!!.playerEntity(), newPlayerPos)
-        EncounterRunner.runPlayerTurnAndUntilReady(encounterState!!, action)
+        EncounterRunner.runPlayerTurn(encounterState!!, action)
+        drawGameState(this.encounterState)
+        EncounterRunner.runUntilPlayerReady(encounterState!!) { drawGameState() }
     }
 
     fun handleKeyPress(event: KeyboardEvent, client: NetworkClient) {

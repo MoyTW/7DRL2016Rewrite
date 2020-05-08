@@ -55,7 +55,23 @@ object EncounterRunner {
         }
     }
 
-    fun runPlayerTurnAndUntilReady(encounterState: EncounterState, playerAction: Action) {
+    fun runPlayerTurn(encounterState: EncounterState, playerAction: Action) {
+        if (encounterState.completed) { return }
+
+        // Move the player
+        Rulebook.resolveAction(playerAction, encounterState)
+        val speedComponent = playerAction.actor.getComponent(SpeedComponent::class)
+        playerAction.actor.getComponent(ActionTimeComponent::class).endTurn(speedComponent)
+
+        // Update the FoV for the player
+        encounterState.calculatePlayerFoVAndMarkExploration()
+
+        // Shoot the player's laser
+        fireLaser(encounterState, playerAction.actor)
+    }
+
+    // TODO: postTurnFn is a really, really bad hacky way of pushing "do a redraw after every change" into the game logic
+    fun runPlayerTurnAndUntilReady(encounterState: EncounterState, playerAction: Action, postTurnFn: (() -> Unit)? = null) {
         if (encounterState.completed) { return }
 
         // Move the player
@@ -69,15 +85,18 @@ object EncounterRunner {
         // Shoot the player's laser
         fireLaser(encounterState, playerAction.actor)
 
-        EncounterRunner.runUntilPlayerReady(encounterState)
+        // Callback
+        if(postTurnFn != null) { postTurnFn() }
+
+        runUntilPlayerReady(encounterState, postTurnFn)
     }
 
-    fun runUntilPlayerReady(encounterState: EncounterState) {
+    fun runUntilPlayerReady(encounterState: EncounterState, postTurnFn: (() -> Unit)? = null) {
         if (encounterState.completed) { return }
 
-        var isPlayerReady = runNextActiveTick(encounterState)
+        var isPlayerReady = runNextActiveTick(encounterState, postTurnFn)
         while (!isPlayerReady && !encounterState.completed) {
-            isPlayerReady = runNextActiveTick(encounterState)
+            isPlayerReady = runNextActiveTick(encounterState, postTurnFn)
         }
         encounterState.calculatePlayerFoVAndMarkExploration()
         // TODO: Figure out why I wrote the below code - it shouldn't be necessary.
@@ -101,7 +120,7 @@ object EncounterRunner {
         }*/
     }
 
-    private fun runNextActiveTick(encounterState: EncounterState): Boolean {
+    private fun runNextActiveTick(encounterState: EncounterState, postTurnFn: (() -> Unit)? = null): Boolean {
         if (encounterState.completed) { return false }
 
         // Run the clock until the next entity is ready
@@ -125,6 +144,9 @@ object EncounterRunner {
                 Rulebook.resolveActions(nextActions, encounterState)
                 val speedComponent = entity.getComponent(SpeedComponent::class)
                 entity.getComponent(ActionTimeComponent::class).endTurn(speedComponent)
+                if(postTurnFn != null) {
+                    postTurnFn()
+                }
             }
         }
 
