@@ -1,34 +1,18 @@
 package com.mtw.supplier.client
 
-import com.mtw.supplier.engine.Serializers
-import com.mtw.supplier.engine.ecs.components.EncounterLocationComponent
-import com.mtw.supplier.engine.encounter.EncounterRunner
-import com.mtw.supplier.engine.encounter.rulebook.actions.MoveAction
-import com.mtw.supplier.engine.encounter.state.EncounterState
-import kotlinx.coroutines.*
 import org.hexworks.zircon.api.CP437TilesetResources
-import org.hexworks.zircon.api.DrawSurfaces
+import org.hexworks.zircon.api.ColorThemes
 import org.hexworks.zircon.api.SwingApplications
 import org.hexworks.zircon.api.application.AppConfig
-import org.hexworks.zircon.api.builder.graphics.LayerBuilder
-import org.hexworks.zircon.api.data.Size
+import org.hexworks.zircon.api.color.TileColor
+import org.hexworks.zircon.api.data.Position
+import org.hexworks.zircon.api.data.Tile
 import org.hexworks.zircon.api.extensions.toScreen
-import org.hexworks.zircon.api.graphics.TileGraphics
-import org.hexworks.zircon.api.uievent.*
-import org.slf4j.LoggerFactory
-import java.io.File
-import java.nio.file.Paths
-
-enum class Direction(val dx: Int, val dy: Int) {
-    N(0, 1),
-    NE(1, 1),
-    E(1, 0),
-    SE(1, -1),
-    S(0, -1),
-    SW(-1, -1),
-    W(-1, 0),
-    NW(-1, 1)
-}
+import org.hexworks.zircon.api.screen.Screen
+import org.hexworks.zircon.api.uievent.KeyboardEvent
+import org.hexworks.zircon.api.uievent.KeyboardEventType
+import org.hexworks.zircon.api.uievent.UIEventPhase
+import org.hexworks.zircon.api.uievent.UIEventResponse
 
 object Main {
     @JvmStatic
@@ -37,16 +21,8 @@ object Main {
     }
 }
 
-class ClientApp() {
-    val logger = LoggerFactory.getLogger(this::class.java)
-
-    val networkClient: NetworkClient
-    // Screen handles
-    val mapFoWTileGraphics: TileGraphics
-    val mapProjectilePathTileGraphics: TileGraphics
-    val mapEntityTileGraphics: TileGraphics
-
-    var encounterState: EncounterState?
+class ClientApp {
+    private val screen: Screen
 
     init {
         // Create Zircon app
@@ -55,92 +31,52 @@ class ClientApp() {
                 .withSize(ClientAppConfig.CLIENT_WIDTH, ClientAppConfig.CLIENT_HEIGHT)
                 .withDefaultTileset(CP437TilesetResources.rexPaint16x16())
                 .build())
-        val screen = tileGrid.toScreen()
+        screen = tileGrid.toScreen()
         screen.display()
-
-        // Network stuff
-        networkClient = NetworkClient()
-
-        // Create FoW, Entity layers & attach to screen
-        mapFoWTileGraphics = DrawSurfaces.tileGraphicsBuilder()
-            .withSize(Size.create(ClientAppConfig.MAP_WIDTH, ClientAppConfig.MAP_HEIGHT))
-            .build()
-        screen.addLayer(LayerBuilder.newBuilder().withTileGraphics(mapFoWTileGraphics).build())
-        mapProjectilePathTileGraphics = DrawSurfaces.tileGraphicsBuilder()
-            .withSize(Size.create(ClientAppConfig.MAP_WIDTH, ClientAppConfig.MAP_HEIGHT))
-            .build()
-        screen.addLayer(LayerBuilder.newBuilder().withTileGraphics(mapProjectilePathTileGraphics).build())
-        mapEntityTileGraphics = DrawSurfaces.tileGraphicsBuilder()
-            .withSize(Size.create(ClientAppConfig.MAP_WIDTH, ClientAppConfig.MAP_HEIGHT))
-            .build()
-        screen.addLayer(LayerBuilder.newBuilder().withTileGraphics(mapEntityTileGraphics).build())
+        screen.theme = (ColorThemes.arc());
 
         // Add input handler
         tileGrid.processKeyboardEvents(KeyboardEventType.KEY_PRESSED) { keyboardEvent: KeyboardEvent, uiEventPhase: UIEventPhase ->
-            handleKeyPress(keyboardEvent, networkClient)
+            handler()
             UIEventResponse.pass()
         }
-
-        encounterState = networkClient.refreshEncounterState()
-        drawGameState()
     }
 
-    private fun drawGameState(encounterState: EncounterState? = this.encounterState) {
-        ClientDrawer.drawGameState(mapFoWTileGraphics, mapProjectilePathTileGraphics, mapEntityTileGraphics, encounterState)
-    }
+    /**
+     * run with ./gradlew client:run
+     *
+     * I would expect when running this that it shows X, then it shows Y, then it shows Z, but it instead waits until
+     * 2 seconds have passed and then shows Z. I assume this is because it doesn't actually flush the draw buffer while
+     * the input is being handled, so it saves all those changes until the end. Is that a correct mental model of how
+     * the input handling works?
+     */
+    private fun handler() {
+        screen.clear()
+        val tileX = Tile.newBuilder()
+            .withCharacter('X')
+            .withForegroundColor(TileColor.create(255, 255, 255))
+            .withBackgroundColor(TileColor.create(217, 112, 213))
+            .build()
+        screen.draw(tileX, Position.create(5, 5))
 
-    private fun executeMoveAction(direction: Direction) {
-        /*val serverEncounterState = GlobalScope.async {
-            networkClient.postMoveAction(direction)
-        }*/
-        optimisticallyProcessMoveAction(direction)
-        // drawGameState()
-        // I'm reasonably sure using runBlocking like this isn't idiomatic.
-        /*runBlocking {
-            val serverEncounterStateString = serverEncounterState.await()
-            if (Serializers.stringify(encounterState!!) != serverEncounterStateString) {
-                logger.error("You've desync'd somehow! F.")
-                File(Paths.get("").toAbsolutePath().toString() + "/tmp/client.json").writeText(Serializers.stringify(encounterState!!))
-                File(Paths.get("").toAbsolutePath().toString() + "/tmp/server.json").writeText(serverEncounterStateString!!)
-                encounterState = Serializers.parse(serverEncounterStateString!!)
-                drawGameState()
-            }
+        Thread.sleep(1000)
 
-        }*/
-    }
+        screen.clear()
+        val tileY = Tile.newBuilder()
+            .withCharacter('Y')
+            .withForegroundColor(TileColor.create(255, 255, 255))
+            .withBackgroundColor(TileColor.create(217, 112, 213))
+            .build()
+        screen.draw(tileY, Position.create(5, 5))
 
-    private fun optimisticallyProcessMoveAction(direction: Direction) {
-        val oldPlayerPos = encounterState!!.playerEntity().getComponent(EncounterLocationComponent::class).position
-		val newPlayerPos = oldPlayerPos.copy(
-			x = oldPlayerPos.x + direction.dx, y = oldPlayerPos.y + direction.dy)
+        Thread.sleep(1000)
 
-		val action = MoveAction(encounterState!!.playerEntity(), newPlayerPos)
-        EncounterRunner.runPlayerTurn(encounterState!!, action)
-        drawGameState(this.encounterState)
-        EncounterRunner.runUntilPlayerReady(encounterState!!) { drawGameState() }
-    }
-
-    fun handleKeyPress(event: KeyboardEvent, client: NetworkClient) {
-        when (event.code) {
-            KeyCode.NUMPAD_1 ->  executeMoveAction(Direction.SW) 
-            KeyCode.KEY_B ->  executeMoveAction(Direction.SW) 
-            KeyCode.NUMPAD_2 ->  executeMoveAction(Direction.S) 
-            KeyCode.KEY_J ->  executeMoveAction(Direction.S) 
-            KeyCode.NUMPAD_3 ->  executeMoveAction(Direction.SE) 
-            KeyCode.KEY_N ->  executeMoveAction(Direction.SE) 
-            KeyCode.NUMPAD_4 ->  executeMoveAction(Direction.W) 
-            KeyCode.KEY_H ->  executeMoveAction(Direction.W) 
-            KeyCode.NUMPAD_5 ->  client.postWaitAction() 
-            KeyCode.PERIOD ->  client.postWaitAction() 
-            KeyCode.NUMPAD_6 ->  executeMoveAction(Direction.E) 
-            KeyCode.KEY_L ->  executeMoveAction(Direction.E) 
-            KeyCode.NUMPAD_7 ->  executeMoveAction(Direction.NW) 
-            KeyCode.KEY_Y ->  executeMoveAction(Direction.NW) 
-            KeyCode.NUMPAD_8 ->  executeMoveAction(Direction.N) 
-            KeyCode.KEY_K ->  executeMoveAction(Direction.N) 
-            KeyCode.NUMPAD_9 ->  executeMoveAction(Direction.NE) 
-            KeyCode.KEY_U ->  executeMoveAction(Direction.NE)
-            else -> null
-        }
+        screen.clear()
+        val tileZ = Tile.newBuilder()
+            .withCharacter('Z')
+            .withForegroundColor(TileColor.create(255, 255, 255))
+            .withBackgroundColor(TileColor.create(217, 112, 213))
+            .build()
+        screen.draw(tileZ, Position.create(5, 5))
     }
 }
