@@ -81,8 +81,8 @@ object ClientApp {
 
         // Add input handler
         tileGrid.processKeyboardEvents(KeyboardEventType.KEY_PRESSED) { keyboardEvent: KeyboardEvent, uiEventPhase: UIEventPhase ->
-            handleKeyPress(keyboardEvent, networkClient)
-            renderGameState(mapFoWTileGraphics, mapProjectilePathTileGraphics, mapEntityTileGraphics, networkClient.refreshEncounterState())
+            val newEncounterState = handleKeyPress(keyboardEvent, networkClient)
+            renderGameState(mapFoWTileGraphics, mapProjectilePathTileGraphics, mapEntityTileGraphics, newEncounterState)
             UIEventResponse.pass()
         }
 
