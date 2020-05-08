@@ -30,7 +30,7 @@ class NetworkClient(
         }
     }
 
-    fun postMoveAction(direction: Direction): EncounterState? {
+    fun postMoveAction(direction: Direction): String? {
         logger.info("###############################################################")
         val millis = System.currentTimeMillis()
         val response: Response = httpPost {
@@ -47,10 +47,9 @@ class NetworkClient(
             val body = response.asString()
             return if (body != null) {
                 logger.info("postMoveAction time taken before parse: ${System.currentTimeMillis() - millis}")
-                val parsed = Serializers.parse(body)
                 logger.info("postMoveAction total time taken: ${System.currentTimeMillis() - millis}")
                 logger.info("------------------------------------------------------------------")
-                parsed
+                return body
             } else {
                 null
             }

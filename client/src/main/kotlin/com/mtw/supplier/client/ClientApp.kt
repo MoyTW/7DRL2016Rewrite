@@ -1,6 +1,11 @@
 package com.mtw.supplier.client
 
+import com.mtw.supplier.engine.Serializers
+import com.mtw.supplier.engine.ecs.components.EncounterLocationComponent
+import com.mtw.supplier.engine.encounter.EncounterRunner
+import com.mtw.supplier.engine.encounter.rulebook.actions.MoveAction
 import com.mtw.supplier.engine.encounter.state.EncounterState
+import kotlinx.coroutines.*
 import org.hexworks.zircon.api.CP437TilesetResources
 import org.hexworks.zircon.api.DrawSurfaces
 import org.hexworks.zircon.api.SwingApplications
@@ -11,6 +16,8 @@ import org.hexworks.zircon.api.extensions.toScreen
 import org.hexworks.zircon.api.graphics.TileGraphics
 import org.hexworks.zircon.api.uievent.*
 import org.slf4j.LoggerFactory
+import java.io.File
+import java.nio.file.Paths
 
 enum class Direction(val dx: Int, val dy: Int) {
     N(0, 1),
@@ -26,6 +33,22 @@ enum class Direction(val dx: Int, val dy: Int) {
 object Main {
     @JvmStatic
     fun main(args: Array<String>) {
+        ClientApp()
+    }
+}
+
+class ClientApp() {
+    val logger = LoggerFactory.getLogger(this::class.java)
+
+    val networkClient: NetworkClient
+    // Screen handles
+    val mapFoWTileGraphics: TileGraphics
+    val mapProjectilePathTileGraphics: TileGraphics
+    val mapEntityTileGraphics: TileGraphics
+
+    var encounterState: EncounterState?
+
+    init {
         // Create Zircon app
         val tileGrid = SwingApplications.startTileGrid(
             AppConfig.newBuilder()
@@ -36,56 +59,85 @@ object Main {
         screen.display()
 
         // Network stuff
-        val networkClient = NetworkClient()
+        networkClient = NetworkClient()
 
         // Create FoW, Entity layers & attach to screen
-        val mapFoWTileGraphics: TileGraphics = DrawSurfaces.tileGraphicsBuilder()
+        mapFoWTileGraphics = DrawSurfaces.tileGraphicsBuilder()
             .withSize(Size.create(ClientAppConfig.MAP_WIDTH, ClientAppConfig.MAP_HEIGHT))
             .build()
         screen.addLayer(LayerBuilder.newBuilder().withTileGraphics(mapFoWTileGraphics).build())
-        val mapProjectilePathTileGraphics: TileGraphics = DrawSurfaces.tileGraphicsBuilder()
+        mapProjectilePathTileGraphics = DrawSurfaces.tileGraphicsBuilder()
             .withSize(Size.create(ClientAppConfig.MAP_WIDTH, ClientAppConfig.MAP_HEIGHT))
             .build()
         screen.addLayer(LayerBuilder.newBuilder().withTileGraphics(mapProjectilePathTileGraphics).build())
-        val mapEntityTileGraphics: TileGraphics = DrawSurfaces.tileGraphicsBuilder()
+        mapEntityTileGraphics = DrawSurfaces.tileGraphicsBuilder()
             .withSize(Size.create(ClientAppConfig.MAP_WIDTH, ClientAppConfig.MAP_HEIGHT))
             .build()
         screen.addLayer(LayerBuilder.newBuilder().withTileGraphics(mapEntityTileGraphics).build())
 
         // Add input handler
         tileGrid.processKeyboardEvents(KeyboardEventType.KEY_PRESSED) { keyboardEvent: KeyboardEvent, uiEventPhase: UIEventPhase ->
-            val newEncounterState = ClientApp.handleKeyPress(keyboardEvent, networkClient)
-            ClientDrawer.drawGameState(mapFoWTileGraphics, mapProjectilePathTileGraphics, mapEntityTileGraphics, newEncounterState)
+            handleKeyPress(keyboardEvent, networkClient)
             UIEventResponse.pass()
         }
 
-        ClientDrawer.drawGameState(mapFoWTileGraphics, mapProjectilePathTileGraphics, mapEntityTileGraphics, networkClient.refreshEncounterState())
+        encounterState = networkClient.refreshEncounterState()
+        drawGameState()
     }
-}
 
-object ClientApp {
-    val logger = LoggerFactory.getLogger(this::class.java)
+    private fun drawGameState(encounterState: EncounterState? = this.encounterState) {
+        ClientDrawer.drawGameState(mapFoWTileGraphics, mapProjectilePathTileGraphics, mapEntityTileGraphics, encounterState)
+    }
 
-    fun handleKeyPress(event: KeyboardEvent, client: NetworkClient): EncounterState? {
-        return when (event.code) {
-            KeyCode.NUMPAD_1 ->  client.postMoveAction(Direction.SW) 
-            KeyCode.KEY_B ->  client.postMoveAction(Direction.SW) 
-            KeyCode.NUMPAD_2 ->  client.postMoveAction(Direction.S) 
-            KeyCode.KEY_J ->  client.postMoveAction(Direction.S) 
-            KeyCode.NUMPAD_3 ->  client.postMoveAction(Direction.SE) 
-            KeyCode.KEY_N ->  client.postMoveAction(Direction.SE) 
-            KeyCode.NUMPAD_4 ->  client.postMoveAction(Direction.W) 
-            KeyCode.KEY_H ->  client.postMoveAction(Direction.W) 
+    private fun executeMoveAction(direction: Direction) {
+        val serverEncounterState = GlobalScope.async {
+            networkClient.postMoveAction(direction)
+        }
+        optimisticallyProcessMoveAction(direction)
+        drawGameState()
+        // I'm reasonably sure using runBlocking like this isn't idiomatic.
+        runBlocking {
+            val serverEncounterStateString = serverEncounterState.await()
+            if (Serializers.stringify(encounterState!!) != serverEncounterStateString) {
+                logger.error("You've desync'd somehow! F.")
+                File(Paths.get("").toAbsolutePath().toString() + "/tmp/client.json").writeText(Serializers.stringify(encounterState!!))
+                File(Paths.get("").toAbsolutePath().toString() + "/tmp/server.json").writeText(serverEncounterStateString!!)
+                encounterState = Serializers.parse(serverEncounterStateString!!)
+                drawGameState()
+            }
+
+        }
+    }
+
+    private fun optimisticallyProcessMoveAction(direction: Direction) {
+        val oldPlayerPos = encounterState!!.playerEntity().getComponent(EncounterLocationComponent::class).position
+		val newPlayerPos = oldPlayerPos.copy(
+			x = oldPlayerPos.x + direction.dx, y = oldPlayerPos.y + direction.dy)
+
+		val action = MoveAction(encounterState!!.playerEntity(), newPlayerPos)
+        EncounterRunner.runPlayerTurnAndUntilReady(encounterState!!, action)
+    }
+
+    fun handleKeyPress(event: KeyboardEvent, client: NetworkClient) {
+        when (event.code) {
+            KeyCode.NUMPAD_1 ->  executeMoveAction(Direction.SW) 
+            KeyCode.KEY_B ->  executeMoveAction(Direction.SW) 
+            KeyCode.NUMPAD_2 ->  executeMoveAction(Direction.S) 
+            KeyCode.KEY_J ->  executeMoveAction(Direction.S) 
+            KeyCode.NUMPAD_3 ->  executeMoveAction(Direction.SE) 
+            KeyCode.KEY_N ->  executeMoveAction(Direction.SE) 
+            KeyCode.NUMPAD_4 ->  executeMoveAction(Direction.W) 
+            KeyCode.KEY_H ->  executeMoveAction(Direction.W) 
             KeyCode.NUMPAD_5 ->  client.postWaitAction() 
             KeyCode.PERIOD ->  client.postWaitAction() 
-            KeyCode.NUMPAD_6 ->  client.postMoveAction(Direction.E) 
-            KeyCode.KEY_L ->  client.postMoveAction(Direction.E) 
-            KeyCode.NUMPAD_7 ->  client.postMoveAction(Direction.NW) 
-            KeyCode.KEY_Y ->  client.postMoveAction(Direction.NW) 
-            KeyCode.NUMPAD_8 ->  client.postMoveAction(Direction.N) 
-            KeyCode.KEY_K ->  client.postMoveAction(Direction.N) 
-            KeyCode.NUMPAD_9 ->  client.postMoveAction(Direction.NE) 
-            KeyCode.KEY_U ->  client.postMoveAction(Direction.NE) 
+            KeyCode.NUMPAD_6 ->  executeMoveAction(Direction.E) 
+            KeyCode.KEY_L ->  executeMoveAction(Direction.E) 
+            KeyCode.NUMPAD_7 ->  executeMoveAction(Direction.NW) 
+            KeyCode.KEY_Y ->  executeMoveAction(Direction.NW) 
+            KeyCode.NUMPAD_8 ->  executeMoveAction(Direction.N) 
+            KeyCode.KEY_K ->  executeMoveAction(Direction.N) 
+            KeyCode.NUMPAD_9 ->  executeMoveAction(Direction.NE) 
+            KeyCode.KEY_U ->  executeMoveAction(Direction.NE)
             else -> null
         }
     }
