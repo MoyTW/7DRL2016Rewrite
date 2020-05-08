@@ -1,8 +1,13 @@
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
+    application
     kotlin("jvm")
     id("org.jetbrains.kotlin.plugin.serialization")
+}
+
+application {
+    this.mainClassName = "com.mtw.supplier.client.Main"
 }
 
 java.sourceCompatibility = JavaVersion.VERSION_1_8
