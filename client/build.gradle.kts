@@ -24,8 +24,8 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-runtime:0.13.0") // JVM dependency
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.3.5")
     implementation("io.github.rybalkinsd:kohttp:0.11.1")
-    implementation("org.hexworks.zircon:zircon.core-jvm:2020.1.1-PREVIEW")
-    implementation("org.hexworks.zircon:zircon.jvm.swing:2020.1.1-PREVIEW")
+    implementation("org.hexworks.zircon:zircon.core-jvm:2020.1.4-HOTFIX")
+    implementation("org.hexworks.zircon:zircon.jvm.swing:2020.1.4-HOTFIX")
 }
 
 tasks.withType<KotlinCompile> {
