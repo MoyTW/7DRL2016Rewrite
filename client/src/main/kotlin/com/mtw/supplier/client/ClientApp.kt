@@ -54,11 +54,10 @@ data class PlayerInputEvent(val event: KeyboardEvent, override val emitter: Any)
 class ClientApp {
     val logger = LoggerFactory.getLogger(this::class.java)
 
-    val networkClient: NetworkClient
     // Screen handles
     val mapFoWTileGraphics: TileGraphics
-    val mapProjectilePathTileGraphics: TileGraphics
-    val mapEntityTileGraphics: TileGraphics
+    //val mapProjectilePathTileGraphics: TileGraphics
+    //val mapEntityTileGraphics: TileGraphics
 
     var encounterState: EncounterState?
     val playerInputQueue: BlockingQueue<PlayerInputEvent> = ArrayBlockingQueue(2500)
@@ -73,48 +72,26 @@ class ClientApp {
         val screen = tileGrid.toScreen()
         screen.display()
 
-        // Network stuff
-        networkClient = NetworkClient()
-
         // Create FoW, Entity layers & attach to screen
         mapFoWTileGraphics = DrawSurfaces.tileGraphicsBuilder()
             .withSize(Size.create(ClientAppConfig.MAP_WIDTH, ClientAppConfig.MAP_HEIGHT))
             .build()
         screen.addLayer(LayerBuilder.newBuilder().withTileGraphics(mapFoWTileGraphics).build())
-        mapProjectilePathTileGraphics = DrawSurfaces.tileGraphicsBuilder()
+        /*mapProjectilePathTileGraphics = DrawSurfaces.tileGraphicsBuilder()
             .withSize(Size.create(ClientAppConfig.MAP_WIDTH, ClientAppConfig.MAP_HEIGHT))
             .build()
         screen.addLayer(LayerBuilder.newBuilder().withTileGraphics(mapProjectilePathTileGraphics).build())
         mapEntityTileGraphics = DrawSurfaces.tileGraphicsBuilder()
             .withSize(Size.create(ClientAppConfig.MAP_WIDTH, ClientAppConfig.MAP_HEIGHT))
             .build()
-        screen.addLayer(LayerBuilder.newBuilder().withTileGraphics(mapEntityTileGraphics).build())
-
-        // Add input handler
-        tileGrid.processKeyboardEvents(KeyboardEventType.KEY_PRESSED) { keyboardEvent: KeyboardEvent, uiEventPhase: UIEventPhase ->
-            Zircon.eventBus.publish(PlayerInputEvent(keyboardEvent, this))
-            UIEventResponse.processed()
-        }
-        Zircon.eventBus.subscribeTo<PlayerInputEvent>(key = PlayerInputEvent::class.simpleName!!) {
-            playerInputQueue.put(it)
-            KeepSubscription
-        }
-
-        // Set up game processing thread
-        thread(start = true) {
-            while(true) {
-                val nextEvent = playerInputQueue.take();
-                handleKeyPress(nextEvent.event, networkClient)
-                Thread.sleep(33)
-            }
-        }
+        screen.addLayer(LayerBuilder.newBuilder().withTileGraphics(mapEntityTileGraphics).build())*/
 
         // Popluate & do the initial draw from the encounterState
         encounterState = generateNewGameState()
         drawGameState()
     }
 
-    private final fun generateNewGameState(): EncounterState {
+    private fun generateNewGameState(): EncounterState {
         val state = EncounterState(SeededRand(100), Constants.MAP_WIDTH, Constants.MAP_HEIGHT)
 
         val player = Entity(state.getNextEntityId(), "player")
@@ -140,7 +117,6 @@ class ClientApp {
         makeAndPlaceScout(state, 30, 14)
         makeAndPlaceScout(state, 30, 10)
 
-
         EncounterRunner.runUntilPlayerReady(state)
 
         return state
@@ -161,70 +137,6 @@ class ClientApp {
     }
 
     private fun drawGameState(encounterState: EncounterState? = this.encounterState) {
-        ClientDrawer.drawGameState(mapFoWTileGraphics, mapProjectilePathTileGraphics, mapEntityTileGraphics, encounterState)
-    }
-
-    private fun executeMoveAction(direction: Direction) {
-        /*val serverEncounterState = GlobalScope.async {
-            networkClient.postMoveAction(direction)
-        }*/
-        optimisticallyProcessMoveAction(direction)
-        logger.info("Processed ${direction.name}")
-
-        // I'm reasonably sure using runBlocking like this isn't idiomatic.
-        runBlocking {
-            /*val serverEncounterStateString = serverEncounterState.await()
-            if (Serializers.stringify(encounterState!!) != serverEncounterStateString) {
-                logger.error("You've desync'd somehow! F.")
-                File(Paths.get("").toAbsolutePath().toString() + "/tmp/client.json").writeText(Serializers.stringify(encounterState!!))
-                File(Paths.get("").toAbsolutePath().toString() + "/tmp/server.json").writeText(serverEncounterStateString!!)
-                encounterState = Serializers.parse(serverEncounterStateString!!)
-                drawGameState()
-            }*/
-        }
-    }
-
-    private fun optimisticallyProcessMoveAction(direction: Direction) {
-        val oldPlayerPos = encounterState!!.playerEntity().getComponent(EncounterLocationComponent::class).position
-		val newPlayerPos = oldPlayerPos.copy(
-			x = oldPlayerPos.x + direction.dx, y = oldPlayerPos.y + direction.dy)
-
-		val action = MoveAction(encounterState!!.playerEntity(), newPlayerPos)
-        EncounterRunner.runPlayerTurn(encounterState!!, action)
-        drawGameState(encounterState!!)
-
-        // Copied from EncounterRunner.runUntilPlayerReady()
-        var isPlayerReady = EncounterRunner.runNextActiveTick(encounterState!!)
-        drawGameState(encounterState!!)
-        while (!isPlayerReady && !encounterState!!.completed) {
-            isPlayerReady = EncounterRunner.runNextActiveTick(encounterState!!)
-            drawGameState(encounterState!!)
-            Thread.sleep(250)
-        }
-        encounterState!!.calculatePlayerFoVAndMarkExploration()
-    }
-
-    fun handleKeyPress(event: KeyboardEvent, client: NetworkClient) {
-        when (event.code) {
-            KeyCode.NUMPAD_1 ->  executeMoveAction(Direction.SW) 
-            KeyCode.KEY_B ->  executeMoveAction(Direction.SW) 
-            KeyCode.NUMPAD_2 ->  executeMoveAction(Direction.S) 
-            KeyCode.KEY_J ->  executeMoveAction(Direction.S) 
-            KeyCode.NUMPAD_3 ->  executeMoveAction(Direction.SE) 
-            KeyCode.KEY_N ->  executeMoveAction(Direction.SE) 
-            KeyCode.NUMPAD_4 ->  executeMoveAction(Direction.W) 
-            KeyCode.KEY_H ->  executeMoveAction(Direction.W) 
-            KeyCode.NUMPAD_5 ->  client.postWaitAction() 
-            KeyCode.PERIOD ->  client.postWaitAction() 
-            KeyCode.NUMPAD_6 ->  executeMoveAction(Direction.E) 
-            KeyCode.KEY_L ->  executeMoveAction(Direction.E) 
-            KeyCode.NUMPAD_7 ->  executeMoveAction(Direction.NW) 
-            KeyCode.KEY_Y ->  executeMoveAction(Direction.NW) 
-            KeyCode.NUMPAD_8 ->  executeMoveAction(Direction.N) 
-            KeyCode.KEY_K ->  executeMoveAction(Direction.N) 
-            KeyCode.NUMPAD_9 ->  executeMoveAction(Direction.NE) 
-            KeyCode.KEY_U ->  executeMoveAction(Direction.NE)
-            else -> null
-        }
+        ClientDrawer.drawGameState(mapFoWTileGraphics, encounterState)
     }
 }
