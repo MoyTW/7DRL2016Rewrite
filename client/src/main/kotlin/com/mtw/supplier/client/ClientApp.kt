@@ -129,7 +129,6 @@ class ClientApp {
                 encounterState = Serializers.parse(serverEncounterStateString!!)
                 drawGameState()
             }
-
         }
     }
 
@@ -148,7 +147,7 @@ class ClientApp {
         while (!isPlayerReady && !encounterState!!.completed) {
             isPlayerReady = EncounterRunner.runNextActiveTick(encounterState!!)
             drawGameState(encounterState!!)
-            Thread.sleep(16)
+            Thread.sleep(100)
         }
         encounterState!!.calculatePlayerFoVAndMarkExploration()
     }

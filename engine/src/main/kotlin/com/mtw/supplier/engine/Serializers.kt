@@ -56,7 +56,7 @@ object Serializers {
         val timeTaken = measureTimeMillis {
             s = json.stringify(EncounterState.serializer(), encounterState)
         }
-        logger.info("Stringify ms: $timeTaken")
+        //logger.info("Stringify ms: $timeTaken")
         return s!!.replace(",", ",\n")
     }
 
@@ -65,7 +65,7 @@ object Serializers {
         val timeTaken = measureTimeMillis {
             p = json.parse(EncounterState.serializer(), body)
         }
-        logger.info("Parse ms: $timeTaken")
+        //logger.info("Parse ms: $timeTaken")
         return p!!
     }
 }
