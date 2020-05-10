@@ -114,21 +114,21 @@ class ClientApp {
     }
 
     private fun executeMoveAction(direction: Direction) {
-        val serverEncounterState = GlobalScope.async {
+        /*val serverEncounterState = GlobalScope.async {
             networkClient.postMoveAction(direction)
-        }
+        }*/
         optimisticallyProcessMoveAction(direction)
-        drawGameState()
+
         // I'm reasonably sure using runBlocking like this isn't idiomatic.
         runBlocking {
-            val serverEncounterStateString = serverEncounterState.await()
+            /*val serverEncounterStateString = serverEncounterState.await()
             if (Serializers.stringify(encounterState!!) != serverEncounterStateString) {
                 logger.error("You've desync'd somehow! F.")
                 File(Paths.get("").toAbsolutePath().toString() + "/tmp/client.json").writeText(Serializers.stringify(encounterState!!))
                 File(Paths.get("").toAbsolutePath().toString() + "/tmp/server.json").writeText(serverEncounterStateString!!)
                 encounterState = Serializers.parse(serverEncounterStateString!!)
                 drawGameState()
-            }
+            }*/
         }
     }
 
@@ -147,7 +147,7 @@ class ClientApp {
         while (!isPlayerReady && !encounterState!!.completed) {
             isPlayerReady = EncounterRunner.runNextActiveTick(encounterState!!)
             drawGameState(encounterState!!)
-            Thread.sleep(100)
+            Thread.sleep(250)
         }
         encounterState!!.calculatePlayerFoVAndMarkExploration()
     }
