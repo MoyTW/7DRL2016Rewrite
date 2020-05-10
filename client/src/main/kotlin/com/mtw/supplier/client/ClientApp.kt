@@ -41,6 +41,11 @@ object Main {
     }
 }
 
+/**
+ * Run with `./gradlew clean client:run`
+ *
+ * Comment/uncomment version lines in build.gradle.kts for client to see version diffs
+ */
 class ClientApp {
     init {
         // Create Zircon app
