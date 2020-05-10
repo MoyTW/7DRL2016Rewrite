@@ -1,5 +1,7 @@
 package com.mtw.supplier.client
 
+import org.hexworks.cobalt.events.api.Event
+import org.hexworks.cobalt.events.api.KeepSubscription
 import org.hexworks.zircon.api.CP437TilesetResources
 import org.hexworks.zircon.api.ColorThemes
 import org.hexworks.zircon.api.SwingApplications
@@ -13,14 +15,20 @@ import org.hexworks.zircon.api.uievent.KeyboardEvent
 import org.hexworks.zircon.api.uievent.KeyboardEventType
 import org.hexworks.zircon.api.uievent.UIEventPhase
 import org.hexworks.zircon.api.uievent.UIEventResponse
+import org.hexworks.zircon.internal.Zircon
+import kotlin.concurrent.thread
 
 object Main {
+    @ExperimentalStdlibApi
     @JvmStatic
     fun main(args: Array<String>) {
         ClientApp()
     }
 }
 
+data class CharChangeEvent(val char: Char, val emittedAt: Long, override val emitter: Any): Event
+
+@ExperimentalStdlibApi
 class ClientApp {
     private val screen: Screen
 
@@ -35,10 +43,38 @@ class ClientApp {
         screen.display()
         screen.theme = (ColorThemes.arc());
 
+        val unthreadsafeList: MutableList<CharChangeEvent> = mutableListOf()
+
         // Add input handler
         tileGrid.processKeyboardEvents(KeyboardEventType.KEY_PRESSED) { keyboardEvent: KeyboardEvent, uiEventPhase: UIEventPhase ->
             handler()
             UIEventResponse.pass()
+        }
+
+        Zircon.eventBus.subscribeTo<CharChangeEvent>(key = CharChangeEvent::class.simpleName!!) {
+            println("Received ${it.char} emitted at ${it.emittedAt} at ${System.currentTimeMillis()}")
+            unthreadsafeList.add(it)
+            println("Completed ${it.char} emitted at ${it.emittedAt} at ${System.currentTimeMillis()}")
+            KeepSubscription
+        }
+
+        // This thread will run...FOREVER!
+        thread(start = true) {
+            while(true) {
+                println("game speed thread")
+                if (unthreadsafeList.isNotEmpty()) {
+                   val event = unthreadsafeList.removeFirst()
+                    screen.clear()
+                    val tileX = Tile.newBuilder()
+                        .withCharacter(event.char)
+                        .withForegroundColor(TileColor.create(255, 255, 255))
+                        .withBackgroundColor(TileColor.create(217, 112, 213))
+                        .build()
+                    screen.draw(tileX, Position.create(5, 5))
+                }
+
+                Thread.sleep(1000)
+            }
         }
     }
 
@@ -51,32 +87,19 @@ class ClientApp {
      * the input handling works?
      */
     private fun handler() {
-        screen.clear()
-        val tileX = Tile.newBuilder()
-            .withCharacter('X')
-            .withForegroundColor(TileColor.create(255, 255, 255))
-            .withBackgroundColor(TileColor.create(217, 112, 213))
-            .build()
-        screen.draw(tileX, Position.create(5, 5))
+        val start = System.currentTimeMillis()
+        println("Started recording $start")
+        Zircon.eventBus.publish(CharChangeEvent('X', System.currentTimeMillis(), this))
+        println("Published X")
 
-        Thread.sleep(1000)
+        //Thread.sleep(2000)
 
-        screen.clear()
-        val tileY = Tile.newBuilder()
-            .withCharacter('Y')
-            .withForegroundColor(TileColor.create(255, 255, 255))
-            .withBackgroundColor(TileColor.create(217, 112, 213))
-            .build()
-        screen.draw(tileY, Position.create(5, 5))
+        Zircon.eventBus.publish(CharChangeEvent('Y', System.currentTimeMillis(),this))
+        println("Published Y")
 
-        Thread.sleep(1000)
+        //Thread.sleep(2000)
 
-        screen.clear()
-        val tileZ = Tile.newBuilder()
-            .withCharacter('Z')
-            .withForegroundColor(TileColor.create(255, 255, 255))
-            .withBackgroundColor(TileColor.create(217, 112, 213))
-            .build()
-        screen.draw(tileZ, Position.create(5, 5))
+        Zircon.eventBus.publish(CharChangeEvent('Z', System.currentTimeMillis(),this))
+        println("Published Z")
     }
 }
