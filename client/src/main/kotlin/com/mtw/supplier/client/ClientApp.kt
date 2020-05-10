@@ -6,6 +6,8 @@ import com.mtw.supplier.engine.encounter.EncounterRunner
 import com.mtw.supplier.engine.encounter.rulebook.actions.MoveAction
 import com.mtw.supplier.engine.encounter.state.EncounterState
 import kotlinx.coroutines.*
+import org.hexworks.cobalt.events.api.Event
+import org.hexworks.cobalt.events.api.KeepSubscription
 import org.hexworks.zircon.api.CP437TilesetResources
 import org.hexworks.zircon.api.DrawSurfaces
 import org.hexworks.zircon.api.SwingApplications
@@ -15,9 +17,14 @@ import org.hexworks.zircon.api.data.Size
 import org.hexworks.zircon.api.extensions.toScreen
 import org.hexworks.zircon.api.graphics.TileGraphics
 import org.hexworks.zircon.api.uievent.*
+import org.hexworks.zircon.internal.Zircon
 import org.slf4j.LoggerFactory
 import java.io.File
 import java.nio.file.Paths
+import java.util.Queue
+import java.util.concurrent.ArrayBlockingQueue
+import java.util.concurrent.BlockingQueue
+import kotlin.concurrent.thread
 
 enum class Direction(val dx: Int, val dy: Int) {
     N(0, 1),
@@ -37,7 +44,9 @@ object Main {
     }
 }
 
-class ClientApp() {
+data class PlayerInputEvent(val event: KeyboardEvent, override val emitter: Any): Event
+
+class ClientApp {
     val logger = LoggerFactory.getLogger(this::class.java)
 
     val networkClient: NetworkClient
@@ -47,6 +56,7 @@ class ClientApp() {
     val mapEntityTileGraphics: TileGraphics
 
     var encounterState: EncounterState?
+    val playerInputQueue: BlockingQueue<PlayerInputEvent> = ArrayBlockingQueue(2500)
 
     init {
         // Create Zircon app
@@ -77,10 +87,24 @@ class ClientApp() {
 
         // Add input handler
         tileGrid.processKeyboardEvents(KeyboardEventType.KEY_PRESSED) { keyboardEvent: KeyboardEvent, uiEventPhase: UIEventPhase ->
-            handleKeyPress(keyboardEvent, networkClient)
-            UIEventResponse.pass()
+            Zircon.eventBus.publish(PlayerInputEvent(keyboardEvent, this))
+            UIEventResponse.processed()
+        }
+        Zircon.eventBus.subscribeTo<PlayerInputEvent>(key = PlayerInputEvent::class.simpleName!!) {
+            playerInputQueue.put(it)
+            KeepSubscription
         }
 
+        // Set up game processing thread
+        thread(start = true) {
+            while(true) {
+                val nextEvent = playerInputQueue.take();
+                handleKeyPress(nextEvent.event, networkClient)
+                Thread.sleep(33)
+            }
+        }
+
+        // Popluate & do the initial draw from the encounterState
         encounterState = networkClient.refreshEncounterState()
         drawGameState()
     }
@@ -115,7 +139,18 @@ class ClientApp() {
 			x = oldPlayerPos.x + direction.dx, y = oldPlayerPos.y + direction.dy)
 
 		val action = MoveAction(encounterState!!.playerEntity(), newPlayerPos)
-        EncounterRunner.runPlayerTurnAndUntilReady(encounterState!!, action)
+        EncounterRunner.runPlayerTurn(encounterState!!, action)
+        drawGameState(encounterState!!)
+
+        // Copied from EncounterRunner.runUntilPlayerReady()
+        var isPlayerReady = EncounterRunner.runNextActiveTick(encounterState!!)
+        drawGameState(encounterState!!)
+        while (!isPlayerReady && !encounterState!!.completed) {
+            isPlayerReady = EncounterRunner.runNextActiveTick(encounterState!!)
+            drawGameState(encounterState!!)
+            Thread.sleep(16)
+        }
+        encounterState!!.calculatePlayerFoVAndMarkExploration()
     }
 
     fun handleKeyPress(event: KeyboardEvent, client: NetworkClient) {

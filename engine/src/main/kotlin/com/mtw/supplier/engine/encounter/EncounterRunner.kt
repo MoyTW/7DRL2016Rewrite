@@ -55,7 +55,7 @@ object EncounterRunner {
         }
     }
 
-    fun runPlayerTurnAndUntilReady(encounterState: EncounterState, playerAction: Action) {
+    fun runPlayerTurn(encounterState: EncounterState, playerAction: Action) {
         if (encounterState.completed) { return }
 
         // Move the player
@@ -68,8 +68,11 @@ object EncounterRunner {
 
         // Shoot the player's laser
         fireLaser(encounterState, playerAction.actor)
+    }
 
-        EncounterRunner.runUntilPlayerReady(encounterState)
+    fun runPlayerTurnAndUntilReady(encounterState: EncounterState, playerAction: Action) {
+        runPlayerTurn(encounterState, playerAction)
+        runUntilPlayerReady(encounterState)
     }
 
     fun runUntilPlayerReady(encounterState: EncounterState) {
@@ -101,7 +104,7 @@ object EncounterRunner {
         }*/
     }
 
-    private fun runNextActiveTick(encounterState: EncounterState): Boolean {
+    fun runNextActiveTick(encounterState: EncounterState): Boolean {
         if (encounterState.completed) { return false }
 
         // Run the clock until the next entity is ready

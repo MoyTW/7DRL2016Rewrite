@@ -108,7 +108,7 @@ class RootController {
 
 		val player = Entity(state.getNextEntityId(), "player")
 			.addComponent(PlayerComponent())
-			.addComponent(DefenderComponent(0, 50, 50))
+			.addComponent(DefenderComponent(9999, 50, 50))
 			.addComponent(FactionComponent(2))
 			.addComponent(CollisionComponent.defaultFighter())
 			.addComponent(ActionTimeComponent(100))
