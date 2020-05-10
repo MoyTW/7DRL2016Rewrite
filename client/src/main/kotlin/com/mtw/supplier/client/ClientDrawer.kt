@@ -18,6 +18,7 @@ object ClientDrawer {
                       mapProjectilePathTileGraphics: TileGraphics,
                       mapEntityTileGraphics: TileGraphics,
                       encounterState: EncounterState?) {
+        println("IN DRAW GAME STEAT")
         // TODO: log this
         if (encounterState == null) {
             return
