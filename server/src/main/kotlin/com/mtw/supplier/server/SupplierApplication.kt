@@ -71,7 +71,7 @@ class RootController {
 			EncounterRunner.runPlayerTurnAndUntilReady(gameState, action)
 		}
 		hackMetrics.add(Pair("/move", turnTime))
-		logger.info("Processed $turnTime ms")
+		//logger.info("Processed $turnTime ms")
 
 		return Serializers.stringify(gameState)
 	}
@@ -83,7 +83,7 @@ class RootController {
 			EncounterRunner.runPlayerTurnAndUntilReady(gameState, action)
 		}
 		hackMetrics.add(Pair("/wait", turnTime))
-		logger.info("Processed $turnTime ms")
+		//logger.info("Processed $turnTime ms")
 
 		return Serializers.stringify(gameState)
 	}

@@ -31,8 +31,8 @@ class NetworkClient(
     }
 
     fun postMoveAction(direction: Direction): String? {
-        logger.info("###############################################################")
-        val millis = System.currentTimeMillis()
+        //logger.info("###############################################################")
+        //val millis = System.currentTimeMillis()
         val response: Response = httpPost {
             host = "localhost"
             port = SERVER_PORT
@@ -46,9 +46,9 @@ class NetworkClient(
         response.use {
             val body = response.asString()
             return if (body != null) {
-                logger.info("postMoveAction time taken before parse: ${System.currentTimeMillis() - millis}")
-                logger.info("postMoveAction total time taken: ${System.currentTimeMillis() - millis}")
-                logger.info("------------------------------------------------------------------")
+                //logger.info("postMoveAction time taken before parse: ${System.currentTimeMillis() - millis}")
+                //logger.info("postMoveAction total time taken: ${System.currentTimeMillis() - millis}")
+                //logger.info("------------------------------------------------------------------")
                 return body
             } else {
                 null
