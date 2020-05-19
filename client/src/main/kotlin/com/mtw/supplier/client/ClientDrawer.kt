@@ -146,6 +146,21 @@ object ClientDrawer {
                     .withForegroundColor(TileColor.create(255, 70, 0))
                     .withBackgroundColor(TileColor.transparent())
                     .build()
+                DisplayType.SATELLITE -> Tile.newBuilder()
+                    .withCharacter('#')
+                    .withForegroundColor(TileColor.create(255, 255, 255))
+                    .withBackgroundColor(TileColor.transparent())
+                    .build()
+                DisplayType.JUMP_POINT -> Tile.newBuilder()
+                    .withCharacter('j')
+                    .withForegroundColor(TileColor.create(69, 0, 255))
+                    .withBackgroundColor(TileColor.transparent())
+                    .build()
+                DisplayType.INTEL -> Tile.newBuilder()
+                    .withCharacter('i')
+                    .withForegroundColor(TileColor.create(255, 255, 255))
+                    .withBackgroundColor(TileColor.transparent())
+                    .build()
             }
         }
     }

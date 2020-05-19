@@ -104,9 +104,9 @@ class RootController {
 
 	// TODO: Proppa level gen & not literally in controller lol
 	private final fun generateNewGameState(): EncounterState {
-		val state = EncounterState(SeededRand(Random.nextInt()), Constants.MAP_WIDTH, Constants.MAP_HEIGHT)
+		val consistentRand = SeededRand(10)
 
-		val player = Entity(state.getNextEntityId(), "player")
+		val player = Entity(-1, "player")
 			.addComponent(PlayerComponent())
 			.addComponent(DefenderComponent(0, 50, 50))
 			.addComponent(FactionComponent(2))
@@ -114,7 +114,10 @@ class RootController {
 			.addComponent(ActionTimeComponent(100))
 			.addComponent(SpeedComponent(100))
 			.addComponent(DisplayComponent(DisplayType.PLAYER, false))
-		state.placeEntity(player, XYCoordinates(25, 25))
+		val state = EncounterState(consistentRand, Constants.MAP_WIDTH, Constants.MAP_HEIGHT)
+		state.initialize(player)
+
+		/*state.placeEntity(player, XYCoordinates(25, 25))
 
 		makeAndPlaceScout(state, 10, 30)
 		makeAndPlaceScout(state, 10, 26)
@@ -127,8 +130,7 @@ class RootController {
 		makeAndPlaceScout(state, 30, 22)
 		makeAndPlaceScout(state, 30, 18)
 		makeAndPlaceScout(state, 30, 14)
-		makeAndPlaceScout(state, 30, 10)
-
+		makeAndPlaceScout(state, 30, 10)*/
 
 		EncounterRunner.runUntilPlayerReady(state)
 

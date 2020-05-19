@@ -1,41 +1,82 @@
 package com.mtw.supplier.engine.encounter.state
 
+import com.mtw.supplier.engine.ecs.Entity
+import com.mtw.supplier.engine.ecs.EntityDictionary
 import com.mtw.supplier.engine.utils.SeededRand
 import com.mtw.supplier.engine.utils.XYCoordinates
 
 class Zone(
-    val bottomLeft: XYCoordinates,
-    val width: Int,
-    val height: Int,
-    val name: String
+    private val bottomLeft: XYCoordinates,
+    private val width: Int,
+    private val height: Int,
+    val name: String,
+    private val seededRand: SeededRand
 ) {
-    fun intersects(zone: Zone): Boolean {
-        TODO()
+    val x1 = bottomLeft.x
+    val y1 = bottomLeft.y
+    val x2 = bottomLeft.x + width
+    val y2 = bottomLeft.y + height
+    val rand = seededRand.getRandom()
+
+    fun intersects(other: Zone): Boolean {
+        return this.x1 <= other.x2 && this.x2 >= other.x1 && this.y1 <= other.y2 && this.y2 >= other.y1
     }
 
-    fun center(): XYCoordinates {
-        TODO()
+    fun randomCoordinates(): XYCoordinates {
+        return XYCoordinates(x = rand.nextInt(x1, x2), y = rand.nextInt(y1, y2))
     }
 
-    fun randomUnblockedCoordinates(): XYCoordinates {
-        TODO()
+    internal fun randomUnblockedCoordinates(encounterMap: EncounterMap): XYCoordinates {
+        val maxTries = 1000
+        var tries = 0
+        var pos = randomCoordinates()
+        while (encounterMap.positionBlocked(pos)) {
+            if (tries > maxTries) {
+                throw IllegalArgumentException("Can't find random unblocked coordinates in zone! " +
+                    "Something's gone wrong with your minimum/satellite ratio probably.")
+            }
+            pos = randomCoordinates()
+            tries++
+        }
+        return pos
     }
 }
 
+class LevelBlueprint(
+    val satellitesPerZone: Int
+) {
+
+}
+
 class EncounterMapBuilder(
+    val levelDepth: Int,
+    val player: Entity,
+    val seededRand: SeededRand,
     val mapWidth: Int = 300,
     val mapHeight: Int = 300,
     val maxZoneGenAttempts: Int = 100,
     val maxZones: Int = 9,
     val zoneMinSize: Int = 20,
-    val zoneMaxSize: Int = 40,
-    val seededRand: SeededRand
+    val zoneMaxSize: Int = 40
 ) {
-    fun placeObjects(zone: Zone) {
-        TODO()
+    internal fun fillZone(zone: Zone, encounterMap: EncounterMap, blueprint: LevelBlueprint, safe: Boolean = false) {
+        // Distribute satellites within zone
+        for (i in 0 until blueprint.satellitesPerZone) {
+            val pos = zone.randomCoordinates()
+            if (!encounterMap.positionBlocked(pos)) {
+                // TODO: change entity ids to guids & sort encounterState by "order added"
+                encounterMap.placeEntity(EntityDictionary.buildSatelliteEntity(seededRand.getRandom().nextInt(9999, Integer.MAX_VALUE)), pos, true)
+            }
+        }
+
+        // Place enemies within zone
+        // TODO: Place enemies
+
+        // Place items within zone
+        // TODO: Place items
     }
 
-    fun build() {
+    internal fun build(): EncounterMap {
         // Generate the map with a border
         val encounterMap = EncounterMap(mapWidth, mapHeight)
         for (x in 0 until mapWidth) {
@@ -46,7 +87,7 @@ class EncounterMapBuilder(
             }
         }
 
-        // Generate the zones
+        // Generate the zones layouts. No entities are added here.
         val zones: MutableList<Zone> = mutableListOf()
         var zoneGenAttempts = 0
         while (zoneGenAttempts < maxZoneGenAttempts && zones.size < maxZones) {
@@ -55,7 +96,7 @@ class EncounterMapBuilder(
             val zoneHeight = (zoneMinSize..zoneMaxSize).random(seededRand.getRandom())
             val bottomLeft = XYCoordinates((0 until mapWidth - zoneWidth).random(seededRand.getRandom()),
                 (0 until mapHeight - zoneHeight).random(seededRand.getRandom()))
-            val newZone = Zone(bottomLeft, zoneWidth, zoneHeight, "Zone ${zones.size}")
+            val newZone = Zone(bottomLeft, zoneWidth, zoneHeight, "Zone ${zones.size}", seededRand)
 
             // Compare the zones
             var failed = false
@@ -67,23 +108,44 @@ class EncounterMapBuilder(
             }
 
             if (!failed) {
-                TODO() // Figure out how to properly place this!
-                //if (zones.isEmpty()) { encounterState.placeEntity(player, newZone.center()) }
-                placeObjects(newZone)
                 zones.add(newZone)
             }
             zoneGenAttempts += 1
         }
 
-        // TODO: Generate the diplomat if you're on the last level
+        // Place entities in the zones
+        // Place the player. If on depth 9, player is placed in a hazardous zone; otherwise starting zone is safe.
+        if (levelDepth == 9) {
+            encounterMap.placeEntity(player, zones[0].randomUnblockedCoordinates(encounterMap), true)
+            fillZone(zones[0], encounterMap, LevelBlueprint(20), safe = false)
+        } else {
+            encounterMap.placeEntity(player, zones[0].randomUnblockedCoordinates(encounterMap), true)
+            fillZone(zones[0], encounterMap, LevelBlueprint(20), safe = true)
+        }
+        // We add objects to every other zone
+        for (i in 1 until zones.size) {
+            fillZone(zones[i], encounterMap, LevelBlueprint(20), safe = false)
+        }
+        // Generate the diplomat if you're on the last level
+        if (levelDepth == 10) {
+            TODO("Generate the diplomat!")
+        }
 
-        // Generate the stairs
-        val stairsZone = zones[(1 until zones.size).random(seededRand.getRandom())]
-        val stairsPos = stairsZone.randomUnblockedCoordinates()
-        TODO() // Generate stairs
+        // Generate the jump point
+        val jumpPointZone = zones[(1 until zones.size).random(seededRand.getRandom())]
+        val jumpPointPos = jumpPointZone.randomUnblockedCoordinates(encounterMap)
+        // TODO: entityId -> UUID
+        encounterMap.placeEntity(EntityDictionary.buildJumpPointEntity(999), jumpPointPos, true)
 
         // Generate the intel
-        TODO()
+        val intelZone = zones[(1 until zones.size).random(seededRand.getRandom())]
+        val intelPos = jumpPointZone.randomUnblockedCoordinates(encounterMap)
+        // TODO: entityId -> UUID
+        encounterMap.placeEntity(EntityDictionary.buildJumpPointEntity(1000), jumpPointPos, true)
+
+        // TODO: Finalize the zone strings
+
+        return encounterMap
     }
 
 }

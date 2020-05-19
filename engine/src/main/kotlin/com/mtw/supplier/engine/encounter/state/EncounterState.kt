@@ -46,8 +46,21 @@ class EncounterState(
     private var _completed: Boolean = false,
     private var entityIdIdx: Int = 0 // TODO: uh this be dumb tho
 ) {
+    // I don't think this is elegant, or like...good. in case you're wondering.
+    private var _encounterMap: EncounterMap? = null
+    private val encounterMap: EncounterMap
+        get() = _encounterMap!!
+
     val messageLog: EncounterMessageLog = EncounterMessageLog()
     var fovCache: FoVCache? = null
+
+    /**
+     * Wouldn't normally do this, but serialization library discourages taking in constructor parameters that aren't var
+     * or vals, and this (while not...elegant) is quick. rip.
+     */
+    fun initialize(player: Entity) {
+        this._encounterMap = EncounterMapBuilder(0, player, seededRand).build()
+    }
 
     val currentTime: Int
         get() = this._currentTime
@@ -70,8 +83,6 @@ class EncounterState(
         return entityIdIdx
     }
 
-    // TODO: Map sizing
-    private val encounterMap: EncounterMap = EncounterMap(width, height)
 
     fun getEncounterTileMap(): EncounterTileMapView {
         return encounterMap
