@@ -5,11 +5,11 @@ import kotlinx.serialization.Transient
 import kotlin.random.Random
 
 @Serializable
-class SeededRand(private var seed: Int) {
+class SeededRand(var seed: Int) {
     @Transient private var random: Random? = null
 
     fun reseed() {
-        this.seed = this.random!!.nextInt()
+        this.seed = this.getRandom().nextInt()
         this.random = Random(seed)
     }
 

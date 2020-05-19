@@ -98,14 +98,15 @@ class ClientApp() {
         // I'm reasonably sure using runBlocking like this isn't idiomatic.
         runBlocking {
             val serverEncounterStateString = serverEncounterState.await()
-            if (Serializers.stringify(encounterState!!) != serverEncounterStateString) {
+            val stringifiedLocal = Serializers.stringify(encounterState!!)
+            if (stringifiedLocal != serverEncounterStateString) {
                 logger.error("You've desync'd somehow! F.")
-                File(Paths.get("").toAbsolutePath().toString() + "/tmp/client.json").writeText(Serializers.stringify(encounterState!!))
+                File(Paths.get("").toAbsolutePath().toString() + "/tmp/client.json").writeText(stringifiedLocal)
                 File(Paths.get("").toAbsolutePath().toString() + "/tmp/server.json").writeText(serverEncounterStateString!!)
                 encounterState = Serializers.parse(serverEncounterStateString!!)
+
                 drawGameState()
             }
-
         }
     }
 
