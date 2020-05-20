@@ -1,13 +1,20 @@
 package com.mtw.supplier.engine.ecs
 
+import com.mtw.supplier.engine.utils.SeededRand
 import kotlinx.serialization.Serializable
+import java.util.*
 import kotlin.reflect.KClass
 
 @Serializable
-class Entity(
-    val id: Int,
+class Entity internal constructor(
+    val id: String,
     val name: String
 ) {
+    constructor(name: String, seededRand: SeededRand) : this(
+        id = UUID.nameUUIDFromBytes(seededRand.getRandom().nextBytes(16)).toString(),
+        name = name
+    )
+
     private val components: MutableList<Component> = mutableListOf()
 
     fun addComponent(component: Component): Entity {

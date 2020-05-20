@@ -4,4 +4,6 @@ import com.mtw.supplier.engine.ecs.Component
 import kotlinx.serialization.Serializable
 
 @Serializable
-class PlayerComponent(override var _parentId: Int? = null): Component()
+class PlayerComponent(): Component() {
+    override var _parentId: String? = null
+}

@@ -4,11 +4,13 @@ import com.mtw.supplier.engine.ecs.components.CollisionComponent
 import com.mtw.supplier.engine.ecs.components.DefenderComponent
 import com.mtw.supplier.engine.ecs.components.DisplayComponent
 import com.mtw.supplier.engine.ecs.components.DisplayType
+import com.mtw.supplier.engine.utils.SeededRand
+import java.util.*
 
 // TODO: Move this out of Literally Hard-Coded
 object EntityDictionary {
-    fun buildSatelliteEntity(entityId: Int): Entity {
-        return Entity(entityId, "Satellite")
+    fun buildSatelliteEntity(seededRand: SeededRand): Entity {
+        return Entity("Satellite", seededRand)
             .addComponent(CollisionComponent(
                 blocksMovement = true,
                 blocksVision = true,
@@ -24,15 +26,15 @@ object EntityDictionary {
             ))
     }
 
-    fun buildJumpPointEntity(entityId: Int): Entity {
+    fun buildJumpPointEntity(seededRand: SeededRand): Entity {
         // TODO: Implement jump point functionality
-        return Entity(entityId, "Jump Point")
+        return Entity("Jump Point", seededRand)
             .addComponent(DisplayComponent(DisplayType.JUMP_POINT, true))
     }
 
-    fun buildIntelEntity(entityId: Int): Entity {
+    fun buildIntelEntity(seededRand: SeededRand): Entity {
         // TODO: Implement intel founctionality
-        return Entity(entityId, "Intel")
+        return Entity("Intel", seededRand)
             .addComponent(DisplayComponent(DisplayType.INTEL, true))
     }
 }

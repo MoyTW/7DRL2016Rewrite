@@ -58,7 +58,7 @@ object Rulebook {
         val shooterPos = action.actor.getComponent(EncounterLocationComponent::class).position
         repeat (action.numProjectiles) {
             val path = action.pathBuilder.build(shooterPos)
-            val projectile = Entity(encounterState.getNextEntityId(), action.projectileType.displayName)
+            val projectile = Entity(action.projectileType.displayName, seededRand = encounterState.seededRand)
                 .addComponent(PathAIComponent(path))
                 .addComponent(AttackerComponent(action.power))
                 .addComponent(CollisionComponent.defaultProjectile())

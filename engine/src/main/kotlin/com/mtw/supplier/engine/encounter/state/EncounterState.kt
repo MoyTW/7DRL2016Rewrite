@@ -101,7 +101,7 @@ class EncounterState(
     class EncounterCannotBeCompletedTwiceException: Exception("Encounter cannot be completed twice!")
 
 
-    // TODO: Possibly maintain internal list
+    // TODO: Assure ordering!
     fun entities(): List<Entity> {
         return this.encounterMap.entitiesOrderedById()
     }
@@ -110,10 +110,10 @@ class EncounterState(
         return this.entities().first { it.hasComponent(PlayerComponent::class) }
     }
 
-    fun getEntity(entityId: Int): Entity {
+    fun getEntity(entityId: String): Entity {
         return entities().firstOrNull { it.id == entityId } ?: throw EntityIdNotFoundException(entityId)
     }
-    class EntityIdNotFoundException(entityId: Int): Exception("Entity id $entityId could not be found!")
+    class EntityIdNotFoundException(entityId: String): Exception("Entity id $entityId could not be found!")
 
     fun getBlockingEntityAtPosition(pos: XYCoordinates): Entity? {
         return this.encounterMap.getEntitiesAtPosition(pos).firstOrNull { it.getComponentOrNull(CollisionComponent::class)?.blocksMovement ?: false }

@@ -7,5 +7,5 @@ import kotlinx.serialization.Serializable
 class AttackerComponent(
     var power: Int
 ): Component() {
-    override var _parentId: Int? = null
+    override var _parentId: String? = null
 }

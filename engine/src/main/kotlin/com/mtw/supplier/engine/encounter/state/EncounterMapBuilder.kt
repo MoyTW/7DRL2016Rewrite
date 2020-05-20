@@ -65,7 +65,7 @@ class EncounterMapBuilder(
             val pos = zone.randomCoordinates()
             if (!encounterMap.positionBlocked(pos)) {
                 // TODO: change entity ids to guids & sort encounterState by "order added"
-                encounterMap.placeEntity(EntityDictionary.buildSatelliteEntity(seededRand.getRandom().nextInt(9999, Integer.MAX_VALUE)), pos, true)
+                encounterMap.placeEntity(EntityDictionary.buildSatelliteEntity(seededRand), pos, true)
             }
         }
 
@@ -134,14 +134,12 @@ class EncounterMapBuilder(
         // Generate the jump point
         val jumpPointZone = zones[(1 until zones.size).random(seededRand.getRandom())]
         val jumpPointPos = jumpPointZone.randomUnblockedCoordinates(encounterMap)
-        // TODO: entityId -> UUID
-        encounterMap.placeEntity(EntityDictionary.buildJumpPointEntity(999), jumpPointPos, true)
+        encounterMap.placeEntity(EntityDictionary.buildJumpPointEntity(seededRand), jumpPointPos, true)
 
         // Generate the intel
         val intelZone = zones[(1 until zones.size).random(seededRand.getRandom())]
         val intelPos = jumpPointZone.randomUnblockedCoordinates(encounterMap)
-        // TODO: entityId -> UUID
-        encounterMap.placeEntity(EntityDictionary.buildJumpPointEntity(1000), jumpPointPos, true)
+        encounterMap.placeEntity(EntityDictionary.buildIntelEntity(seededRand), jumpPointPos, true)
 
         // TODO: Finalize the zone strings
 

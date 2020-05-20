@@ -90,6 +90,7 @@ internal class EncounterMap(
         return adjacentUnblockedPositions
     }
 
+    // TODO: Order by something sane, now that IDs are UUID strings!
     internal fun entitiesOrderedById(): List<Entity> {
         return this.entitiesByPosition.values.flatten().sortedBy { it.id }
     }

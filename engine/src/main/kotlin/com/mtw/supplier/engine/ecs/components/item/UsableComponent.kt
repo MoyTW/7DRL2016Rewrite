@@ -5,4 +5,6 @@ import kotlinx.serialization.Serializable
 
 
 @Serializable
-class UsableComponent: Component() { override var _parentId: Int? = null }
+class UsableComponent: Component() {
+    override var _parentId: String? = null
+}

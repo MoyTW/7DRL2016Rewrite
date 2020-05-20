@@ -25,5 +25,5 @@ class DisplayComponent (
     val displayType: DisplayType,
     val seeInFoW: Boolean
 ) : Component() {
-    override var _parentId: Int? = null
+    override var _parentId: String? = null
 }

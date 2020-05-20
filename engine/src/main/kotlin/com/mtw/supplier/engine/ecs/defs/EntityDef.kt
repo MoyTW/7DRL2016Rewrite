@@ -3,6 +3,7 @@ package com.mtw.supplier.engine.ecs.defs
 import com.mtw.supplier.engine.ecs.Entity
 import kotlinx.serialization.Serializable
 
+/*
 @Serializable
 class EntityDef(
     val componentDefs: List<ComponentDef>
@@ -11,10 +12,10 @@ class EntityDef(
         if (id == null) {
             TODO("Auto-increment entity IDs aren't a thing yet")
         }
-        val entity = Entity(id, name)
+        val entity = Entity(name)
         for (componentDef in componentDefs) {
             entity.addComponent(componentDef.buildComponent())
         }
         return entity
     }
-}
+}*/

@@ -91,7 +91,7 @@ class RootController {
 	private fun makeAndPlaceScout(state: EncounterState, x: Int, y: Int) {
 		val activatedAi = EnemyScoutAIComponent()
 		activatedAi.isActive = true
-		val scout = Entity(state.getNextEntityId(), "Scout")
+		val scout = Entity("Scout", state.seededRand)
 			.addComponent(activatedAi)
 			.addComponent(DefenderComponent(0, 10, 10))
 			.addComponent(FactionComponent(0))
@@ -106,7 +106,7 @@ class RootController {
 	private final fun generateNewGameState(): EncounterState {
 		val consistentRand = SeededRand(10)
 
-		val player = Entity(-1, "player")
+		val player = Entity("player", seededRand = consistentRand)
 			.addComponent(PlayerComponent())
 			.addComponent(DefenderComponent(0, 50, 50))
 			.addComponent(FactionComponent(2))
