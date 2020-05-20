@@ -104,12 +104,13 @@ object ClientDrawer {
                 }
             }
 
+        // TODO: Consolidate all the Tile.newBuilder() calls Somewhere
+        val pathTile = Tile.newBuilder()
+            .withForegroundColor(TileColor.transparent())
+            .withBackgroundColor(TileColor.create(217, 112, 213))
+            .build()
+
         markedPositions.forEach {
-            // TODO: Consolidate all the Tile.newBuilder()
-            val pathTile = Tile.newBuilder()
-                .withForegroundColor(TileColor.transparent())
-                .withBackgroundColor(TileColor.create(217, 112, 213))
-                .build()
             draw(tileGraphics, pathTile, it, cameraX, cameraY)
         }
     }

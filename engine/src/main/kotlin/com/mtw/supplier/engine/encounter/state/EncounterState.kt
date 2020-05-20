@@ -103,7 +103,7 @@ class EncounterState(
 
     // TODO: Assure ordering!
     fun entities(): List<Entity> {
-        return this.encounterMap.entitiesOrderedById()
+        return this.encounterMap.entitiesByPlacementOrder()
     }
 
     fun playerEntity(): Entity {

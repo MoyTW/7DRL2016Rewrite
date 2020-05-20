@@ -64,7 +64,6 @@ class EncounterMapBuilder(
         for (i in 0 until blueprint.satellitesPerZone) {
             val pos = zone.randomCoordinates()
             if (!encounterMap.positionBlocked(pos)) {
-                // TODO: change entity ids to guids & sort encounterState by "order added"
                 encounterMap.placeEntity(EntityDictionary.buildSatelliteEntity(seededRand), pos, true)
             }
         }

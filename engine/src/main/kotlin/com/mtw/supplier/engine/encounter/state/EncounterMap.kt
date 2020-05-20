@@ -1,8 +1,11 @@
 package com.mtw.supplier.engine.encounter.state
 
 import com.mtw.supplier.engine.ecs.Entity
+import com.mtw.supplier.engine.ecs.components.ActionTimeComponent
 import com.mtw.supplier.engine.ecs.components.CollisionComponent
 import com.mtw.supplier.engine.ecs.components.EncounterLocationComponent
+import com.mtw.supplier.engine.ecs.components.PlayerComponent
+import com.mtw.supplier.engine.ecs.components.ai.PathAIComponent
 import com.mtw.supplier.engine.utils.XYCoordinates
 import kotlinx.serialization.Serializable
 
@@ -39,6 +42,9 @@ internal class EncounterMap(
     override val width: Int,
     override val height: Int
 ): EncounterTileMapView {
+    // Tracks the ordering of entities being placed on the map, so if there are multiple entities going on the same tick
+    // we have a non-arbitrary ordering. This is...kind of crude
+    private var placementTracker: Int = 0
     private val nodes: Array<Array<EncounterNode>> = Array(width) { Array(height) { EncounterNode() } }
     private val entitiesByPosition: MutableMap<XYCoordinates, MutableList<Entity>> = mutableMapOf()
 
@@ -90,9 +96,15 @@ internal class EncounterMap(
         return adjacentUnblockedPositions
     }
 
-    // TODO: Order by something sane, now that IDs are UUID strings!
-    internal fun entitiesOrderedById(): List<Entity> {
-        return this.entitiesByPosition.values.flatten().sortedBy { it.id }
+    internal fun entitiesByPlacementOrder(): List<Entity> {
+        /*return this.entitiesByPosition.values.flatten().sortedBy {
+            it.getComponentOrNull(ActionTimeComponent::class)?.ticksUntilTurn ?: 0
+        }*/
+
+        val entities = this.entitiesByPosition.values.flatten().sortedBy {
+            it.getComponentOrNull(PathAIComponent::class)?.isActive ?: false
+        }
+        return entities
     }
 
     internal fun getEntitiesAtPosition(pos: XYCoordinates): List<Entity> {
@@ -116,7 +128,8 @@ internal class EncounterMap(
         } else {
             this.entitiesByPosition[targetPosition] = mutableListOf(entity)
         }
-        entity.addComponent(EncounterLocationComponent(targetPosition))
+        entity.addComponent(EncounterLocationComponent(targetPosition, placementTracker))
+        placementTracker++
     }
     class EntityAlreadyHasLocation(message: String): Exception(message)
     class NodeHasInsufficientSpaceException(message: String): Exception(message)
@@ -127,15 +140,30 @@ internal class EncounterMap(
         }
 
         val locationComponent = entity.getComponent(EncounterLocationComponent::class)
-        val (x, y) = locationComponent.position
         this.entitiesByPosition[locationComponent.position]!!.remove(entity)
         entity.removeComponent(locationComponent)
     }
     class EntityHasNoLocation(message: String): Exception(message)
 
     internal fun teleportEntity(entity: Entity, targetPosition: XYCoordinates, ignoreCollision: Boolean) {
-        this.removeEntity(entity)
-        this.placeEntity(entity, targetPosition, ignoreCollision)
+        if (!entity.hasComponent(EncounterLocationComponent::class)) {
+            throw EntityHasNoLocation("Specified entity ${entity.name} has no location, cannot remove!")
+        } else if (!ignoreCollision && this.positionBlocked(targetPosition)) {
+            throw NodeHasInsufficientSpaceException("Node $targetPosition is full, cannot place ${entity.name}")
+        }
+
+        val locationComponent = entity.getComponent(EncounterLocationComponent::class)
+
+        // Modify EncounterMap linkages
+        this.entitiesByPosition[locationComponent.position]!!.remove(entity)
+        if(this.entitiesByPosition.containsKey(targetPosition)) {
+            this.entitiesByPosition[targetPosition]!!.add(entity)
+        } else {
+            this.entitiesByPosition[targetPosition] = mutableListOf(entity)
+        }
+
+        // Update locationComponent
+        locationComponent.position = targetPosition
     }
 
 }

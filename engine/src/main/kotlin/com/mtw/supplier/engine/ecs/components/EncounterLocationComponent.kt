@@ -5,6 +5,6 @@ import com.mtw.supplier.engine.utils.XYCoordinates
 import kotlinx.serialization.Serializable
 
 @Serializable
-class EncounterLocationComponent(var position: XYCoordinates): Component() {
+class EncounterLocationComponent(var position: XYCoordinates, val placementOrder: Int): Component() {
     override var _parentId: String? = null
 }
