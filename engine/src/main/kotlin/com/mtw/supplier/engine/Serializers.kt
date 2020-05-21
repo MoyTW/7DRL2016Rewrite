@@ -2,9 +2,7 @@ package com.mtw.supplier.engine
 
 import com.mtw.supplier.engine.ecs.Component
 import com.mtw.supplier.engine.ecs.components.*
-import com.mtw.supplier.engine.ecs.components.ai.AIComponent
-import com.mtw.supplier.engine.ecs.components.ai.EnemyScoutAIComponent
-import com.mtw.supplier.engine.ecs.components.ai.PathAIComponent
+import com.mtw.supplier.engine.ecs.components.ai.*
 import com.mtw.supplier.engine.ecs.components.item.CarryableComponent
 import com.mtw.supplier.engine.ecs.components.item.InventoryComponent
 import com.mtw.supplier.engine.ecs.components.item.UsableComponent
@@ -26,6 +24,8 @@ object Serializers {
             polymorphic(Component::class) {
                 // ai
                 AIComponent::class with AIComponent.serializer()
+                EnemyFighterAIComponent::class with EnemyFighterAIComponent.serializer()
+                EnemyGunshipAIComponent::class with EnemyGunshipAIComponent.serializer()
                 EnemyScoutAIComponent::class with EnemyScoutAIComponent.serializer()
                 PathAIComponent::class with PathAIComponent.serializer()
 

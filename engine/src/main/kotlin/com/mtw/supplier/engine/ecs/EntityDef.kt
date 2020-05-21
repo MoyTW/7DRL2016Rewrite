@@ -1,20 +1,45 @@
 package com.mtw.supplier.engine.ecs
 
-import com.mtw.supplier.engine.ecs.components.CollisionComponent
-import com.mtw.supplier.engine.ecs.components.DefenderComponent
-import com.mtw.supplier.engine.ecs.components.DisplayComponent
-import com.mtw.supplier.engine.ecs.components.DisplayType
+import com.mtw.supplier.engine.ecs.components.ai.*
+import com.mtw.supplier.engine.ecs.components.*
 import com.mtw.supplier.engine.utils.SeededRand
-import java.util.*
 
 // TODO: json data or something less hard-coded
 enum class EntityDef(val build: (SeededRand) -> Entity) {
     // #################################################################################################################
     // # ENEMIES                                                                                                       #
     // #################################################################################################################
-    SCOUT({ TODO() }),
-    FIGHTER({ TODO() }),
-    GUNSHIP({ TODO() }),
+    SCOUT({
+        // TODO: Add in XP values
+        Entity("Scout", it)
+            .addComponent(EnemyScoutAIComponent())
+            .addComponent(DefenderComponent(defense = 0, maxHp = 10, currentHp = 10))
+            .addComponent(FactionComponent(0))
+            .addComponent(CollisionComponent.defaultFighter())
+            .addComponent(ActionTimeComponent(75))
+            .addComponent(SpeedComponent(75))
+            .addComponent(DisplayComponent(DisplayType.ENEMY_SCOUT, false))
+    }),
+    FIGHTER({
+        Entity("Fighter", it)
+            .addComponent(EnemyFighterAIComponent())
+            .addComponent(DefenderComponent(defense = 0, maxHp = 30, currentHp = 30))
+            .addComponent(FactionComponent(0))
+            .addComponent(CollisionComponent.defaultFighter())
+            .addComponent(ActionTimeComponent(125))
+            .addComponent(SpeedComponent(125))
+            .addComponent(DisplayComponent(DisplayType.ENEMY_FIGHTER, false))
+    }),
+    GUNSHIP({
+        Entity("Gunship", it)
+            .addComponent(EnemyGunshipAIComponent())
+            .addComponent(DefenderComponent(defense = 4, maxHp = 50, currentHp = 50))
+            .addComponent(FactionComponent(0))
+            .addComponent(CollisionComponent.defaultFighter())
+            .addComponent(ActionTimeComponent(100))
+            .addComponent(SpeedComponent(100))
+            .addComponent(DisplayComponent(DisplayType.ENEMY_GUNSHIP, false))
+    }),
     FRIGATE({ TODO() }),
     DESTROYER({ TODO() }),
     CRUISER({ TODO() }),

@@ -2,7 +2,9 @@ package com.mtw.supplier.server
 
 import com.mtw.supplier.engine.Serializers
 import com.mtw.supplier.engine.ecs.Entity
+import com.mtw.supplier.engine.ecs.EntityDef
 import com.mtw.supplier.engine.ecs.components.*
+import com.mtw.supplier.engine.ecs.components.ai.AIComponent
 import com.mtw.supplier.engine.ecs.components.ai.EnemyScoutAIComponent
 import com.mtw.supplier.engine.encounter.EncounterRunner
 import com.mtw.supplier.engine.encounter.rulebook.actions.MoveAction
@@ -88,18 +90,10 @@ class RootController {
 		return Serializers.stringify(gameState)
 	}
 
-	private fun makeAndPlaceScout(state: EncounterState, x: Int, y: Int) {
-		val activatedAi = EnemyScoutAIComponent()
-		activatedAi.isActive = true
-		val scout = Entity("Scout", state.seededRand)
-			.addComponent(activatedAi)
-			.addComponent(DefenderComponent(0, 10, 10))
-			.addComponent(FactionComponent(0))
-			.addComponent(CollisionComponent.defaultFighter())
-			.addComponent(ActionTimeComponent(75))
-			.addComponent(SpeedComponent(75))
-			.addComponent(DisplayComponent(DisplayType.ENEMY_SCOUT, false))
-		state.placeEntity(scout, XYCoordinates(x, y))
+	private fun buildActivateAndPlace(entityDef: EntityDef, state: EncounterState, x: Int, y: Int) {
+		val entity = entityDef.build(state.seededRand)
+		entity.getComponentOrNull(AIComponent::class)?.isActive = true
+		state.placeEntity(entity, XYCoordinates(x, y))
 	}
 
 	// TODO: Proppa level gen & not literally in controller lol
@@ -117,20 +111,14 @@ class RootController {
 		val state = EncounterState(consistentRand, Constants.MAP_WIDTH, Constants.MAP_HEIGHT)
 		state.initialize(player)
 
-		/*state.placeEntity(player, XYCoordinates(25, 25))
+		state.removeEntity(player)
+		state.placeEntity(player, XYCoordinates(25, 25))
 
-		makeAndPlaceScout(state, 10, 30)
-		makeAndPlaceScout(state, 10, 26)
-		makeAndPlaceScout(state, 10, 22)
-		makeAndPlaceScout(state, 10, 18)
-		makeAndPlaceScout(state, 10, 14)
-		makeAndPlaceScout(state, 10, 10)
-		makeAndPlaceScout(state, 30, 30)
-		makeAndPlaceScout(state, 30, 26)
-		makeAndPlaceScout(state, 30, 22)
-		makeAndPlaceScout(state, 30, 18)
-		makeAndPlaceScout(state, 30, 14)
-		makeAndPlaceScout(state, 30, 10)*/
+		EntityDef.GUNSHIP.build(consistentRand)
+
+		buildActivateAndPlace(EntityDef.SCOUT, state, 10, 10)
+		buildActivateAndPlace(EntityDef.FIGHTER, state, 10, 20)
+		buildActivateAndPlace(EntityDef.GUNSHIP, state, 10, 30)
 
 		EncounterRunner.runUntilPlayerReady(state)
 

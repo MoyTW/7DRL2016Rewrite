@@ -12,6 +12,8 @@ import kotlinx.serialization.Serializable
 enum class DisplayType(val priority: Int) {
     PLAYER(0),
     ENEMY_SCOUT(0),
+    ENEMY_FIGHTER(0),
+    ENEMY_GUNSHIP(0),
     SATELLITE(0),
 
     PROJECTILE_SMALL_SHOTGUN(1),
