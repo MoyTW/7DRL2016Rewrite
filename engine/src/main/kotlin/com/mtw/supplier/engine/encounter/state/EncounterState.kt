@@ -59,7 +59,7 @@ class EncounterState(
      * or vals, and this (while not...elegant) is quick. rip.
      */
     fun initialize(player: Entity) {
-        this._encounterMap = EncounterMapBuilder(0, player, seededRand).build()
+        this._encounterMap = EncounterMapBuilder(1, player, seededRand).build()
     }
 
     val currentTime: Int

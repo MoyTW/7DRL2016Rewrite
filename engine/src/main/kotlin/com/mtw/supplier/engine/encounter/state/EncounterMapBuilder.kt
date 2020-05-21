@@ -1,7 +1,9 @@
 package com.mtw.supplier.engine.encounter.state
 
 import com.mtw.supplier.engine.ecs.Entity
-import com.mtw.supplier.engine.ecs.EntityDictionary
+import com.mtw.supplier.engine.ecs.EntityDef
+import com.mtw.supplier.engine.encounter.LevelBlueprint
+import com.mtw.supplier.engine.encounter.LevelData
 import com.mtw.supplier.engine.utils.SeededRand
 import com.mtw.supplier.engine.utils.XYCoordinates
 
@@ -42,12 +44,6 @@ class Zone(
     }
 }
 
-class LevelBlueprint(
-    val satellitesPerZone: Int
-) {
-
-}
-
 class EncounterMapBuilder(
     val levelDepth: Int,
     val player: Entity,
@@ -64,7 +60,7 @@ class EncounterMapBuilder(
         for (i in 0 until blueprint.satellitesPerZone) {
             val pos = zone.randomCoordinates()
             if (!encounterMap.positionBlocked(pos)) {
-                encounterMap.placeEntity(EntityDictionary.buildSatelliteEntity(seededRand), pos, true)
+                encounterMap.placeEntity(EntityDef.SATELLITE.build(seededRand), pos, true)
             }
         }
 
@@ -76,6 +72,8 @@ class EncounterMapBuilder(
     }
 
     internal fun build(): EncounterMap {
+        val blueprint = LevelData.depthsToBlueprints[levelDepth]!!
+
         // Generate the map with a border
         val encounterMap = EncounterMap(mapWidth, mapHeight)
         for (x in 0 until mapWidth) {
@@ -116,14 +114,14 @@ class EncounterMapBuilder(
         // Place the player. If on depth 9, player is placed in a hazardous zone; otherwise starting zone is safe.
         if (levelDepth == 9) {
             encounterMap.placeEntity(player, zones[0].randomUnblockedCoordinates(encounterMap), true)
-            fillZone(zones[0], encounterMap, LevelBlueprint(20), safe = false)
+            fillZone(zones[0], encounterMap, blueprint, safe = false)
         } else {
             encounterMap.placeEntity(player, zones[0].randomUnblockedCoordinates(encounterMap), true)
-            fillZone(zones[0], encounterMap, LevelBlueprint(20), safe = true)
+            fillZone(zones[0], encounterMap, blueprint, safe = true)
         }
         // We add objects to every other zone
         for (i in 1 until zones.size) {
-            fillZone(zones[i], encounterMap, LevelBlueprint(20), safe = false)
+            fillZone(zones[i], encounterMap, blueprint, safe = false)
         }
         // Generate the diplomat if you're on the last level
         if (levelDepth == 10) {
@@ -133,12 +131,12 @@ class EncounterMapBuilder(
         // Generate the jump point
         val jumpPointZone = zones[(1 until zones.size).random(seededRand.getRandom())]
         val jumpPointPos = jumpPointZone.randomUnblockedCoordinates(encounterMap)
-        encounterMap.placeEntity(EntityDictionary.buildJumpPointEntity(seededRand), jumpPointPos, true)
+        encounterMap.placeEntity(EntityDef.JUMP_POINT.build(seededRand), jumpPointPos, true)
 
         // Generate the intel
         val intelZone = zones[(1 until zones.size).random(seededRand.getRandom())]
         val intelPos = jumpPointZone.randomUnblockedCoordinates(encounterMap)
-        encounterMap.placeEntity(EntityDictionary.buildIntelEntity(seededRand), jumpPointPos, true)
+        encounterMap.placeEntity(EntityDef.INTEL.build(seededRand), jumpPointPos, true)
 
         // TODO: Finalize the zone strings
 
