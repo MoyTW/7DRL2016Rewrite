@@ -97,12 +97,8 @@ internal class EncounterMap(
     }
 
     internal fun entitiesByPlacementOrder(): List<Entity> {
-        /*return this.entitiesByPosition.values.flatten().sortedBy {
-            it.getComponentOrNull(ActionTimeComponent::class)?.ticksUntilTurn ?: 0
-        }*/
-
         val entities = this.entitiesByPosition.values.flatten().sortedBy {
-            it.getComponentOrNull(PathAIComponent::class)?.isActive ?: false
+            it.getComponent(EncounterLocationComponent::class).placementOrder
         }
         return entities
     }
