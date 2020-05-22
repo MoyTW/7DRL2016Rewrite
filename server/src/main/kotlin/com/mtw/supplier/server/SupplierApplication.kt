@@ -102,7 +102,7 @@ class RootController {
 
 		val player = Entity("player", seededRand = consistentRand)
 			.addComponent(PlayerComponent())
-			.addComponent(DefenderComponent(0, 50, 50))
+			.addComponent(DefenderComponent(9999, 50, 50))
 			.addComponent(FactionComponent(2))
 			.addComponent(CollisionComponent.defaultFighter())
 			.addComponent(ActionTimeComponent(100))
@@ -113,8 +113,6 @@ class RootController {
 
 		state.removeEntity(player)
 		state.placeEntity(player, XYCoordinates(25, 25))
-
-		EntityDef.GUNSHIP.build(consistentRand)
 
 		buildActivateAndPlace(EntityDef.SCOUT, state, 10, 10)
 		buildActivateAndPlace(EntityDef.FIGHTER, state, 10, 20)
