@@ -50,10 +50,10 @@ object ClientDrawer {
             .withBackgroundColor(ANSITileColor.BLACK)
             .build()
         val exploredTile = Tile.newBuilder()
-            .withBackgroundColor(ANSITileColor.GRAY)
+            .withBackgroundColor(TileColor.create(16, 13, 66))
             .build()
         val visibleTile = Tile.newBuilder()
-            .withBackgroundColor(ANSITileColor.WHITE)
+            .withBackgroundColor(TileColor.create(67, 16, 97))
             .build()
         for (x in 0 until tiles.width) {
             for (y in 0 until tiles.height) {
