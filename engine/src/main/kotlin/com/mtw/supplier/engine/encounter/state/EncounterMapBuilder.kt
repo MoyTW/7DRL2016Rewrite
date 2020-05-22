@@ -2,25 +2,27 @@ package com.mtw.supplier.engine.encounter.state
 
 import com.mtw.supplier.engine.ecs.Entity
 import com.mtw.supplier.engine.ecs.EntityDef
+import com.mtw.supplier.engine.encounter.EncounterDef
 import com.mtw.supplier.engine.encounter.LevelBlueprint
 import com.mtw.supplier.engine.encounter.LevelData
 import com.mtw.supplier.engine.utils.SeededRand
 import com.mtw.supplier.engine.utils.XYCoordinates
 
-class Zone(
+class ZoneBuilder(
     private val bottomLeft: XYCoordinates,
     private val width: Int,
     private val height: Int,
     val name: String,
-    private val seededRand: SeededRand
+    private val seededRand: SeededRand,
+    var encounterDef: EncounterDef? = null
 ) {
-    val x1 = bottomLeft.x
-    val y1 = bottomLeft.y
-    val x2 = bottomLeft.x + width
-    val y2 = bottomLeft.y + height
-    val rand = seededRand.getRandom()
+    private val x1 = bottomLeft.x
+    private val y1 = bottomLeft.y
+    private val x2 = bottomLeft.x + width
+    private val y2 = bottomLeft.y + height
+    private val rand = seededRand.getRandom()
 
-    fun intersects(other: Zone): Boolean {
+    fun intersects(other: ZoneBuilder): Boolean {
         return this.x1 <= other.x2 && this.x2 >= other.x1 && this.y1 <= other.y2 && this.y2 >= other.y1
     }
 
@@ -44,6 +46,18 @@ class Zone(
     }
 }
 
+class Zone(
+    private val x1: Int,
+    private val y1: Int,
+    private val x2: Int,
+    private val y2: Int,
+    val name: String,
+    val encounterDef: EncounterDef,
+    val informedByIntel: Boolean
+) {
+    val center: XYCoordinates = XYCoordinates(x1 + x2 / 2, (y1 + y2) / 2)
+}
+
 class EncounterMapBuilder(
     val levelDepth: Int,
     val player: Entity,
@@ -55,17 +69,27 @@ class EncounterMapBuilder(
     val zoneMinSize: Int = 20,
     val zoneMaxSize: Int = 40
 ) {
-    internal fun fillZone(zone: Zone, encounterMap: EncounterMap, blueprint: LevelBlueprint, safe: Boolean = false) {
+    internal fun fillZone(zoneBuilder: ZoneBuilder, encounterMap: EncounterMap, blueprint: LevelBlueprint, safe: Boolean = false) {
         // Distribute satellites within zone
         for (i in 0 until blueprint.satellitesPerZone) {
-            val pos = zone.randomCoordinates()
+            val pos = zoneBuilder.randomCoordinates()
             if (!encounterMap.positionBlocked(pos)) {
                 encounterMap.placeEntity(EntityDef.SATELLITE.build(seededRand), pos, true)
             }
         }
 
         // Place enemies within zone
-        // TODO: Place enemies
+        if (safe) {
+            zoneBuilder.encounterDef = EncounterDef.EMPTY_ENCOUNTER
+        } else {
+            val chosenEncounter = blueprint.chooseEncounter(seededRand)
+            zoneBuilder.encounterDef = chosenEncounter
+
+            chosenEncounter.shipList.map {
+                val enemy = it.build(seededRand)
+                encounterMap.placeEntity(enemy, zoneBuilder.randomUnblockedCoordinates(encounterMap), false)
+            }
+        }
 
         // Place items within zone
         // TODO: Place items
@@ -85,19 +109,19 @@ class EncounterMapBuilder(
         }
 
         // Generate the zones layouts. No entities are added here.
-        val zones: MutableList<Zone> = mutableListOf()
+        val zoneBuilders: MutableList<ZoneBuilder> = mutableListOf()
         var zoneGenAttempts = 0
-        while (zoneGenAttempts < maxZoneGenAttempts && zones.size < maxZones) {
+        while (zoneGenAttempts < maxZoneGenAttempts && zoneBuilders.size < maxZones) {
             // Make the zone & place it
             val zoneWidth = (zoneMinSize..zoneMaxSize).random(seededRand.getRandom())
             val zoneHeight = (zoneMinSize..zoneMaxSize).random(seededRand.getRandom())
             val bottomLeft = XYCoordinates((0 until mapWidth - zoneWidth).random(seededRand.getRandom()),
                 (0 until mapHeight - zoneHeight).random(seededRand.getRandom()))
-            val newZone = Zone(bottomLeft, zoneWidth, zoneHeight, "Zone ${zones.size}", seededRand)
+            val newZone = ZoneBuilder(bottomLeft, zoneWidth, zoneHeight, "Zone ${zoneBuilders.size}", seededRand)
 
             // Compare the zones
             var failed = false
-            for (otherZone in zones) {
+            for (otherZone in zoneBuilders) {
                 if (newZone.intersects(otherZone)) {
                     failed = true
                     break
@@ -105,7 +129,7 @@ class EncounterMapBuilder(
             }
 
             if (!failed) {
-                zones.add(newZone)
+                zoneBuilders.add(newZone)
             }
             zoneGenAttempts += 1
         }
@@ -113,15 +137,17 @@ class EncounterMapBuilder(
         // Place entities in the zones
         // Place the player. If on depth 9, player is placed in a hazardous zone; otherwise starting zone is safe.
         if (levelDepth == 9) {
-            encounterMap.placeEntity(player, zones[0].randomUnblockedCoordinates(encounterMap), true)
-            fillZone(zones[0], encounterMap, blueprint, safe = false)
+            encounterMap.placeEntity(player, zoneBuilders[0].randomUnblockedCoordinates(encounterMap), true)
+            fillZone(zoneBuilders[0], encounterMap, blueprint, safe = false)
         } else {
-            encounterMap.placeEntity(player, zones[0].randomUnblockedCoordinates(encounterMap), true)
-            fillZone(zones[0], encounterMap, blueprint, safe = true)
+            encounterMap.placeEntity(player, zoneBuilders[0].randomUnblockedCoordinates(encounterMap), true)
+            fillZone(zoneBuilders[0], encounterMap, blueprint, safe = false)
+            // TODO Move "starting zone is dangerous" into the level blueprint
+            //fillZone(zoneBuilders[0], encounterMap, blueprint, safe = true)
         }
         // We add objects to every other zone
-        for (i in 1 until zones.size) {
-            fillZone(zones[i], encounterMap, blueprint, safe = false)
+        for (i in 1 until zoneBuilders.size) {
+            fillZone(zoneBuilders[i], encounterMap, blueprint, safe = false)
         }
         // Generate the diplomat if you're on the last level
         if (levelDepth == 10) {
@@ -129,12 +155,12 @@ class EncounterMapBuilder(
         }
 
         // Generate the jump point
-        val jumpPointZone = zones[(1 until zones.size).random(seededRand.getRandom())]
+        val jumpPointZone = zoneBuilders[(1 until zoneBuilders.size).random(seededRand.getRandom())]
         val jumpPointPos = jumpPointZone.randomUnblockedCoordinates(encounterMap)
         encounterMap.placeEntity(EntityDef.JUMP_POINT.build(seededRand), jumpPointPos, true)
 
         // Generate the intel
-        val intelZone = zones[(1 until zones.size).random(seededRand.getRandom())]
+        val intelZone = zoneBuilders[(1 until zoneBuilders.size).random(seededRand.getRandom())]
         val intelPos = jumpPointZone.randomUnblockedCoordinates(encounterMap)
         encounterMap.placeEntity(EntityDef.INTEL.build(seededRand), jumpPointPos, true)
 

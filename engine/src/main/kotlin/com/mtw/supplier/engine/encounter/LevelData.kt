@@ -21,7 +21,7 @@ object WeightedChoicePicker {
     }
 }
 
-enum class EncounterDef(val encounterName: String, shipList: List<EntityDef>) {
+enum class EncounterDef(val encounterName: String, val shipList: List<EntityDef>) {
     EMPTY_ENCOUNTER ( "none", listOf()),
     SCOUT_ENCOUNTER ("single scout", listOf(EntityDef.SCOUT)),
     SCOUT_PAIR_ENCOUNTER ("scout pair", listOf(EntityDef.SCOUT, EntityDef.SCOUT)),
@@ -108,7 +108,7 @@ class LevelBlueprint(
      * 1. Roll for the challenge rating
      * 2. Roll for the specific encounter at that challenge level
      */
-    fun generateEncounter(seededRand: SeededRand): EncounterDef {
+    fun chooseEncounter(seededRand: SeededRand): EncounterDef {
         val encounterLevel = WeightedChoicePicker.pick(depthEncounterTable, seededRand)
         return WeightedChoicePicker.pick(encounterLevel.challengeRatingToEncounters, seededRand)
     }

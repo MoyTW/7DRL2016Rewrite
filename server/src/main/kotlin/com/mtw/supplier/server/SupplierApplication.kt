@@ -111,12 +111,14 @@ class RootController {
 		val state = EncounterState(consistentRand, Constants.MAP_WIDTH, Constants.MAP_HEIGHT)
 		state.initialize(player)
 
+		/*
 		state.removeEntity(player)
 		state.placeEntity(player, XYCoordinates(25, 25))
 
 		buildActivateAndPlace(EntityDef.SCOUT, state, 10, 10)
 		buildActivateAndPlace(EntityDef.FIGHTER, state, 10, 20)
 		buildActivateAndPlace(EntityDef.GUNSHIP, state, 10, 30)
+		*/
 
 		EncounterRunner.runUntilPlayerReady(state)
 
