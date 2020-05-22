@@ -57,7 +57,7 @@ object Serializers {
             s = json.stringify(EncounterState.serializer(), encounterState)
         }
         //logger.info("Stringify ms: $timeTaken")
-        return s!!.replace(",", ",\n")
+        return s!!//.replace(",", ",\n")
     }
 
     fun parse(body: String): EncounterState {
