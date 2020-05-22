@@ -46,6 +46,30 @@ enum class EntityDef(val build: (SeededRand) -> Entity) {
     CARRIER({ TODO() }),
 
     // #################################################################################################################
+    // # ITEM ENTITIES                                                                                                 #
+    // #################################################################################################################
+    ITEM_DUCT_TAPE({
+        // TODO: Implement duct tape!
+        Entity("duct tape", it)
+            .addComponent(DisplayComponent(DisplayType.ITEM_DUCT_TAPE, false))
+    }),
+    ITEM_EMP({
+        // TODO: Implement EMP!
+        Entity("EMP device", it)
+            .addComponent(DisplayComponent(DisplayType.ITEM_EMP, false))
+    }),
+    ITEM_EXTRA_BATTERY({
+        // TODO: Implement battery!
+        Entity("battery", it)
+            .addComponent(DisplayComponent(DisplayType.ITEM_EXTRA_BATTERY, false))
+    }),
+    ITEM_RED_PAINT({
+        // TODO: Implement red paint!
+        Entity("red paint", it)
+            .addComponent(DisplayComponent(DisplayType.ITEM_RED_PAINT, false))
+    }),
+
+    // #################################################################################################################
     // # MAP ENTITIES                                                                                                  #
     // #################################################################################################################
     SATELLITE(fun(seededRand: SeededRand): Entity {

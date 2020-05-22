@@ -18,6 +18,10 @@ enum class DisplayType(val priority: Int) {
 
     PROJECTILE_SMALL_SHOTGUN(1),
 
+    ITEM_DUCT_TAPE(2),
+    ITEM_EMP(2),
+    ITEM_EXTRA_BATTERY(2),
+    ITEM_RED_PAINT(2),
     INTEL(2),
     JUMP_POINT(2)
 }

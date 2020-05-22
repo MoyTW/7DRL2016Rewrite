@@ -69,7 +69,7 @@ class EncounterMapBuilder(
     val zoneMinSize: Int = 20,
     val zoneMaxSize: Int = 40
 ) {
-    internal fun fillZone(zoneBuilder: ZoneBuilder, encounterMap: EncounterMap, blueprint: LevelBlueprint, safe: Boolean = false) {
+    private fun fillZone(zoneBuilder: ZoneBuilder, encounterMap: EncounterMap, blueprint: LevelBlueprint, safe: Boolean = false) {
         // Distribute satellites within zone
         for (i in 0 until blueprint.satellitesPerZone) {
             val pos = zoneBuilder.randomCoordinates()
@@ -82,7 +82,7 @@ class EncounterMapBuilder(
         if (safe) {
             zoneBuilder.encounterDef = EncounterDef.EMPTY_ENCOUNTER
         } else {
-            val chosenEncounter = blueprint.chooseEncounter(seededRand)
+            val chosenEncounter = blueprint.chooseEncounterForZone(seededRand)
             zoneBuilder.encounterDef = chosenEncounter
 
             chosenEncounter.shipList.map {
@@ -92,7 +92,10 @@ class EncounterMapBuilder(
         }
 
         // Place items within zone
-        // TODO: Place items
+        blueprint.chooseItemsForZone(seededRand).map {
+            val item = it.build(seededRand)
+            encounterMap.placeEntity(item, zoneBuilder.randomUnblockedCoordinates(encounterMap), false)
+        }
     }
 
     internal fun build(): EncounterMap {
