@@ -5,6 +5,7 @@ import com.mtw.supplier.engine.ecs.EntityDef
 import com.mtw.supplier.engine.encounter.EncounterDef
 import com.mtw.supplier.engine.encounter.LevelBlueprint
 import com.mtw.supplier.engine.encounter.LevelData
+import com.mtw.supplier.engine.utils.Constants
 import com.mtw.supplier.engine.utils.SeededRand
 import com.mtw.supplier.engine.utils.XYCoordinates
 
@@ -62,12 +63,12 @@ class EncounterMapBuilder(
     val levelDepth: Int,
     val player: Entity,
     val seededRand: SeededRand,
-    val mapWidth: Int = 300,
-    val mapHeight: Int = 300,
-    val maxZoneGenAttempts: Int = 100,
-    val maxZones: Int = 9,
-    val zoneMinSize: Int = 20,
-    val zoneMaxSize: Int = 40
+    val mapWidth: Int = Constants.MAP_WIDTH,
+    val mapHeight: Int = Constants.MAP_HEIGHT,
+    val maxZoneGenAttempts: Int = Constants.MAX_ZONE_GEN_ATTEMPTS,
+    val maxZones: Int = Constants.MAX_ZONES,
+    val zoneMinSize: Int = Constants.ZONE_MIN_SIZE,
+    val zoneMaxSize: Int = Constants.ZONE_MAX_SIZE
 ) {
     private fun fillZone(zoneBuilder: ZoneBuilder, encounterMap: EncounterMap, blueprint: LevelBlueprint, safe: Boolean = false) {
         // Distribute satellites within zone
