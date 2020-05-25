@@ -10,6 +10,21 @@ import com.mtw.supplier.engine.encounter.rulebook.Rulebook
 import com.mtw.supplier.engine.utils.LinePathBuilder
 import org.slf4j.LoggerFactory
 
+/**
+ * ===== ONE TURN =====
+ * Formal description of desired turn behaviour:
+ * 1. List oll entities ready to move
+ * 2. If the player is on the list, the player always goes first
+ *   2a. Player gets infinite free actions
+ *   2b. Player ends turn on move action
+ *   2c. On move turn, fires a laser projectile with TTL 1 and speed 1
+ * 3. All other non-projectile entities go in placement order
+ *   3a. Projectiles launched by entities *do not* take an immediate turn
+ * 4. All projectiles go // TODO: Projectiles & entities interleaved
+ *   4a. Yes this does mean that an entity can move in front of a projectile
+ * 5. Check for victory conditions // TODO: Victory conditions
+ */
+
 object EncounterRunner {
     private val logger = LoggerFactory.getLogger(EncounterRunner::class.java)
 
