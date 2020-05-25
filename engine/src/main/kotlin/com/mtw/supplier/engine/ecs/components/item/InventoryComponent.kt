@@ -2,6 +2,7 @@ package com.mtw.supplier.engine.ecs.components.item
 
 import com.mtw.supplier.engine.ecs.Component
 import com.mtw.supplier.engine.ecs.Entity
+import com.mtw.supplier.engine.ecs.components.EncounterLocationComponent
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -17,7 +18,9 @@ class InventoryComponent(
      * @throws NotCarryableException when the entity has no carryable component
      */
     fun addItem(carryable: Entity) {
-        if (contents.size >= size) {
+        if (carryable.hasComponent(EncounterLocationComponent::class)) {
+            throw ItemHasEncounterLocation("Cannot carry ${carryable.name} because it is on the map!")
+        }else if (contents.size >= size) {
             throw InventoryFullException("Cannot carry ${carryable.name} because inventory is already full!")
         }
 
@@ -28,6 +31,7 @@ class InventoryComponent(
             this.contents.add(carryable)
         }
     }
+    class ItemHasEncounterLocation(message: String): Exception(message)
     class InventoryFullException(message: String): Exception(message)
     class NotCarryableException(message: String): Exception(message)
 

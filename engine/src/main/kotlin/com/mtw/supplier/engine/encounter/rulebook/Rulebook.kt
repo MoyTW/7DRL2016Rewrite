@@ -3,6 +3,8 @@ package com.mtw.supplier.engine.encounter.rulebook
 import com.mtw.supplier.engine.ecs.Entity
 import com.mtw.supplier.engine.ecs.components.*
 import com.mtw.supplier.engine.ecs.components.ai.PathAIComponent
+import com.mtw.supplier.engine.ecs.components.item.CarryableComponent
+import com.mtw.supplier.engine.ecs.components.item.InventoryComponent
 import com.mtw.supplier.engine.encounter.rulebook.actions.*
 import com.mtw.supplier.engine.encounter.state.EncounterState
 import com.mtw.supplier.engine.encounter.state.EncounterMessageLog
@@ -17,6 +19,7 @@ object Rulebook {
         when (action.actionType) {
             ActionType.ATTACK -> resolveAttackAction(action as AttackAction, encounterState)
             ActionType.FIRE_PROJECTILE -> resolveFireProjectileAction(action as FireProjectileAction, encounterState)
+            ActionType.PICK_UP_ITEM -> resolvePickUpItemAction(action as PickUpItemAction, encounterState)
             ActionType.MOVE -> resolveMoveAction(action as MoveAction, encounterState)
             ActionType.USE_ITEM -> TODO()
             ActionType.WAIT -> resolveWaitAction(action as WaitAction, encounterState.messageLog)
@@ -72,6 +75,23 @@ object Rulebook {
                 "${action.actor.name} at $shooterPos fired ${action.projectileType} from ${path.currentPosition()}")
         }
     }
+
+    private fun resolvePickUpItemAction(action: PickUpItemAction, encounterState: EncounterState) {
+        val actorInventory = action.actor.getComponentOrNull(InventoryComponent::class)
+            ?: throw CannotPickUpItemException("${action.actor.name} cannot pick up items as it has no inventory!")
+        val actorLocation = action.actor.getComponentOrNull(EncounterLocationComponent::class)
+            ?: throw CannotPickUpItemException("${action.actor.name} cannot pick up items as it's not on a map!")
+
+        val targetEntity = encounterState.getEntitiesAtPosition(actorLocation.position).filter {
+            it.hasComponent(CarryableComponent::class)
+        }.firstOrNull() // NOTE: If we ever have multiple entities on a square we'll want to allow the user to choose!
+        if (targetEntity != null) {
+            encounterState.removeEntity(targetEntity)
+            actorInventory.addItem(targetEntity)
+            encounterState.messageLog.logAction(action, "SUCCESS", "${action.actor.name} picked up ${targetEntity.name}!")
+        }
+    }
+    class CannotPickUpItemException(message: String): Exception(message)
 
     private fun resolveMoveAction(action: MoveAction, encounterState: EncounterState) {
         val currentPosition = action.actor

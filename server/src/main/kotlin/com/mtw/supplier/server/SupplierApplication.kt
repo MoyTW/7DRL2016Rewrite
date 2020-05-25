@@ -6,6 +6,7 @@ import com.mtw.supplier.engine.ecs.EntityDef
 import com.mtw.supplier.engine.ecs.components.*
 import com.mtw.supplier.engine.ecs.components.ai.AIComponent
 import com.mtw.supplier.engine.ecs.components.ai.EnemyScoutAIComponent
+import com.mtw.supplier.engine.ecs.components.item.InventoryComponent
 import com.mtw.supplier.engine.encounter.EncounterRunner
 import com.mtw.supplier.engine.encounter.rulebook.actions.MoveAction
 import com.mtw.supplier.engine.encounter.rulebook.actions.WaitAction
@@ -102,6 +103,7 @@ class RootController {
 
 		val player = Entity("player", seededRand = consistentRand)
 			.addComponent(PlayerComponent())
+			.addComponent(InventoryComponent())
 			.addComponent(DefenderComponent(9999, 50, 50))
 			.addComponent(FactionComponent(2))
 			.addComponent(CollisionComponent.defaultFighter())

@@ -119,6 +119,10 @@ class EncounterState(
         return this.encounterMap.getEntitiesAtPosition(pos).firstOrNull { it.getComponentOrNull(CollisionComponent::class)?.blocksMovement ?: false }
     }
 
+    fun getEntitiesAtPosition(pos: XYCoordinates): List<Entity> {
+        return this.encounterMap.getEntitiesAtPosition(pos)
+    }
+
     fun positionBlocked(pos: XYCoordinates): Boolean {
         return this.encounterMap.positionBlocked(pos)
     }
