@@ -23,7 +23,10 @@ class FireProjectileAction(
     val speed: Int,
     val projectileType: ProjectileType,
     val numProjectiles: Int = 1
-): Action(actionType = ActionType.FIRE_PROJECTILE)
+): Action() {
+    override val actionType: ActionType = ActionType.PICK_UP_ITEM
+    override val freeAction: Boolean = false
+}
 
 object WeaponList {
     fun createFireSmallShotgunAction(parent: Entity, targetPos: XYCoordinates, seededRand: SeededRand): FireProjectileAction {

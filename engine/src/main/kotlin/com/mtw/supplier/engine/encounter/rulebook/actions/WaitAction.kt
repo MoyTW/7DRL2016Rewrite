@@ -6,4 +6,7 @@ import com.mtw.supplier.engine.encounter.rulebook.ActionType
 import kotlinx.serialization.Serializable
 
 @Serializable
-class WaitAction(override val actorId: String): Action(ActionType.WAIT)
+class WaitAction(override val actorId: String): Action() {
+    override val actionType: ActionType = ActionType.WAIT
+    override val freeAction: Boolean = true
+}

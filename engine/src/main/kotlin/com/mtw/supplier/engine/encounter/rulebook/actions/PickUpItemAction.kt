@@ -6,4 +6,7 @@ import com.mtw.supplier.engine.encounter.rulebook.ActionType
 import kotlinx.serialization.Serializable
 
 @Serializable
-class PickUpItemAction(override val actorId: String): Action(ActionType.PICK_UP_ITEM)
+class PickUpItemAction(override val actorId: String): Action() {
+    override val actionType: ActionType = ActionType.PICK_UP_ITEM
+    override val freeAction: Boolean = true
+}

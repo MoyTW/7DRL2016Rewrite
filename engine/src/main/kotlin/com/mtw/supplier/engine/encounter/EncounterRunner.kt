@@ -75,18 +75,22 @@ object EncounterRunner {
 
         val actor = encounterState.getEntity(playerAction.actorId)
 
-        // Move the player
+        // Take player action
         Rulebook.resolveAction(playerAction, encounterState)
-        val speedComponent = actor.getComponent(SpeedComponent::class)
-        actor.getComponent(ActionTimeComponent::class).endTurn(speedComponent)
 
-        // Update the FoV for the player
-        encounterState.calculatePlayerFoVAndMarkExploration()
+        // TODO: Allow non-players to use free actions (not necessary for original design though)
+        if (!playerAction.freeAction) {
+            val speedComponent = actor.getComponent(SpeedComponent::class)
+            actor.getComponent(ActionTimeComponent::class).endTurn(speedComponent)
 
-        // Shoot the player's laser
-        fireLaser(encounterState, actor)
+            // Update the FoV for the player
+            encounterState.calculatePlayerFoVAndMarkExploration()
 
-        EncounterRunner.runUntilPlayerReady(encounterState)
+            // Shoot the player's laser
+            fireLaser(encounterState, actor)
+
+            runUntilPlayerReady(encounterState)
+        }
     }
 
     fun runUntilPlayerReady(encounterState: EncounterState) {

@@ -4,8 +4,8 @@ import com.mtw.supplier.engine.ecs.Entity
 import kotlinx.serialization.Serializable
 
 @Serializable
-abstract class Action(
-    val actionType: ActionType
-) {
+abstract class Action {
     abstract val actorId: String
+    abstract val actionType: ActionType
+    abstract val freeAction: Boolean
 }
