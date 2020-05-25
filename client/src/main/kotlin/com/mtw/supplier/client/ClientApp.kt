@@ -121,6 +121,7 @@ class ClientApp() {
 
     fun handleKeyPress(event: KeyboardEvent, client: NetworkClient) {
         when (event.code) {
+            // ===== Movement =====
             KeyCode.NUMPAD_1 ->  executeMoveAction(Direction.SW) 
             KeyCode.KEY_B ->  executeMoveAction(Direction.SW) 
             KeyCode.NUMPAD_2 ->  executeMoveAction(Direction.S) 
@@ -129,8 +130,9 @@ class ClientApp() {
             KeyCode.KEY_N ->  executeMoveAction(Direction.SE) 
             KeyCode.NUMPAD_4 ->  executeMoveAction(Direction.W) 
             KeyCode.KEY_H ->  executeMoveAction(Direction.W) 
-            KeyCode.NUMPAD_5 ->  client.postWaitAction() 
-            KeyCode.PERIOD ->  client.postWaitAction() 
+            KeyCode.NUMPAD_5 ->  client.postWaitAction()
+            // DCSS uses period, but I want period to be a valid jump key.
+            KeyCode.SPACE ->  client.postWaitAction()
             KeyCode.NUMPAD_6 ->  executeMoveAction(Direction.E) 
             KeyCode.KEY_L ->  executeMoveAction(Direction.E) 
             KeyCode.NUMPAD_7 ->  executeMoveAction(Direction.NW) 
@@ -139,6 +141,17 @@ class ClientApp() {
             KeyCode.KEY_K ->  executeMoveAction(Direction.N) 
             KeyCode.NUMPAD_9 ->  executeMoveAction(Direction.NE) 
             KeyCode.KEY_U ->  executeMoveAction(Direction.NE)
+
+            // ===== Instant Actions =====
+            KeyCode.KEY_G -> println("Implement get items") // TODO
+            KeyCode.KEY_A -> println("Implement autopilot") // TODO
+            KeyCode.KEY_I -> println("Implement using items from inventory") // TODO
+            KeyCode.KEY_D -> println("Implement dropping from inventory") // TODO
+            KeyCode.PERIOD, KeyCode.GREATER, KeyCode.COMMA, KeyCode.LESS -> println("Implement stairs movement") // TODO
+            KeyCode.KEY_C -> println("Implement level up screen") // TODO
+            KeyCode.KEY_R -> println("Implement intel screen") // TODO
+            // TODO: Since we're dropping mouse support, add a "look" option!
+
             else -> null
         }
     }
