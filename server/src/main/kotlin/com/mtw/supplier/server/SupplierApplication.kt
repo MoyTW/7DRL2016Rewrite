@@ -8,6 +8,7 @@ import com.mtw.supplier.engine.ecs.components.ai.AIComponent
 import com.mtw.supplier.engine.ecs.components.ai.EnemyScoutAIComponent
 import com.mtw.supplier.engine.ecs.components.item.InventoryComponent
 import com.mtw.supplier.engine.encounter.EncounterRunner
+import com.mtw.supplier.engine.encounter.rulebook.Action
 import com.mtw.supplier.engine.encounter.rulebook.actions.MoveAction
 import com.mtw.supplier.engine.encounter.rulebook.actions.WaitAction
 import com.mtw.supplier.engine.utils.XYCoordinates
@@ -27,18 +28,6 @@ import kotlin.system.measureTimeMillis
 @SpringBootApplication
 class SupplierApplication
 
-
-enum class Direction(val dx: Int, val dy: Int) {
-	N(0, 1),
-	NE(1, 1),
-	E(1, 0),
-	SE(1, -1),
-	S(0, -1),
-	SW(-1, -1),
-	W(-1, 0),
-	NW(-1, 1)
-}
-data class ActionMoveRequest(val direction: Direction)
 
 @RestController
 class RootController {
@@ -63,30 +52,12 @@ class RootController {
 		return hackMetrics
 	}
 
-	@PostMapping("/game/player/action/move")
-	fun gamePlayerActionMove(@RequestBody request: ActionMoveRequest): String {
-		val oldPlayerPos = gameState.playerEntity().getComponent(EncounterLocationComponent::class).position
-		val newPlayerPos = oldPlayerPos.copy(
-			x = oldPlayerPos.x + request.direction.dx, y = oldPlayerPos.y + request.direction.dy)
-
-		val action = MoveAction(gameState.playerEntity(), newPlayerPos)
+	@PostMapping("game/player/action")
+	fun gamePlayerAction(@RequestBody action: String): String {
 		val turnTime = measureTimeMillis {
-			EncounterRunner.runPlayerTurnAndUntilReady(gameState, action)
+			EncounterRunner.runPlayerTurnAndUntilReady(gameState, Serializers.parseAction(action))
 		}
-		hackMetrics.add(Pair("/move", turnTime))
-		//logger.info("Processed $turnTime ms")
-
-		return Serializers.stringify(gameState)
-	}
-
-	@PostMapping("/game/player/action/wait")
-	fun gamePlayerActionWait(): String {
-		val action = WaitAction(gameState.playerEntity())
-		val turnTime = measureTimeMillis {
-			EncounterRunner.runPlayerTurnAndUntilReady(gameState, action)
-		}
-		hackMetrics.add(Pair("/wait", turnTime))
-		//logger.info("Processed $turnTime ms")
+		hackMetrics.add(Pair("", turnTime))
 
 		return Serializers.stringify(gameState)
 	}

@@ -17,9 +17,9 @@ class PathAIComponent(
     override fun decideNextActions(encounterState: EncounterState): List<Action> {
         return if (!path.atEnd()) {
             val nextPos = path.step()
-            listOf(MoveAction(this.getParent(encounterState), nextPos))
+            listOf(MoveAction(this.getParent(encounterState).id, nextPos))
         } else {
-            listOf(SelfDestructAction(this.getParent(encounterState)))
+            listOf(SelfDestructAction(this.getParent(encounterState).id))
         }
     }
 }

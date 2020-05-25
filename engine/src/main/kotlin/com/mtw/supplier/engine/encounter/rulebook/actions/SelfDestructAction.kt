@@ -4,4 +4,4 @@ import com.mtw.supplier.engine.ecs.Entity
 import com.mtw.supplier.engine.encounter.rulebook.Action
 import com.mtw.supplier.engine.encounter.rulebook.ActionType
 
-class SelfDestructAction(actor: Entity): Action(actor, ActionType.SELF_DESTRUCT)
+class SelfDestructAction(override val actorId: String): Action(ActionType.SELF_DESTRUCT)

@@ -22,7 +22,7 @@ object Rulebook {
             ActionType.PICK_UP_ITEM -> resolvePickUpItemAction(action as PickUpItemAction, encounterState)
             ActionType.MOVE -> resolveMoveAction(action as MoveAction, encounterState)
             ActionType.USE_ITEM -> TODO()
-            ActionType.WAIT -> resolveWaitAction(action as WaitAction, encounterState.messageLog)
+            ActionType.WAIT -> resolveWaitAction(action as WaitAction, encounterState)
             ActionType.SELF_DESTRUCT -> resolveSelfDestructionAction(action as SelfDestructAction, encounterState)
         }
     }
@@ -31,13 +31,13 @@ object Rulebook {
      * Resolves attack against defense with a straight damage = power - defense formula.
      */
     private fun resolveAttackAction(action: AttackAction, encounterState: EncounterState) {
-        val attacker = action.actor
+        val attacker = encounterState.getEntity(action.actorId)
         val defender = action.target
 
         if (!encounterState.arePositionsAdjacent(
                 attacker.getComponent(EncounterLocationComponent::class).position,
                 defender.getComponent(EncounterLocationComponent::class).position)) {
-            encounterState.messageLog.logAction(action, "INVALID", "[${action.actor.name}] cannot reach [${action.target.name}]")
+            encounterState.messageLog.logAction(action, "INVALID", "[${attacker.name}] cannot reach [${defender.name}]")
         } else {
             val damage = attacker.getComponent(AttackerComponent::class).power -
                 defender.getComponent(DefenderComponent::class).defense
@@ -58,7 +58,8 @@ object Rulebook {
     }
 
     private fun resolveFireProjectileAction(action: FireProjectileAction, encounterState: EncounterState) {
-        val shooterPos = action.actor.getComponent(EncounterLocationComponent::class).position
+        val actor = encounterState.getEntity(action.actorId)
+        val shooterPos = actor.getComponent(EncounterLocationComponent::class).position
         repeat (action.numProjectiles) {
             val path = action.pathBuilder.build(shooterPos)
             val projectile = Entity(action.projectileType.displayName, seededRand = encounterState.seededRand)
@@ -72,15 +73,16 @@ object Rulebook {
             encounterState.placeEntity(projectile, path.currentPosition(), ignoreCollision = true)
 
             encounterState.messageLog.logAction(action, "SUCCESS",
-                "${action.actor.name} at $shooterPos fired ${action.projectileType} from ${path.currentPosition()}")
+                "${actor.name} at $shooterPos fired ${action.projectileType} from ${path.currentPosition()}")
         }
     }
 
     private fun resolvePickUpItemAction(action: PickUpItemAction, encounterState: EncounterState) {
-        val actorInventory = action.actor.getComponentOrNull(InventoryComponent::class)
-            ?: throw CannotPickUpItemException("${action.actor.name} cannot pick up items as it has no inventory!")
-        val actorLocation = action.actor.getComponentOrNull(EncounterLocationComponent::class)
-            ?: throw CannotPickUpItemException("${action.actor.name} cannot pick up items as it's not on a map!")
+        val actor = encounterState.getEntity(action.actorId)
+        val actorInventory = actor.getComponentOrNull(InventoryComponent::class)
+            ?: throw CannotPickUpItemException("${actor.name} cannot pick up items as it has no inventory!")
+        val actorLocation = actor.getComponentOrNull(EncounterLocationComponent::class)
+            ?: throw CannotPickUpItemException("${actor.name} cannot pick up items as it's not on a map!")
 
         val targetEntity = encounterState.getEntitiesAtPosition(actorLocation.position).filter {
             it.hasComponent(CarryableComponent::class)
@@ -88,13 +90,14 @@ object Rulebook {
         if (targetEntity != null) {
             encounterState.removeEntity(targetEntity)
             actorInventory.addItem(targetEntity)
-            encounterState.messageLog.logAction(action, "SUCCESS", "${action.actor.name} picked up ${targetEntity.name}!")
+            encounterState.messageLog.logAction(action, "SUCCESS", "${actor.name} picked up ${targetEntity.name}!")
         }
     }
     class CannotPickUpItemException(message: String): Exception(message)
 
     private fun resolveMoveAction(action: MoveAction, encounterState: EncounterState) {
-        val currentPosition = action.actor
+        val actor = encounterState.getEntity(action.actorId)
+        val currentPosition = actor
             .getComponent(EncounterLocationComponent::class)
             .position
 
@@ -105,32 +108,34 @@ object Rulebook {
         if (targetNodeSameAsCurrentNode) {
             encounterState.messageLog.logAction(action, "INVALID", "Target node ${action.targetPosition} and source node are identical!")
         } else if (targetNodeBlocked) {
-            val collisionComponent = action.actor.getComponent(CollisionComponent::class)
+            val collisionComponent = actor.getComponent(CollisionComponent::class)
             if (collisionComponent.attackOnHit) {
                 val blockingEntity = encounterState.getBlockingEntityAtPosition(action.targetPosition)
                 if (blockingEntity != null) {
-                    resolveAction(AttackAction(action.actor, blockingEntity), encounterState)
+                    resolveAction(AttackAction(actor.id, blockingEntity), encounterState)
                 }
             }
             if (collisionComponent.selfDestructOnHit) {
-                resolveAction(SelfDestructAction(action.actor), encounterState)
+                resolveAction(SelfDestructAction(actor.id), encounterState)
             } else {
                 encounterState.messageLog.logAction(action, "INVALID", "Target node ${action.targetPosition} blocked!")
             }
         } else if (!targetNodeAdjacent) {
             encounterState.messageLog.logAction(action, "INVALID", "Current node $currentPosition is not adjacent to target node ${action.targetPosition}!")
         } else {
-            encounterState.teleportEntity(action.actor, action.targetPosition)
-            encounterState.messageLog.logAction(action, "SUCCESS", "${action.actor.name} $currentPosition to ${action.targetPosition}")
+            encounterState.teleportEntity(actor, action.targetPosition)
+            encounterState.messageLog.logAction(action, "SUCCESS", "${actor.name} $currentPosition to ${action.targetPosition}")
         }
     }
 
-    private fun resolveWaitAction(action: WaitAction, messageLog: EncounterMessageLog) {
-        messageLog.logAction(action, "SUCCESS", "[${action.actor.name}] is waiting!")
+    private fun resolveWaitAction(action: WaitAction, encounterState: EncounterState) {
+        val actor = encounterState.getEntity(action.actorId)
+        encounterState.messageLog.logAction(action, "SUCCESS", "[${actor.name}] is waiting!")
     }
 
     private fun resolveSelfDestructionAction(action: SelfDestructAction, encounterState: EncounterState) {
-        encounterState.removeEntity(action.actor)
-        encounterState.messageLog.logAction(action, "SUCCESS", "[${action.actor.name}] self-destructed!")
+        val actor = encounterState.getEntity(action.actorId)
+        encounterState.removeEntity(actor)
+        encounterState.messageLog.logAction(action, "SUCCESS", "[${actor.name}] self-destructed!")
     }
 }

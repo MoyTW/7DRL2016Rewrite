@@ -4,5 +4,7 @@ import com.mtw.supplier.engine.ecs.Entity
 import com.mtw.supplier.engine.encounter.rulebook.Action
 import com.mtw.supplier.engine.encounter.rulebook.ActionType
 import com.mtw.supplier.engine.utils.XYCoordinates
+import kotlinx.serialization.Serializable
 
-class MoveAction(actor: Entity, val targetPosition: XYCoordinates): Action(actor, ActionType.MOVE)
+@Serializable
+class MoveAction(override val actorId: String, val targetPosition: XYCoordinates): Action(ActionType.MOVE)

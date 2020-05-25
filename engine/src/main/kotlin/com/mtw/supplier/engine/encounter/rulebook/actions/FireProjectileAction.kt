@@ -17,18 +17,18 @@ enum class ProjectileType(val displayName: String) {
 }
 
 class FireProjectileAction(
-    actor: Entity,
+    override val actorId: String,
     val power: Int,
     val pathBuilder: PathBuilder,
     val speed: Int,
     val projectileType: ProjectileType,
     val numProjectiles: Int = 1
-): Action(actor, actionType = ActionType.FIRE_PROJECTILE)
+): Action(actionType = ActionType.FIRE_PROJECTILE)
 
 object WeaponList {
     fun createFireSmallShotgunAction(parent: Entity, targetPos: XYCoordinates, seededRand: SeededRand): FireProjectileAction {
         return FireProjectileAction(
-            actor = parent,
+            actorId = parent.id,
             power = 1,
             pathBuilder = LinePathBuilder(targetPos = targetPos, seededRand = seededRand, spread = 5),
             speed = 25,
@@ -38,7 +38,7 @@ object WeaponList {
 
     fun createFireSmallGatlingAction(parent: Entity, targetPos: XYCoordinates): FireProjectileAction {
         return FireProjectileAction(
-            actor = parent,
+            actorId = parent.id,
             power = 2,
             pathBuilder = LinePathBuilder(targetPos = targetPos),
             speed = 50,
@@ -47,7 +47,7 @@ object WeaponList {
 
     fun createFireSmallCannonAction(parent: Entity, targetPos: XYCoordinates): FireProjectileAction {
         return FireProjectileAction(
-            actor = parent,
+            actorId = parent.id,
             power = 5,
             pathBuilder = LinePathBuilder(targetPos = targetPos),
             speed = 50,

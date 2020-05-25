@@ -1,5 +1,11 @@
 package com.mtw.supplier.engine.encounter.rulebook
 
 import com.mtw.supplier.engine.ecs.Entity
+import kotlinx.serialization.Serializable
 
-abstract class Action(val actor: Entity, val actionType: ActionType)
+@Serializable
+abstract class Action(
+    val actionType: ActionType
+) {
+    abstract val actorId: String
+}

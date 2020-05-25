@@ -7,6 +7,7 @@ import com.mtw.supplier.engine.encounter.rulebook.Action
 import com.mtw.supplier.engine.encounter.rulebook.Rulebook
 import com.mtw.supplier.engine.encounter.rulebook.actions.MoveAction
 import com.mtw.supplier.engine.encounter.rulebook.actions.PickUpItemAction
+import com.mtw.supplier.engine.encounter.rulebook.actions.WaitAction
 import com.mtw.supplier.engine.encounter.state.EncounterState
 import kotlinx.coroutines.*
 import org.hexworks.zircon.api.CP437TilesetResources
@@ -113,43 +114,30 @@ class ClientApp() {
         }
     }
 
-    private fun optimisticallyProcessMoveAction(direction: Direction) {
+    private fun directionToMoveAction(direction: Direction): MoveAction {
         val oldPlayerPos = encounterState!!.playerEntity().getComponent(EncounterLocationComponent::class).position
 		val newPlayerPos = oldPlayerPos.copy(
 			x = oldPlayerPos.x + direction.dx, y = oldPlayerPos.y + direction.dy)
 
-		val action = MoveAction(encounterState!!.playerEntity(), newPlayerPos)
-        EncounterRunner.runPlayerTurnAndUntilReady(encounterState!!, action)
+		return MoveAction(encounterState!!.playerEntity().id, newPlayerPos)
     }
 
     fun handleKeyPress(event: KeyboardEvent, client: NetworkClient) {
         when (event.code) {
             // ===== Movement =====
-            KeyCode.NUMPAD_1 ->  executeMoveAction(Direction.SW) 
-            KeyCode.KEY_B ->  executeMoveAction(Direction.SW) 
-            KeyCode.NUMPAD_2 ->  executeMoveAction(Direction.S) 
-            KeyCode.KEY_J ->  executeMoveAction(Direction.S) 
-            KeyCode.NUMPAD_3 ->  executeMoveAction(Direction.SE) 
-            KeyCode.KEY_N ->  executeMoveAction(Direction.SE) 
-            KeyCode.NUMPAD_4 ->  executeMoveAction(Direction.W) 
-            KeyCode.KEY_H ->  executeMoveAction(Direction.W) 
-            KeyCode.NUMPAD_5 ->  client.postWaitAction()
+            KeyCode.NUMPAD_1, KeyCode.KEY_B ->  executePlayerAction(directionToMoveAction(Direction.SW))
+            KeyCode.NUMPAD_2, KeyCode.KEY_J ->  executePlayerAction(directionToMoveAction(Direction.S))
+            KeyCode.NUMPAD_3, KeyCode.KEY_N ->  executePlayerAction(directionToMoveAction(Direction.SE))
+            KeyCode.NUMPAD_4, KeyCode.KEY_H ->  executePlayerAction(directionToMoveAction(Direction.W))
             // DCSS uses period, but I want period to be a valid jump key.
-            KeyCode.SPACE ->  client.postWaitAction()
-            KeyCode.NUMPAD_6 ->  executeMoveAction(Direction.E) 
-            KeyCode.KEY_L ->  executeMoveAction(Direction.E) 
-            KeyCode.NUMPAD_7 ->  executeMoveAction(Direction.NW) 
-            KeyCode.KEY_Y ->  executeMoveAction(Direction.NW) 
-            KeyCode.NUMPAD_8 ->  executeMoveAction(Direction.N) 
-            KeyCode.KEY_K ->  executeMoveAction(Direction.N) 
-            KeyCode.NUMPAD_9 ->  executeMoveAction(Direction.NE) 
-            KeyCode.KEY_U ->  executeMoveAction(Direction.NE)
+            KeyCode.NUMPAD_5, KeyCode.SPACE ->  executePlayerAction(WaitAction(encounterState!!.playerEntity().id))
+            KeyCode.NUMPAD_6, KeyCode.KEY_L ->  executePlayerAction(directionToMoveAction(Direction.E))
+            KeyCode.NUMPAD_7, KeyCode.KEY_Y ->  executePlayerAction(directionToMoveAction(Direction.NW))
+            KeyCode.NUMPAD_8, KeyCode.KEY_K ->  executePlayerAction(directionToMoveAction(Direction.N))
+            KeyCode.NUMPAD_9, KeyCode.KEY_U ->  executePlayerAction(directionToMoveAction(Direction.NE))
 
             // ===== Instant Actions =====
-            KeyCode.KEY_G -> {
-                // TODO: Sync with server
-                Rulebook.resolveAction(PickUpItemAction(encounterState!!.playerEntity()),  encounterState!!)
-            }
+            KeyCode.KEY_G -> executePlayerAction(PickUpItemAction(encounterState!!.playerEntity().id))
             KeyCode.KEY_A -> println("Implement autopilot") // TODO
             KeyCode.KEY_I -> println("Implement using items from inventory") // TODO
             KeyCode.KEY_D -> println("Implement dropping from inventory") // TODO

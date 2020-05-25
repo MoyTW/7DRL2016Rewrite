@@ -16,6 +16,7 @@ class EncounterMessageLog {
     private val eventLog: MutableList<String> = mutableListOf()
 
     private fun addEntry(text: String) {
+        println(text)
         if (eventLog.size >= LOG_LENGTH) {
             eventLog.removeAt(LOG_LENGTH - 1)
         }
@@ -23,7 +24,8 @@ class EncounterMessageLog {
     }
 
     fun logAction(action: Action, status: String, text: String) {
-        val actionString = "[${action.actor.name}]:[${action.actionType.name}]:[$status] $text"
+        // TODO: Look up the entity and get the name!
+        val actionString = "[${action.actorId}]:[${action.actionType.name}]:[$status] $text"
         addEntry(actionString)
     }
 

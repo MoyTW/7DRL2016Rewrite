@@ -58,16 +58,18 @@ object EncounterRunner {
     fun runPlayerTurnAndUntilReady(encounterState: EncounterState, playerAction: Action) {
         if (encounterState.completed) { return }
 
+        val actor = encounterState.getEntity(playerAction.actorId)
+
         // Move the player
         Rulebook.resolveAction(playerAction, encounterState)
-        val speedComponent = playerAction.actor.getComponent(SpeedComponent::class)
-        playerAction.actor.getComponent(ActionTimeComponent::class).endTurn(speedComponent)
+        val speedComponent = actor.getComponent(SpeedComponent::class)
+        actor.getComponent(ActionTimeComponent::class).endTurn(speedComponent)
 
         // Update the FoV for the player
         encounterState.calculatePlayerFoVAndMarkExploration()
 
         // Shoot the player's laser
-        fireLaser(encounterState, playerAction.actor)
+        fireLaser(encounterState, actor)
 
         EncounterRunner.runUntilPlayerReady(encounterState)
     }

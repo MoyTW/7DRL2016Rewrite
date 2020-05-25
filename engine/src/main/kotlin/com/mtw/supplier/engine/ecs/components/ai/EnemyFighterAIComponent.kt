@@ -28,7 +28,7 @@ class EnemyFighterAIComponent: AIComponent() {
         // Close distance
         val path = EncounterStateUtils.aStarWithNewGrid(parentPos, playerPos, encounterState)
         if (path != null) {
-            actions.add(MoveAction(actor = parent, targetPosition = path[0]))
+            actions.add(MoveAction(actorId = parent.id, targetPosition = path[0]))
         }
 
         // Fire 3 gatling shells (wait, they'll just look like one shell though? did I do that just for style?)

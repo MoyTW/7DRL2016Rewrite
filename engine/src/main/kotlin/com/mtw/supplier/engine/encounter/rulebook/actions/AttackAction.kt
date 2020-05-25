@@ -4,4 +4,5 @@ import com.mtw.supplier.engine.ecs.Entity
 import com.mtw.supplier.engine.encounter.rulebook.Action
 import com.mtw.supplier.engine.encounter.rulebook.ActionType
 
-class AttackAction(actor: Entity, val target: Entity): Action(actor, ActionType.ATTACK)
+// TODO: Switch target to ID
+class AttackAction(override val actorId: String, val target: Entity): Action(ActionType.ATTACK)

@@ -26,7 +26,7 @@ class EnemyScoutAIComponent: AIComponent() {
         if (EncounterStateUtils.distanceBetween(parentPos, playerPos) >= 5f) {
             val path = EncounterStateUtils.aStarWithNewGrid(parentPos, playerPos, encounterState)
             if (path != null) {
-                actions.add(MoveAction(actor = parent, targetPosition = path[0]))
+                actions.add(MoveAction(actorId = parent.id, targetPosition = path[0]))
             }
         }
         // Fire
