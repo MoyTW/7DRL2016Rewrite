@@ -1,7 +1,11 @@
 package com.mtw.supplier.engine.ecs
 
-import com.mtw.supplier.engine.ecs.components.ai.*
 import com.mtw.supplier.engine.ecs.components.*
+import com.mtw.supplier.engine.ecs.components.ai.EnemyFighterAIComponent
+import com.mtw.supplier.engine.ecs.components.ai.EnemyGunshipAIComponent
+import com.mtw.supplier.engine.ecs.components.ai.EnemyScoutAIComponent
+import com.mtw.supplier.engine.ecs.components.item.CarryableComponent
+import com.mtw.supplier.engine.ecs.components.item.UsableComponent
 import com.mtw.supplier.engine.utils.SeededRand
 
 // TODO: json data or something less hard-coded
@@ -51,21 +55,29 @@ enum class EntityDef(val build: (SeededRand) -> Entity) {
     ITEM_DUCT_TAPE({
         // TODO: Implement duct tape!
         Entity("duct tape", it)
+            .addComponent(UsableComponent())
+            .addComponent(CarryableComponent())
             .addComponent(DisplayComponent(DisplayType.ITEM_DUCT_TAPE, false))
     }),
     ITEM_EMP({
         // TODO: Implement EMP!
         Entity("EMP device", it)
+            .addComponent(UsableComponent())
+            .addComponent(CarryableComponent())
             .addComponent(DisplayComponent(DisplayType.ITEM_EMP, false))
     }),
     ITEM_EXTRA_BATTERY({
         // TODO: Implement battery!
         Entity("battery", it)
+            .addComponent(UsableComponent())
+            .addComponent(CarryableComponent())
             .addComponent(DisplayComponent(DisplayType.ITEM_EXTRA_BATTERY, false))
     }),
     ITEM_RED_PAINT({
         // TODO: Implement red paint!
         Entity("red paint", it)
+            .addComponent(UsableComponent())
+            .addComponent(CarryableComponent())
             .addComponent(DisplayComponent(DisplayType.ITEM_RED_PAINT, false))
     }),
 

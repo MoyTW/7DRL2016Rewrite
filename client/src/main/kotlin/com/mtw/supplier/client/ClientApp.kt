@@ -3,7 +3,10 @@ package com.mtw.supplier.client
 import com.mtw.supplier.engine.Serializers
 import com.mtw.supplier.engine.ecs.components.EncounterLocationComponent
 import com.mtw.supplier.engine.encounter.EncounterRunner
+import com.mtw.supplier.engine.encounter.rulebook.Action
+import com.mtw.supplier.engine.encounter.rulebook.Rulebook
 import com.mtw.supplier.engine.encounter.rulebook.actions.MoveAction
+import com.mtw.supplier.engine.encounter.rulebook.actions.PickUpItemAction
 import com.mtw.supplier.engine.encounter.state.EncounterState
 import kotlinx.coroutines.*
 import org.hexworks.zircon.api.CP437TilesetResources
@@ -89,11 +92,11 @@ class ClientApp() {
         ClientDrawer.drawGameState(mapFoWTileGraphics, mapProjectilePathTileGraphics, mapEntityTileGraphics, encounterState)
     }
 
-    private fun executeMoveAction(direction: Direction) {
+    private fun executePlayerAction(action: Action) {
         val serverEncounterState = GlobalScope.async {
-            networkClient.postMoveAction(direction)
+            networkClient.postAction(action)
         }
-        optimisticallyProcessMoveAction(direction)
+        EncounterRunner.runPlayerTurnAndUntilReady(encounterState!!, action)
         drawGameState()
         // I'm reasonably sure using runBlocking like this isn't idiomatic.
         runBlocking {
@@ -143,7 +146,10 @@ class ClientApp() {
             KeyCode.KEY_U ->  executeMoveAction(Direction.NE)
 
             // ===== Instant Actions =====
-            KeyCode.KEY_G -> println("Implement get items") // TODO
+            KeyCode.KEY_G -> {
+                // TODO: Sync with server
+                Rulebook.resolveAction(PickUpItemAction(encounterState!!.playerEntity()),  encounterState!!)
+            }
             KeyCode.KEY_A -> println("Implement autopilot") // TODO
             KeyCode.KEY_I -> println("Implement using items from inventory") // TODO
             KeyCode.KEY_D -> println("Implement dropping from inventory") // TODO
