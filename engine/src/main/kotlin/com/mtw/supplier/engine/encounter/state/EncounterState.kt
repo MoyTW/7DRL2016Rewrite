@@ -103,17 +103,16 @@ class EncounterState(
     class EncounterCannotBeCompletedTwiceException: Exception("Encounter cannot be completed twice!")
 
 
-    // TODO: Assure ordering!
-    fun entities(): List<Entity> {
+    fun entitiesByPlacementOrder(): List<Entity> {
         return this.encounterMap.entitiesByPlacementOrder()
     }
 
     fun playerEntity(): Entity {
-        return this.entities().first { it.hasComponent(PlayerComponent::class) }
+        return this.entitiesByPlacementOrder().first { it.hasComponent(PlayerComponent::class) }
     }
 
     fun getEntity(entityId: String): Entity {
-        return entities().firstOrNull { it.id == entityId } ?: throw EntityIdNotFoundException(entityId)
+        return entitiesByPlacementOrder().firstOrNull { it.id == entityId } ?: throw EntityIdNotFoundException(entityId)
     }
     class EntityIdNotFoundException(entityId: String): Exception("Entity id $entityId could not be found!")
 

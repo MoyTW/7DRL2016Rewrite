@@ -82,7 +82,7 @@ object ClientDrawer {
         val fovCache = encounterState.fovCache!!
         val markedPositions = mutableSetOf<XYCoordinates>()
 
-        encounterState.entities()
+        encounterState.entitiesByPlacementOrder()
             .filter { it.hasComponent(EncounterLocationComponent::class) && it.hasComponent(PathAIComponent::class) }
             .map {
                 val path = it.getComponent(PathAIComponent::class).path
@@ -117,7 +117,7 @@ object ClientDrawer {
 
     private fun drawDisplayEntities(tileGraphics: TileGraphics, encounterState: EncounterState, cameraX: Int, cameraY: Int) {
         val fowCache = encounterState.fovCache!!
-        encounterState.entities()
+        encounterState.entitiesByPlacementOrder()
             .filter { it.hasComponent(EncounterLocationComponent::class) && it.hasComponent(DisplayComponent::class) }
             .sortedByDescending { it.getComponent(DisplayComponent::class).displayType.priority }
             .map {

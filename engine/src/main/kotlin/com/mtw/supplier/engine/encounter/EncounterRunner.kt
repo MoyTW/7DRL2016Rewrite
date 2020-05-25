@@ -3,7 +3,6 @@ package com.mtw.supplier.engine.encounter
 import com.mtw.supplier.engine.ecs.Entity
 import com.mtw.supplier.engine.ecs.components.*
 import com.mtw.supplier.engine.ecs.components.ai.AIComponent
-import com.mtw.supplier.engine.ecs.components.ai.PathAIComponent
 import com.mtw.supplier.engine.encounter.rulebook.Action
 import com.mtw.supplier.engine.encounter.state.EncounterState
 import com.mtw.supplier.engine.encounter.rulebook.Rulebook
@@ -30,7 +29,7 @@ object EncounterRunner {
 
     private fun ticksToNextEvent(encounterState: EncounterState): Int {
         var ticksToNext = 99999999
-        for (entity in encounterState.entities()) {
+        for (entity in encounterState.entitiesByPlacementOrder()) {
             val toNext = entity.getComponentOrNull(ActionTimeComponent::class)?.ticksUntilTurn
             if (toNext != null && toNext < ticksToNext) {
                 ticksToNext = toNext
@@ -42,7 +41,7 @@ object EncounterRunner {
     private fun passTimeAndGetReadyEntities(encounterState: EncounterState, ticks: Int): MutableList<Entity> {
         val readyEntities = mutableListOf<Entity>()
 
-        for (entity in encounterState.entities()) {
+        for (entity in encounterState.entitiesByPlacementOrder()) {
             val actionTimeComponent = entity.getComponentOrNull(ActionTimeComponent::class)
             if (actionTimeComponent != null) {
                 actionTimeComponent.passTime(ticks)
@@ -56,7 +55,7 @@ object EncounterRunner {
     }
 
     private fun fireLaser(encounterState: EncounterState, player: Entity) {
-        val hostileEntities = encounterState.entities().filter {
+        val hostileEntities = encounterState.entitiesByPlacementOrder().filter {
             it.hasComponent(AIComponent::class) && it.hasComponent(FactionComponent::class) }
         // TODO: Range and FOV stuff
         if (hostileEntities.isNotEmpty()) {
@@ -150,7 +149,7 @@ object EncounterRunner {
         }
 
         // lol
-        val remainingAIEntities = encounterState.entities().filter {
+        val remainingAIEntities = encounterState.entitiesByPlacementOrder().filter {
             it.hasComponent(AIComponent::class) && it.hasComponent(FactionComponent::class)
         }
         val anyHostileRelationships = remainingAIEntities.any { leftEntity ->
