@@ -5,6 +5,7 @@ import com.mtw.supplier.engine.ecs.components.EncounterLocationComponent
 import com.mtw.supplier.engine.encounter.EncounterRunner
 import com.mtw.supplier.engine.encounter.rulebook.Action
 import com.mtw.supplier.engine.encounter.rulebook.Rulebook
+import com.mtw.supplier.engine.encounter.rulebook.actions.AutopilotAction
 import com.mtw.supplier.engine.encounter.rulebook.actions.MoveAction
 import com.mtw.supplier.engine.encounter.rulebook.actions.PickUpItemAction
 import com.mtw.supplier.engine.encounter.rulebook.actions.WaitAction
@@ -151,7 +152,8 @@ class ClientApp() {
              * Hmm! And it *doesn't* do that on the desktop client, so that's a online-specific affordance...
              * ...I think I'll steal it! Let's just do that. Okay. This comment is over now.
              */
-            KeyCode.KEY_A -> println("Implement autopilot") // TODO
+            // TODO: Pick a zone!
+            KeyCode.KEY_A -> executePlayerAction(AutopilotAction(encounterState!!.playerEntity().id, "unused value"))
             KeyCode.KEY_I -> println("Implement using items from inventory") // TODO
             KeyCode.KEY_D -> println("Implement dropping from inventory") // TODO
             KeyCode.PERIOD, KeyCode.GREATER, KeyCode.COMMA, KeyCode.LESS -> println("Implement stairs movement") // TODO

@@ -5,9 +5,12 @@ import com.mtw.supplier.engine.ecs.components.*
 import com.mtw.supplier.engine.ecs.components.ai.PathAIComponent
 import com.mtw.supplier.engine.ecs.components.item.CarryableComponent
 import com.mtw.supplier.engine.ecs.components.item.InventoryComponent
+import com.mtw.supplier.engine.encounter.EncounterRunner
 import com.mtw.supplier.engine.encounter.rulebook.actions.*
 import com.mtw.supplier.engine.encounter.state.EncounterState
 import com.mtw.supplier.engine.encounter.state.EncounterMessageLog
+import com.mtw.supplier.engine.encounter.state.EncounterStateUtils
+import com.mtw.supplier.engine.utils.XYCoordinates
 
 object Rulebook {
 
@@ -58,7 +61,23 @@ object Rulebook {
     }
 
     private fun resolveAutopilotAction(action: AutopilotAction, encounterState: EncounterState) {
-        TODO("Resolve autopilot action!")
+        val player = encounterState.getEntity(action.actorId)
+        val encounterLocationComponent = player.getComponent(EncounterLocationComponent::class)
+
+        val path = EncounterStateUtils.aStarWithNewGrid(
+            startPos = encounterLocationComponent.position,
+            endPos = XYCoordinates(5, 5), // TODO: Zones!
+            encounterState = encounterState
+        ) ?: throw TODO("Gracefully handle obstructed destination with a tasteful user prompt or something")
+
+        var idx = 0
+
+        while (idx < path.size) {
+            val nextMoveAction = MoveAction(player.id, path[idx])
+            EncounterRunner.runPlayerTurnAndUntilReady(encounterState, nextMoveAction)
+            // TODO: Autopilot cessation checks
+            idx++
+        }
     }
 
     private fun resolveFireProjectileAction(action: FireProjectileAction, encounterState: EncounterState) {
