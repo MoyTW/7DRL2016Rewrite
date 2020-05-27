@@ -2,6 +2,7 @@ package com.mtw.supplier.engine.utils
 
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
+import java.util.*
 import kotlin.random.Random
 
 @Serializable
@@ -18,5 +19,9 @@ class SeededRand(var seed: Int) {
             this.random = Random(seed)
         }
         return this.random!!
+    }
+
+    fun generateUUID(): String {
+        return UUID.nameUUIDFromBytes(this.getRandom().nextBytes(16)).toString()
     }
 }

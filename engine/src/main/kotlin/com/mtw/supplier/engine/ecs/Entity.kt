@@ -11,7 +11,7 @@ class Entity internal constructor(
     val name: String
 ) {
     constructor(name: String, seededRand: SeededRand) : this(
-        id = UUID.nameUUIDFromBytes(seededRand.getRandom().nextBytes(16)).toString(),
+        id = seededRand.generateUUID(),
         name = name
     )
 
