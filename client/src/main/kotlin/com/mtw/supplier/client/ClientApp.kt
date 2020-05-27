@@ -139,19 +139,7 @@ class ClientApp() {
 
             // ===== Instant Actions =====
             KeyCode.KEY_G -> executePlayerAction(PickUpItemAction(encounterState!!.playerEntity().id))
-            /**
-             * To implement autopilot:
-             * 1. Do we allow the pilot to interrupt autopilot?
-             *   This influences how the client/server relationship works. If we don't allow interruptions, we can just
-             * model it as an Autopilot Action or something and resolve it fully on the client and server.
-             *   If we make it interruptible, we have either:
-             *   1a. Autopilot is entirely on the client side, we just send a storm of movement actions to server. This
-             *     seems...bad. The issue here is you're restricting the
-             * WAIT STOP THE PRESSES
-             * DCSS online client does autoexplore as "Instant, but it displays the path you took by footprints"
-             * Hmm! And it *doesn't* do that on the desktop client, so that's a online-specific affordance...
-             * ...I think I'll steal it! Let's just do that. Okay. This comment is over now.
-             */
+            // TODO: Draw the path in blue or something?
             // TODO: Pick a zone!
             KeyCode.KEY_A -> executePlayerAction(AutopilotAction(encounterState!!.playerEntity().id, "unused value"))
             KeyCode.KEY_I -> println("Implement using items from inventory") // TODO

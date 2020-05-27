@@ -2,13 +2,13 @@ package com.mtw.supplier.engine.encounter.rulebook
 
 import com.mtw.supplier.engine.ecs.Entity
 import com.mtw.supplier.engine.ecs.components.*
+import com.mtw.supplier.engine.ecs.components.ai.AIComponent
 import com.mtw.supplier.engine.ecs.components.ai.PathAIComponent
 import com.mtw.supplier.engine.ecs.components.item.CarryableComponent
 import com.mtw.supplier.engine.ecs.components.item.InventoryComponent
 import com.mtw.supplier.engine.encounter.EncounterRunner
 import com.mtw.supplier.engine.encounter.rulebook.actions.*
 import com.mtw.supplier.engine.encounter.state.EncounterState
-import com.mtw.supplier.engine.encounter.state.EncounterMessageLog
 import com.mtw.supplier.engine.encounter.state.EncounterStateUtils
 import com.mtw.supplier.engine.utils.XYCoordinates
 
@@ -61,6 +61,11 @@ object Rulebook {
     }
 
     private fun resolveAutopilotAction(action: AutopilotAction, encounterState: EncounterState) {
+        if (closestVisibleEnemy(encounterState).isNotEmpty()) {
+            encounterState.messageLog.logAction(action, "FAILED", "Cannot autopilot in the presence of enemies!")
+            return
+        }
+
         val player = encounterState.getEntity(action.actorId)
         val encounterLocationComponent = player.getComponent(EncounterLocationComponent::class)
 
@@ -75,9 +80,40 @@ object Rulebook {
         while (idx < path.size) {
             val nextMoveAction = MoveAction(player.id, path[idx])
             EncounterRunner.runPlayerTurnAndUntilReady(encounterState, nextMoveAction)
-            // TODO: Autopilot cessation checks
+
+            if (closestVisibleEnemy(encounterState).isNotEmpty()) {
+                encounterState.messageLog.logAction(action, "INTERRUPTED", "Enemy ships nearby! Autopilot disengaging!")
+                return
+            }
+
             idx++
         }
+
+    }
+
+    /**
+     * Finds the closest visible enemy to the player
+     */
+    // TODO: If this is slow you can check outwards instead of checking literally every square
+    fun closestVisibleEnemy(encounterState: EncounterState): List<Entity> {
+        val player = encounterState.playerEntity()
+        val playerPos = player.getComponent(EncounterLocationComponent::class).position
+
+        var closestDistance: Double = player.getComponent(PlayerComponent::class).visionRadius + 1.0
+        var closestEnemies = listOf<Entity>()
+        for (pos in encounterState.fovCache!!.visiblePositions) {
+            val hostiles = encounterState.getEntitiesAtPosition(pos).filter {
+                it.hasComponent(AIComponent::class) &&
+                    it.getComponentOrNull(FactionComponent::class)?.isHostileTo(encounterState.playerEntity().id, encounterState) ?: false
+            }
+            val distance = playerPos.distanceTo(pos)
+            if (hostiles.isNotEmpty() && distance < closestDistance) {
+                closestDistance = distance
+                closestEnemies = hostiles
+            }
+        }
+
+        return closestEnemies
     }
 
     private fun resolveFireProjectileAction(action: FireProjectileAction, encounterState: EncounterState) {

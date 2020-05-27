@@ -73,7 +73,7 @@ class EncounterState(
     fun calculatePlayerFoVAndMarkExploration() {
         this.fovCache = FoVCache.computeFoV(this.encounterMap,
             this.playerEntity().getComponent(EncounterLocationComponent::class).position,
-            Constants.VISION_RADIUS
+            this.playerEntity().getComponent(PlayerComponent::class).visionRadius
         )
         for (pos in this.fovCache!!.visiblePositions) {
             encounterMap.markExplored(pos)
