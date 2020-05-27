@@ -1,11 +1,11 @@
 package com.mtw.supplier.engine.encounter.rulebook
 
 enum class ActionType {
-    MOVE,
     ATTACK,
-    USE_ITEM,
-    WAIT,
-    SELF_DESTRUCT,
+    AUTOPILOT,
     FIRE_PROJECTILE,
-    PICK_UP_ITEM
+    MOVE,
+    PICK_UP_ITEM,
+    SELF_DESTRUCT,
+    WAIT
 }

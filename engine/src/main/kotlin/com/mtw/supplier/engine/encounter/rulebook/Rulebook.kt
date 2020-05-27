@@ -18,10 +18,10 @@ object Rulebook {
     fun resolveAction(action: Action, encounterState: EncounterState) {
         when (action.actionType) {
             ActionType.ATTACK -> resolveAttackAction(action as AttackAction, encounterState)
+            ActionType.AUTOPILOT -> resolveAutopilotAction(action as AutopilotAction, encounterState)
             ActionType.FIRE_PROJECTILE -> resolveFireProjectileAction(action as FireProjectileAction, encounterState)
             ActionType.PICK_UP_ITEM -> resolvePickUpItemAction(action as PickUpItemAction, encounterState)
             ActionType.MOVE -> resolveMoveAction(action as MoveAction, encounterState)
-            ActionType.USE_ITEM -> TODO()
             ActionType.WAIT -> resolveWaitAction(action as WaitAction, encounterState)
             ActionType.SELF_DESTRUCT -> resolveSelfDestructionAction(action as SelfDestructAction, encounterState)
         }
@@ -55,6 +55,10 @@ object Rulebook {
             encounterState.removeEntity(entity)
             encounterState.messageLog.logEvent("DEATH", "[${entity.name}] is dead!")
         }
+    }
+
+    private fun resolveAutopilotAction(action: AutopilotAction, encounterState: EncounterState) {
+        TODO("Resolve autopilot action!")
     }
 
     private fun resolveFireProjectileAction(action: FireProjectileAction, encounterState: EncounterState) {

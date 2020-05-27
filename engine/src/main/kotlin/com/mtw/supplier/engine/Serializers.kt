@@ -7,6 +7,7 @@ import com.mtw.supplier.engine.ecs.components.item.CarryableComponent
 import com.mtw.supplier.engine.ecs.components.item.InventoryComponent
 import com.mtw.supplier.engine.ecs.components.item.UsableComponent
 import com.mtw.supplier.engine.encounter.rulebook.Action
+import com.mtw.supplier.engine.encounter.rulebook.actions.AutopilotAction
 import com.mtw.supplier.engine.encounter.rulebook.actions.MoveAction
 import com.mtw.supplier.engine.encounter.rulebook.actions.PickUpItemAction
 import com.mtw.supplier.engine.encounter.rulebook.actions.WaitAction
@@ -51,6 +52,7 @@ object Serializers {
             }
 
             polymorphic(Action::class) {
+                AutopilotAction::class with AutopilotAction.serializer()
                 MoveAction::class with MoveAction.serializer()
                 PickUpItemAction::class with PickUpItemAction.serializer()
                 WaitAction::class with WaitAction.serializer()
